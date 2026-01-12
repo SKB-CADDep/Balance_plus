@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./services/balance-orchestrator/backend
+    container_name: balance_backend
+    restart: always
+    env_file:
+      - ./services/balance-orchestrator/backend/.env
+    ports:
+      - "8005:8000"
+
+  frontend:
+    build: ./services/balance-orchestrator/frontend
+    container_name: balance_frontend
+    restart: always
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
