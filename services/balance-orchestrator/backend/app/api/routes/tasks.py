@@ -1,4 +1,5 @@
 # api/routes/tasks.py
+import gitlab.exceptions
 from fastapi import APIRouter, HTTPException, Query
 from slugify import slugify
 
@@ -24,6 +25,10 @@ async def list_tasks(state: str = "opened", my_only: bool = False):
             pass
         issues = gitlab_client.get_all_assigned_issues(state=state)
         return issues
+    except gitlab.exceptions.GitlabAuthenticationError:
+        raise HTTPException(status_code=401, detail="Ошибка авторизации в GitLab")
+    except gitlab.exceptions.GitlabError as e:
+        raise HTTPException(status_code=502, detail=f"Ошибка GitLab API: {e}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Ошибка получения задач: {e}")
 
@@ -34,8 +39,14 @@ async def get_task(issue_iid: int, project_id: int = Query(...)):
     try:
         issue = gitlab_client.get_issue(issue_iid, project_id)
         return issue
+    except gitlab.exceptions.GitlabAuthenticationError:
+        raise HTTPException(status_code=401, detail="Ошибка авторизации в GitLab")
+    except gitlab.exceptions.GitlabGetError:
+        raise HTTPException(status_code=404, detail=f"Задача #{issue_iid} не найдена в GitLab")
+    except gitlab.exceptions.GitlabError as e:
+        raise HTTPException(status_code=502, detail=f"Ошибка GitLab API: {e}")
     except Exception as e:
-        raise HTTPException(status_code=404, detail=f"Задача не найдена: {e}")
+        raise HTTPException(status_code=500, detail=f"Ошибка получения задачи: {e}")
 
 
 @router.post("", response_model=TaskInfo)
@@ -51,6 +62,12 @@ async def create_task(task: TaskCreate):
         
         # Возвращаем полную информацию через get_issue
         return gitlab_client.get_issue(issue_data["iid"], issue_data["project_id"])
+    except gitlab.exceptions.GitlabAuthenticationError:
+        raise HTTPException(status_code=401, detail="Ошибка авторизации в GitLab")
+    except gitlab.exceptions.GitlabGetError:
+        raise HTTPException(status_code=404, detail="Проект не найден в GitLab")
+    except gitlab.exceptions.GitlabError as e:
+        raise HTTPException(status_code=502, detail=f"Ошибка GitLab API: {e}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Ошибка создания задачи: {e}")
 
@@ -87,6 +104,12 @@ async def create_task_branch(issue_iid: int, payload: BranchCreateRequest):
             issue_iid=issue_iid,
             created=created,
         )
+    except gitlab.exceptions.GitlabAuthenticationError:
+        raise HTTPException(status_code=401, detail="Ошибка авторизации в GitLab")
+    except gitlab.exceptions.GitlabGetError:
+        raise HTTPException(status_code=404, detail="Задача или проект не найдены в GitLab")
+    except gitlab.exceptions.GitlabError as e:
+        raise HTTPException(status_code=502, detail=f"Ошибка GitLab API: {e}")
     except Exception as e:
         # Логируем ошибку подробнее
         print(f"❌ Ошибка создания ветки: {e}")
@@ -105,7 +128,10 @@ async def submit_task(issue_iid: int, project_id: int = Query(...)):
         if not branch_name:
              # Фоллбек: если ветки нет, попробуем сгенерировать (вдруг еще не создана?)
              # Но для сабмита это странно. Лучше вернуть ошибку.
-             raise ValueError(f"Ветка для задачи #{issue_iid} не найдена в GitLab. Сначала нажмите 'Начать работу'.")
+             raise HTTPException(
+                 status_code=400,
+                 detail=f"Ветка для задачи #{issue_iid} не найдена в GitLab. Сначала нажмите 'Начать работу'."
+             )
 
         print(f"📌 Найдена ветка для сабмита: {branch_name}")
 
@@ -123,8 +149,17 @@ async def submit_task(issue_iid: int, project_id: int = Query(...)):
         
         return {"status": "success", "mr_url": result["web_url"], "mr_iid": result["iid"]}
 
-    except ValueError as ve:
-        raise HTTPException(status_code=400, detail=str(ve))
+    except gitlab.exceptions.GitlabAuthenticationError:
+        raise HTTPException(status_code=401, detail="Ошибка авторизации в GitLab")
+    except gitlab.exceptions.GitlabGetError:
+        raise HTTPException(status_code=404, detail="Задача или ветка не найдены в GitLab")
+    except gitlab.exceptions.GitlabError as e:
+        # Ловим ошибку "MR already exists" и красиво отдаем
+        if "already exists" in str(e):
+            raise HTTPException(status_code=400, detail="Merge Request уже создан!")
+        raise HTTPException(status_code=502, detail=f"Ошибка GitLab API: {e}")
+    except HTTPException:
+        raise
     except Exception as e:
         # Ловим ошибку "MR already exists" и красиво отдаем
         if "already exists" in str(e):

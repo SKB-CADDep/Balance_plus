@@ -1,9 +1,8 @@
 import json
-from datetime import datetime
+import gitlab.exceptions
 from fastapi import APIRouter, HTTPException, Query
 from app.schemas.calculation import CalculationSaveRequest
 from app.core.gitlab_adapter import gitlab_client
-from slugify import slugify
 
 router = APIRouter(prefix="/calculations", tags=["Calculations"])
 
@@ -18,15 +17,17 @@ async def save_calculation_result(req: CalculationSaveRequest):
         # Передаем project_id, так как мы теперь в мульти-репо
         branch_name = gitlab_client.find_branch_by_issue_iid(req.task_iid, req.project_id)
         
+        # Строгая проверка: если ветка не найдена, немедленно возвращаем ошибку
         if not branch_name:
-             raise HTTPException(status_code=400, detail=f"Ветка для задачи #{req.task_iid} не найдена в GitLab. Убедитесь, что работа над задачей начата.")
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Ветка для задачи #{req.task_iid} не найдена в GitLab. Убедитесь, что работа над задачей начата."
+            )
 
         print(f"💾 Сохраняем в ветку: {branch_name} (Проект ID: {req.project_id})")
 
-        # 2. Формируем путь
-        ts_str = req.output_data.get('calc_timestamp') or datetime.now().isoformat()
-        folder_name = ts_str.replace(':', '-').replace('.', '-')
-        base_path = f"calculations/{req.app_type}/{folder_name}"
+        # 2. Формируем фиксированный путь (перезаписываем файлы для работы Git Diff)
+        base_path = f"calculations/{req.app_type}/current"
         
         # 3. Готовим файлы
         files_to_commit = {
@@ -49,11 +50,16 @@ async def save_calculation_result(req: CalculationSaveRequest):
             "web_url": commit.web_url
         }
 
+    except gitlab.exceptions.GitlabAuthenticationError:
+        raise HTTPException(status_code=401, detail="Ошибка авторизации в GitLab")
+    except gitlab.exceptions.GitlabGetError:
+        raise HTTPException(status_code=404, detail="Объект не найден в GitLab")
+    except gitlab.exceptions.GitlabError as e:
+        raise HTTPException(status_code=502, detail=f"Ошибка GitLab API: {e}")
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Error saving calculation: {e}")
-        # Если это HTTPException, пробрасываем его как есть
-        if isinstance(e, HTTPException):
-            raise e
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -61,44 +67,35 @@ async def save_calculation_result(req: CalculationSaveRequest):
 async def get_latest_calculation(task_iid: int = Query(...), app_type: str = Query(...), project_id: int = Query(...)):
     """
     Возвращает данные последнего расчёта для гидрации формы.
+    Читает из фиксированного пути calculations/{app_type}/current/
     """
     try:
-        # 1. Определяем ветку
-        issue = gitlab_client.get_issue(task_iid, project_id)
-        safe_slug = slugify(issue["title"], max_length=40) or "task"
-        branch_name = f"issue/{task_iid}-{safe_slug}"
+        # 1. Ищем РЕАЛЬНУЮ ветку задачи (Умный поиск)
+        branch_name = gitlab_client.find_branch_by_issue_iid(task_iid, project_id)
         
-        if not gitlab_client.branch_exists(branch_name, project_id=project_id):
+        if not branch_name:
             return {"found": False, "reason": "Branch not found"}
 
-        # 2. Ищем папку с расчётами
-        base_path = f"calculations/{app_type}"
-        folders = gitlab_client.list_files_in_path(base_path, ref=branch_name, project_id=project_id)
-        
-        if not folders:
-            return {"found": False, "reason": "No calculations found"}
-            
-        # 3. Сортируем папки (они у нас ISO timestamp, так что сортировка по алфавиту сработает)
-        # folder['name'] выглядит как '2025-11-27T10-00-00'
-        folders.sort(key=lambda x: x['name'], reverse=True)
-        latest_folder = folders[0]['name']
-        
-        full_path = f"{base_path}/{latest_folder}"
-        
-        # 4. Читаем файлы
-        input_content = gitlab_client.get_file_content_decoded(f"{full_path}/input.json", ref=branch_name, project_id=project_id)
-        result_content = gitlab_client.get_file_content_decoded(f"{full_path}/result.json", ref=branch_name, project_id=project_id)
+        # 2. Читаем файлы напрямую из фиксированного пути
+        base_path = f"calculations/{app_type}/current"
+        input_content = gitlab_client.get_file_content_decoded(f"{base_path}/input.json", ref=branch_name, project_id=project_id)
+        result_content = gitlab_client.get_file_content_decoded(f"{base_path}/result.json", ref=branch_name, project_id=project_id)
         
         if not input_content:
-             return {"found": False, "reason": "Files missing"}
+            return {"found": False, "reason": "Files missing"}
 
         return {
             "found": True,
-            "timestamp": latest_folder,
             "input_data": json.loads(input_content),
             "output_data": json.loads(result_content) if result_content else None
         }
 
+    except gitlab.exceptions.GitlabAuthenticationError:
+        return {"found": False, "error": "Ошибка авторизации в GitLab"}
+    except gitlab.exceptions.GitlabGetError:
+        return {"found": False, "reason": "Branch or files not found"}
+    except gitlab.exceptions.GitlabError as e:
+        return {"found": False, "error": f"Ошибка GitLab API: {e}"}
     except Exception as e:
         print(f"Error getting calc: {e}")
         # Не падаем с ошибкой, а просто говорим "данных нет", чтобы форма открылась пустой

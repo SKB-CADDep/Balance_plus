@@ -2,7 +2,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import health, geometries, tasks, user, calculations, projects
+from app.api.routes import health, geometries, tasks, user, calculations, projects, config
 
 app = FastAPI(
     title="Balance+ Orchestrator",
@@ -25,6 +25,7 @@ app.include_router(tasks.router, prefix="/api/v1")
 app.include_router(user.router, prefix="/api/v1")
 app.include_router(calculations.router, prefix="/api/v1")
 app.include_router(projects.router, prefix="/api/v1")
+app.include_router(config.router, prefix="/api/v1")
 
 
 @app.get("/")

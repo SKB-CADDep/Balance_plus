@@ -1,5 +1,6 @@
 # api/routes/geometries.py
 import json
+import gitlab.exceptions
 from fastapi import APIRouter, HTTPException
 
 from app.schemas.geometry import GeometriesManifest, GeometryInfo, CondenserGeometry
@@ -20,6 +21,12 @@ async def list_geometries():
         content = file.decode().decode("utf-8")
         manifest = GeometriesManifest.model_validate_json(content)
         return manifest.geometries
+    except gitlab.exceptions.GitlabAuthenticationError:
+        raise HTTPException(status_code=401, detail="Ошибка авторизации в GitLab")
+    except gitlab.exceptions.GitlabGetError:
+        raise HTTPException(status_code=404, detail="Манифест геометрий не найден в GitLab")
+    except gitlab.exceptions.GitlabError as e:
+        raise HTTPException(status_code=502, detail=f"Ошибка GitLab API: {e}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Ошибка чтения манифеста: {e}")
 
@@ -55,6 +62,12 @@ async def get_geometry(geometry_id: str):
 
         return geometry_data
 
+    except gitlab.exceptions.GitlabAuthenticationError:
+        raise HTTPException(status_code=401, detail="Ошибка авторизации в GitLab")
+    except gitlab.exceptions.GitlabGetError:
+        raise HTTPException(status_code=404, detail="Геометрия или файл не найдены в GitLab")
+    except gitlab.exceptions.GitlabError as e:
+        raise HTTPException(status_code=502, detail=f"Ошибка GitLab API: {e}")
     except HTTPException:
         raise
     except Exception as e:

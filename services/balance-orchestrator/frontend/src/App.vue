@@ -33,53 +33,10 @@ interface Bureau {
   modules: { id: string; label: string }[]
 }
 
-// --- CONSTANTS ---
-const BUREAUS: Bureau[] = [
-  {
-    id: 'btr',
-    label: 'БТР',
-    color: '#1976D2',
-    modules: [
-      { id: 'btr-balances', label: 'Балансы' },
-      { id: 'btr-velocity-triangles', label: 'Треугольники скоростей' },
-      { id: 'btr-steam-distribution', label: 'Парораспределение' },
-      { id: 'btr-condensers', label: 'Конденсаторы' },
-      { id: 'btr-valve-stems', label: 'Штоки клапанов' },
-      { id: 'btr-aux-calcs', label: 'Вспомогательные' },
-      { id: 'btr-wsprop', label: 'WSProp' },
-      { id: 'btr-gasdynamics-ansys', label: 'Газодинамика (Ansys)' },
-      { id: 'btr-thermal-expansions', label: 'Тепловые перемещения' }
-    ]
-  },
-  {
-    id: 'bpr',
-    label: 'БПР',
-    color: '#26A69A',
-    modules: [
-      { id: 'bpr-flowpath-design', label: 'Проектирование ПЧ' },
-      { id: 'bpr-cylinders', label: 'Цилиндры' },
-      { id: 'bpr-heat-exchangers', label: 'Теплообменники' },
-      { id: 'bpr-materials', label: 'Материалы' },
-      { id: 'bpr-acts', label: 'Акты' }
-    ]
-  },
-  {
-    id: 'bvp',
-    label: 'БВП',
-    color: '#7E57C2',
-    modules: [
-      { id: 'bvp-static-shaft-deflection', label: 'Прогибы' },
-      { id: 'bvp-static-alignment', label: 'Центровка' },
-      { id: 'bvp-dynamic-bending-vibration', label: 'Изгибные колебания' },
-      { id: 'bvp-dynamic-torsional-vibration', label: 'Крутильные колебания' },
-      { id: 'bvp-working-blades', label: 'Рабочие лопатки' }
-    ]
-  }
-]
-
 // --- STATE ---
 const currentUser = ref({ name: 'Загрузка...', avatar_url: '' })
 const tasks = ref<Task[]>([])
+const bureaus = ref<Bureau[]>([])
 const activeBureauId = ref<string | null>(null) // null = Все задачи
 const activeModuleId = ref<string | null>(null) // null = Все модули выбранного бюро
 const showCreateModal = ref(false)
@@ -94,12 +51,14 @@ const currentProjectId = ref(0)
 // --- API ---
 const fetchData = async () => {
   try {
-    const [userRes, tasksRes] = await Promise.all([
+    const [userRes, tasksRes, bureausRes] = await Promise.all([
       axios.get('/api/v1/user/me'),
-      axios.get('/api/v1/tasks?state=opened')
+      axios.get('/api/v1/tasks?state=opened'),
+      axios.get('/api/v1/config/bureaus')
     ])
     currentUser.value = userRes.data
     tasks.value = tasksRes.data
+    bureaus.value = bureausRes.data
   } catch (e) { console.error(e) } 
   finally { loading.value = false }
 }
@@ -160,7 +119,7 @@ const handleSubmitTask = async (task: Task) => {
 // --- COMPUTED ---
 const activeBureau = computed(() => {
   if (!activeBureauId.value) return null
-  return BUREAUS.find(b => b.id === activeBureauId.value) || null
+  return bureaus.value.find(b => b.id === activeBureauId.value) || null
 })
 
 const filteredTasks = computed(() => {
@@ -229,7 +188,7 @@ onMounted(fetchData)
           </a>
           
           <a 
-            v-for="b in BUREAUS" :key="b.id" 
+            v-for="b in bureaus" :key="b.id" 
             href="#"
             class="nav-link"
             :class="{ active: activeBureauId === b.id }"
@@ -293,7 +252,7 @@ onMounted(fetchData)
       />
     </div>
 
-    <CreateTaskModal v-if="showCreateModal" @close="showCreateModal = false" @create="createTask" />
+    <CreateTaskModal v-if="showCreateModal" :bureaus="bureaus" @close="showCreateModal = false" @create="createTask" />
   </div>
 </template>
 
@@ -301,6 +260,10 @@ onMounted(fetchData)
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 /* === ГЛОБАЛЬНЫЙ СБРОС (Самое важное для фикса верстки) === */
+:root {
+  color-scheme: light;
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
 }
@@ -309,10 +272,16 @@ body {
   margin: 0;
   padding: 0;
   font-family: 'Inter', sans-serif;
-  background-color: #FFFFFF;
+  background-color: #ffffff;
+  color: #000000;
   /* Возвращаем нормальный скролл для страницы */
   overflow-y: auto; 
   overflow-x: hidden;
+}
+
+input, select, textarea {
+  background-color: #ffffff;
+  color: #000000;
 }
 
 .layout {
