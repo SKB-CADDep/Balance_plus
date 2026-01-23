@@ -1,0 +1,27 @@
+{
+  "condenser_id": null,
+  "main_info": {
+    "name_condenser": null,
+    "project_id": null,
+    "doc_num_thermo_calc": null,
+    "doc_num_assembly": null,
+    "doc_num_passport": null
+  },
+  "geometry": {
+    "diameter_internal": 20.0,
+    "wall_thickness": 1.0,
+    "material_id": null,
+    "main_length": 7500.0,
+    "main_count": 12000.0,
+    "builtin_length": 7500.0,
+    "builtin_count": 4000.0,
+    "aircooler_count": null,
+    "passes_main": 2.0,
+    "passes_builtin": 2.0,
+    "ejectors_count": 1
+  },
+  "limits": {
+    "mass_flow_steam_nom": 350.0,
+    "mass_flow_air": 16.5
+  }
+}
