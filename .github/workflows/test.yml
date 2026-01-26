@@ -4,7 +4,7 @@ on:
   workflow_run:
     workflows: [Lint]
     types: [completed]
-    branches: [feat/add-ci-cd]
+    # branches: [feat/add-ci-cd]
 
 jobs:
   test-backend:
