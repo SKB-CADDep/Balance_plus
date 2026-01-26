@@ -9,6 +9,9 @@ on:
 jobs:
   test-backend:
     name: Test backend
+    if: |
+      github.event.workflow_run.conclusion == 'success' ||
+      github.event.workflow_run.conclusion == 'failure'
     runs-on: self-hosted
 
     steps:
