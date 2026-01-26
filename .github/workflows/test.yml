@@ -11,5 +11,5 @@ jobs:
     name: Test backend
     runs-on: ["self-hosted"]
 
-  steps:
-  - run: echo "Hello from test job!"
+    steps:
+    - run: echo "Hello from test job!"
