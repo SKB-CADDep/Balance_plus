@@ -2,14 +2,14 @@ name: Test
 
 on:
   workflow_run:
-    workflows: ["Lint"]
-    types: ["completed"]
-    branches: ["feat/add-ci-cd"]
+    workflows: [Lint]
+    types: [completed]
+    branches: [feat/add-ci-cd]
 
 jobs:
   test-backend:
     name: Test backend
-    runs-on: ["self-hosted"]
+    runs-on: self-hosted
 
     steps:
     - run: echo "Hello from test job!"

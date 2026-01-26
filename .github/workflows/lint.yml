@@ -2,13 +2,13 @@ name: Lint
 
 on:
   push:
-    branches: ["feat/add-ci-cd"]
+    branches: [feat/add-ci-cd]
   workflow_dispatch:
 
 jobs:
   lint-backend:
     name: Lint backend
-    runs-on: ["self-hosted"]
+    runs-on: self-hosted
 
     steps:
     - run: echo "Hello from lint job!"
