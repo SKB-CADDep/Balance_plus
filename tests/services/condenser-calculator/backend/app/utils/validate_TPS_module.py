@@ -1,5 +1,5 @@
 from pprint import pprint
-from utils.TPS_module import TablePressureStrategy
+from app.utils.TPS_module import TablePressureStrategy
 
 def run_validation_case(strategy: TablePressureStrategy, params: dict, title: str, tolerance_percent: float):
     """

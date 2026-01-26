@@ -1,5 +1,5 @@
 import pandas as pd
-from utils.VKU_strategy import VKUStrategy
+from app.utils.VKU_strategy import VKUStrategy
 
 
 def run_validation():

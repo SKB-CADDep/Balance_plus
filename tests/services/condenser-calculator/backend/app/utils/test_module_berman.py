@@ -1,12 +1,15 @@
-import unittest
-from utils.berman_strategy import BermanStrategy
+import pytest
+from app.utils.berman_strategy import BermanStrategy
 
-class TestBermanEjectorPressure(unittest.TestCase):
+
+class TestBermanEjectorPressure:
     """
     Тестирует корректность расчета давления всасывания эжекторов
     в классе BermanStrategy.
     """
-    def setUp(self):
+    
+    @pytest.fixture(autouse=True)
+    def setup(self):
         """
         Настраивает общие параметры для тестов перед каждым запуском.
         """
@@ -44,7 +47,7 @@ class TestBermanEjectorPressure(unittest.TestCase):
         calculation_results = self.strategy.calculate(self.simulation_params)
         all_ejector_results = calculation_results['ejector_results']
 
-        self.assertIsNotNone(all_ejector_results, "Секция 'ejector_results' отсутствует в результатах.")
+        assert all_ejector_results is not None, "Секция 'ejector_results' отсутствует в результатах."
         
         # Отфильтровываем результаты только для одного работающего эжектора
         results_for_one_ejector = [
@@ -52,8 +55,8 @@ class TestBermanEjectorPressure(unittest.TestCase):
         ]
         
         # Проверяем, что количество результатов соответствует количеству входных температур
-        self.assertEqual(len(results_for_one_ejector), len(self.simulation_params['temperature_cooling_water_1_list']),
-                         "Количество результатов для одного эжектора не совпадает с количеством заданных температур.")
+        assert len(results_for_one_ejector) == len(self.simulation_params['temperature_cooling_water_1_list']), \
+            "Количество результатов для одного эжектора не совпадает с количеством заданных температур."
 
         # Преобразуем список результатов в удобный для проверки словарь {температура: давление}
         calculated_pressures_map = {
@@ -75,17 +78,11 @@ class TestBermanEjectorPressure(unittest.TestCase):
 
         # Сравниваем фактические значения с эталонными для каждой температуры
         for temp, expected_pressure in expected_pressures_map.items():
-            with self.subTest(temperature=temp):
-                self.assertIn(temp, calculated_pressures_map, f"Результат для температуры {temp}°C не найден.")
-                actual_pressure = calculated_pressures_map[temp]
-                self.assertAlmostEqual(
-                    actual_pressure,
-                    expected_pressure,
-                    places=2, # Точность до 2-го знака после запятой
-                    msg=f"Давление для t={temp}°C не совпадает с эталоном"
-                )
+            assert temp in calculated_pressures_map, f"Результат для температуры {temp}°C не найден."
+            actual_pressure = calculated_pressures_map[temp]
+            assert actual_pressure == pytest.approx(
+                expected_pressure,
+                abs=0.01  # Точность до 2-го знака после запятой
+            ), f"Давление для t={temp}°C не совпадает с эталоном"
 
         print("\nТест эжектора: все значения давлений успешно прошли проверку.")
-
-if __name__ == '__main__':
-    unittest.main()

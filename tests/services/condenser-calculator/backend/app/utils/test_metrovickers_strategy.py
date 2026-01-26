@@ -1,7 +1,8 @@
-import unittest
-from utils.metrovickers_strategy import MetroVickersStrategy
+import pytest
+from app.utils.metrovickers_strategy import MetroVickersStrategy
 
-class TestMetroVickersStrategy(unittest.TestCase):
+
+class TestMetroVickersStrategy:
     """
     Набор тестов для проверки корректности расчетов по методике Metro-Vickers.
     """
@@ -32,12 +33,7 @@ class TestMetroVickersStrategy(unittest.TestCase):
         
         actual_pressure = results['pressure_flow_path_1']
 
-        self.assertAlmostEqual(
-            actual_pressure, 
+        assert actual_pressure == pytest.approx(
             expected_pressure, 
-            places=5, 
-            msg=f"Расчетное давление {actual_pressure} не совпадает с эталонным {expected_pressure}"
-        )
-
-if __name__ == '__main__':
-    unittest.main()
+            abs=1e-5
+        ), f"Расчетное давление {actual_pressure} не совпадает с эталонным {expected_pressure}"

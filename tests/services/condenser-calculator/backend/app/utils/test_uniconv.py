@@ -7,7 +7,7 @@
 
 import pytest
 
-from utils.uniconv import (
+from app.utils.uniconv import (
     UnitConverter,
     UnknownParameterError,
     UnknownUnitError,

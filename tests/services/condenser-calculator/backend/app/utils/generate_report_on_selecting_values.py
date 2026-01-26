@@ -1,4 +1,4 @@
-from compare_selection_methods import run_comparison
+from app.utils.compare_selection_methods import run_comparison
 
 
 def create_markdown_table(results):

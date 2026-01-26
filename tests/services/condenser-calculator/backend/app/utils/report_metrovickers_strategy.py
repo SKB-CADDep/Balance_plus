@@ -1,4 +1,4 @@
-from utils.metrovickers_strategy import MetroVickersStrategy
+from app.utils.metrovickers_strategy import MetroVickersStrategy
 
 def print_beautifully(data_dict, friendly_names, title, keys_to_print):
     """

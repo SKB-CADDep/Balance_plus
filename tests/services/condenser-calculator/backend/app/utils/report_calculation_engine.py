@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import curve_fit
 from scipy.interpolate import CubicSpline
-from utils.calculation_engine import k_interpolation_data
+from app.utils.calculation_engine import k_interpolation_data
 
 
 def power_law_model(v, a, b, c):
