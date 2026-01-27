@@ -47,7 +47,7 @@ jobs:
 
   deploy-prod:
     name: Deploy to prod
-    needs: [test-backend, build-backend-prod]
+    needs: [test-backend, build-backend-prod, deploy-stage]
     runs-on: self-hosted
 
     steps:
