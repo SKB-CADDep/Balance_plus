@@ -1,0 +1,54 @@
+name: CI/CD for Balanse Plus
+
+on:
+  push:
+    branches: [feat/add-ci-cd]
+  workflow_dispatch:
+
+jobs:
+  lint-backend:
+    name: Lint backend
+    runs-on: self-hosted
+
+    steps:
+    - run: echo "Hello from lint-backend job!"
+
+  test-backend:
+    name: Test backend
+    needs: lint-backend
+    runs-on: self-hosted
+
+    steps:
+    - run: echo "Hello from test-backend job!"
+
+  build-backend-stage:
+    name: Build backend for stage
+    needs: test-backend
+    runs-on: self-hosted
+
+    steps:
+    - run: echo "Hello from build-backend-stage job!"
+
+  build-backend-prod:
+    name: Build backend for prod
+    needs: test-backend
+    runs-on: self-hosted
+
+    steps:
+    - run: echo "Hello from build-backend-prod job!"
+
+  deploy-stage:
+    name: Deploy to stage
+    needs: [test-backend, build-backend-stage]
+    runs-on: self-hosted
+
+    steps:
+    - run: echo "Hello from deploy-stage job!"
+
+  deploy-prod:
+    name: Deploy to prod
+    needs: [test-backend, build-backend-prod]
+    runs-on: self-hosted
+
+    steps:
+    - run: echo "Hello from deploy-prod job!"
