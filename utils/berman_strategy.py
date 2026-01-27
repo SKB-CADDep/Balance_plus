@@ -208,10 +208,16 @@ class BermanStrategy:
                                     B[bundle_idx], X[bundle_idx], Phi_c[bundle_idx] = 0, 0, 1.0
 
                                 # Коэффициент температуры воды
-                                Phi_t[bundle_idx] = 1.0 - 0.42 * (35.0 - avg_water_temps[bundle_idx]) ** 2 * 0.001
+                                if avg_water_temps[bundle_idx] < 35.0:
+                                    Phi_t[bundle_idx] = 1.0 - 0.00042 * (35.0 - avg_water_temps[bundle_idx]) ** 2
+                                else:
+                                    Phi_t[bundle_idx] = 1.0 + 0.002 * (avg_water_temps[bundle_idx] - 35.0)
 
                                 # Коэффициент числа ходов
-                                Phi_z[bundle_idx] = 1.0 + 0.1 * (Z[bundle_idx] - 2.0) * (1.0 - avg_water_temps[bundle_idx] / 35.0)
+                                if avg_water_temps[bundle_idx] < 35.0:
+                                    Phi_z[bundle_idx] = 1.0 + (Z[bundle_idx] - 2.0) / 10.0 * (1.0 - avg_water_temps[bundle_idx] / 35.0)
+                                else:
+                                    Phi_z[bundle_idx] = 1.0 + (Z[bundle_idx] - 2.0) / 10.0 * (1.0 - avg_water_temps[bundle_idx] / 45.0)
 
                                 # Приведенный расход пара
                                 g_k_priv[bundle_idx] = (0.9 - 0.012 * avg_water_temps[bundle_idx]) * g_k_nom
