@@ -40,6 +40,7 @@ jobs:
   deploy-stage:
     name: Deploy to stage
     needs: [test-backend, build-backend-stage]
+    environment: staging
     runs-on: self-hosted
 
     steps:
