@@ -1,4 +1,4 @@
-from utils.exceptions_method import CondenserExceptions
+from app.utils.exceptions_method import CondenserExceptions
 
 def report_condenser_pressure(pressure_condenser: float | None, 
                               temperature_cooling_water_1: float | None, 

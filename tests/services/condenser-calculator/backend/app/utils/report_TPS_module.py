@@ -1,5 +1,5 @@
 from pprint import pprint
-from utils.TPS_module import TablePressureStrategy
+from app.utils.TPS_module import TablePressureStrategy
 
 params = {
     'NAMET': {

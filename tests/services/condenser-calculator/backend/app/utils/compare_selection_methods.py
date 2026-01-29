@@ -1,6 +1,6 @@
 import time
-from utils.base_for_selection import ProblemDefinition
-from utils.selection_methods import AnalyticalSolver, BisectionSolver, NewtonSolver
+from app.utils.base_for_selection import ProblemDefinition
+from app.utils.selection_methods import AnalyticalSolver, BisectionSolver, NewtonSolver
 
 
 def run_comparison():

@@ -41,32 +41,14 @@
           <select v-model="form.type">
             <option disabled value="">Выберите модуль...</option>
             
-            <optgroup label="БТР (Теплотехника)">
-              <option value="module::btr-balances">Балансы</option>
-              <option value="module::btr-velocity-triangles">Треугольники скоростей</option>
-              <option value="module::btr-steam-distribution">Парораспределение</option>
-              <option value="module::btr-condensers">Конденсаторы</option>
-              <option value="module::btr-valve-stems">Штоки клапанов</option>
-              <option value="module::btr-aux-calcs">Вспомогательные</option>
-              <option value="module::btr-wsprop">WSProp</option>
-              <option value="module::btr-gasdynamics-ansys">Газодинамика (Ansys)</option>
-              <option value="module::btr-thermal-expansions">Тепловые перемещения</option>
-            </optgroup>
-
-            <optgroup label="БПР (Прочность)">
-              <option value="module::bpr-flowpath-design">Проектирование ПЧ</option>
-              <option value="module::bpr-cylinders">Цилиндры</option>
-              <option value="module::bpr-heat-exchangers">Теплообменники</option>
-              <option value="module::bpr-materials">Материалы</option>
-              <option value="module::bpr-acts">Акты</option>
-            </optgroup>
-
-            <optgroup label="БВП (Вибрация)">
-              <option value="module::bvp-static-shaft-deflection">Прогибы</option>
-              <option value="module::bvp-static-alignment">Центровка</option>
-              <option value="module::bvp-dynamic-bending-vibration">Изгибные колебания</option>
-              <option value="module::bvp-dynamic-torsional-vibration">Крутильные колебания</option>
-              <option value="module::bvp-working-blades">Рабочие лопатки</option>
+            <optgroup v-for="bureau in bureaus" :key="bureau.id" :label="`${bureau.label}`">
+              <option 
+                v-for="module in bureau.modules" 
+                :key="module.id" 
+                :value="`module::${module.id}`"
+              >
+                {{ module.label }}
+              </option>
             </optgroup>
           </select>
         </div>
@@ -88,6 +70,17 @@
   <script setup lang="ts">
   import { reactive, ref, onMounted, computed } from 'vue'
   import axios from 'axios'
+  
+  interface Bureau {
+    id: string
+    label: string
+    color: string
+    modules: { id: string; label: string }[]
+  }
+  
+  const props = defineProps<{
+    bureaus: Bureau[]
+  }>()
   
   const emit = defineEmits(['close', 'create'])
   

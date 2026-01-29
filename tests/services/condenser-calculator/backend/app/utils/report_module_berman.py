@@ -1,5 +1,5 @@
 # generate_berman_report.py
-from utils.berman_strategy import BermanStrategy
+from app.utils.berman_strategy import BermanStrategy
 
 def create_markdown_table(headers, data_rows):
     """
