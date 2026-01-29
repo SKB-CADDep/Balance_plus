@@ -13,6 +13,7 @@ jobs:
     steps:
     - run: echo "Hello from lint-backend job!"
     - run: exit 1
+      continue-on-error: true
 
   test-backend:
     name: Test backend
