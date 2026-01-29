@@ -14,6 +14,13 @@ jobs:
     - run: echo "Hello from lint-backend job!"
     - run: exit 1
       continue-on-error: true
+    - name: Get info
+      run: |
+        ls
+        pwd
+        whoami
+        docker -v
+        docker ps
 
   test-backend:
     name: Test backend
