@@ -1,0 +1,29 @@
+{
+  "coefficient_b": [
+    1.0,
+    0.75
+  ],
+  "Z_main": 2.0,
+  "Z_builtin": 2.0,
+  "Z_ejectors": 1,
+  "W_main": [
+    8000.0,
+    16000.0
+  ],
+  "W_builtin": [],
+  "t1_main": [
+    5.0,
+    10.0,
+    15.0,
+    20.0,
+    25.0,
+    30.0
+  ],
+  "t1_builtin": [],
+  "G_steam": [
+    100.0,
+    300.0
+  ],
+  "H_steam": 515.0,
+  "X_steam": null
+}
