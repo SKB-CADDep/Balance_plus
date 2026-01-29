@@ -9,8 +9,6 @@ jobs:
   lint-backend:
     name: Lint backend
     runs-on: self-hosted
-    container:
-      image: alpine:latest
 
     steps:
     - run: echo "Hello from lint-backend job!"
