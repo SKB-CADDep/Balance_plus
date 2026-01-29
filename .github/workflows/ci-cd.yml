@@ -17,6 +17,7 @@ jobs:
   test-backend:
     name: Test backend
     needs: lint-backend
+    if: always()
     runs-on: self-hosted
 
     steps:
