@@ -19,8 +19,6 @@ jobs:
         ls
         pwd
         whoami
-        docker -v
-        docker ps
 
   test-backend:
     name: Test backend
