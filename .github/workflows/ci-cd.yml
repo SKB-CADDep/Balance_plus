@@ -10,7 +10,7 @@ jobs:
     name: Lint backend
     runs-on: self-hosted
     container:
-      image: ubuntu:24.04
+      image: alpine:latest
 
     steps:
     - run: echo "Hello from lint-backend job!"
