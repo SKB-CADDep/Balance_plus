@@ -11,6 +11,7 @@ jobs:
     runs-on: self-hosted
 
     steps:
+    - uses: actions/checkout@v6
     - run: echo "Hello from lint-backend job!"
     - run: exit 1
       continue-on-error: true
