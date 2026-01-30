@@ -28,6 +28,11 @@ jobs:
 
     steps:
     - run: echo "Hello from test-backend job!"
+    - name: Get info
+      run: |
+        ls
+        pwd
+        whoami
 
   build-backend-stage:
     name: Build backend for stage
