@@ -23,7 +23,7 @@ jobs:
 
   lint-frontend:
     name: Lint frontend
-    runs-on: ubuntu latest
+    runs-on: ubuntu-latest
 
     steps:
     - run: echo "Hello from lint-frontend job!"
@@ -31,7 +31,6 @@ jobs:
 
   test-backend:
     name: Test backend
-    needs: lint-backend
     runs-on: ubuntu-latest
 
     steps:
@@ -42,25 +41,25 @@ jobs:
         pwd
         whoami
 
-  build-backend-stage:
+  build-stage:
     name: Build backend for stage
     needs: test-backend
     runs-on: self-hosted
 
     steps:
-    - run: echo "Hello from build-backend-stage job!"
+    - run: echo "Hello from build-stage job!"
 
-  build-backend-prod:
+  build-prod:
     name: Build backend for prod
     needs: test-backend
     runs-on: self-hosted
 
     steps:
-    - run: echo "Hello from build-backend-prod job!"
+    - run: echo "Hello from build-prod job!"
 
   deploy-stage:
     name: Deploy to stage
-    needs: [test-backend, build-backend-stage]
+    needs: [test-backend, build-stage]
     environment: staging
     runs-on: self-hosted
 
@@ -69,7 +68,7 @@ jobs:
 
   deploy-prod:
     name: Deploy to prod
-    needs: [test-backend, build-backend-prod, deploy-stage]
+    needs: [test-backend, build-prod, deploy-stage]
     environment: production
     runs-on: self-hosted
 
