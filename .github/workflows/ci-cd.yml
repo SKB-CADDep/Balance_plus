@@ -13,19 +13,14 @@ jobs:
     steps:
     - uses: actions/checkout@v6
     - run: echo "Hello from lint-backend job!"
-    - run: exit 1
       continue-on-error: true
-    - name: Get info
-      run: |
-        ls
-        pwd
-        whoami
 
   lint-frontend:
     name: Lint frontend
     runs-on: ubuntu-latest
 
     steps:
+    - uses: actions/checkout@v6
     - run: echo "Hello from lint-frontend job!"
       continue-on-error: true
 
@@ -34,27 +29,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - uses: actions/checkout@v6
     - run: echo "Hello from test-backend job!"
-    - name: Get info
-      run: |
-        ls
-        pwd
-        whoami
 
   build-stage:
-    name: Build backend for stage
+    name: Build for stage
     needs: test-backend
     runs-on: self-hosted
 
     steps:
+    - uses: actions/checkout@v6
     - run: echo "Hello from build-stage job!"
 
   build-prod:
-    name: Build backend for prod
+    name: Build for prod
     needs: test-backend
     runs-on: self-hosted
 
     steps:
+    - uses: actions/checkout@v6
     - run: echo "Hello from build-prod job!"
 
   deploy-stage:
