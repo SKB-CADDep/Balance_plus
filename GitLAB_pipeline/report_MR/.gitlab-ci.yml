@@ -1,0 +1,17 @@
+stages:
+  - check
+
+diff_check:
+  stage: check
+  image: python:3.9-slim
+  variables:
+    PIP_ROOT_USER_ACTION: "ignore"
+  before_script:
+    - apt-get update && apt-get install -y git
+    # Добавляем matplotlib
+    - pip install pyyaml requests matplotlib
+    - git fetch origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME
+  script:
+    - python pattern/custom_diff.py
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"

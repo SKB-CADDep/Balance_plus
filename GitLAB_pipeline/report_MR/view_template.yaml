@@ -1,0 +1,49 @@
+data_file_path: "calculations/balance/zone"
+root_key_name: "TEST_1"
+
+groups:
+  - title: "Основные параметры (TEPO)"
+    path: "TEPO"
+    type: direct
+    #whitelist: 
+      #- "GKON"
+      #- "QNOM"
+      #- "TEX"
+
+  - title: "Проточная часть (TEPP)"
+    path: "TEPP"
+    type: list_lookup
+    lookup_id: "NAMU"
+    #whitelist:
+      #- "P00" # Давление
+      #- "T00" # Температура
+
+  - title: "Регенерация (TEPR)"
+    path: "TEPR"
+    type: list_lookup
+    lookup_id: "NAMU"
+    whitelist: []
+
+  - title: "Сетевая вода (TEPW)"
+    path: "TEPW"
+    type: list_lookup
+    lookup_id: "NAMU"
+    #whitelist:
+      #- "EK"
+
+  - title: "Связи (TEPS)"
+    path: "TEPS"
+    type: list_lookup
+    lookup_id: "NAMU" # Идентификатор (например, ОП1)
+    #whitelist:
+      #- "NAMN" # Начальный узел
+      #- "NAMK" # Конечный узел
+      #- "DOP"  # Сопротивление
+
+  - title: "📈 Графические зависимости (TEPT)"
+    path: "TEPT"
+    type: list_chart
+    lookup_id: "NAME"
+    x_key: "X"
+    y_key: "Y"
+    z_key: "Z"
