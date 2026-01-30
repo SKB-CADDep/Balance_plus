@@ -3,9 +3,9 @@ import numpy as np
 from scipy.interpolate import RegularGridInterpolator
 from typing import Dict, Any
 import seuif97
-from uniconv import UnitConverter
+from app.utils.uniconv import UnitConverter
 
-from utils.Constants import coefficient_B_const, k_interpolation_data, \
+from app.utils.Constants import coefficient_B_const, k_interpolation_data, \
     temperature_cooling_water_average_heating_const, speed_cooling_water_const
 
 class MetroVickersStrategy:
