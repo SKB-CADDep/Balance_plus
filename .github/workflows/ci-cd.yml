@@ -21,6 +21,14 @@ jobs:
         pwd
         whoami
 
+  lint-frontend:
+    name: Lint frontend
+    runs-on: ubuntu latest
+
+    steps:
+    - run: echo "Hello from lint-frontend job!"
+      continue-on-error: true
+
   test-backend:
     name: Test backend
     needs: lint-backend
