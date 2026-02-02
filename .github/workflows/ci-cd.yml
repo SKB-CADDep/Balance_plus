@@ -12,7 +12,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v6
-    - run: echo "Hello from lint-backend job!"
+
+    - name: Greeting
+      run: echo "Hello from lint-backend job!"
       continue-on-error: true
 
   lint-frontend:
@@ -21,7 +23,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v6
-    - run: echo "Hello from lint-frontend job!"
+
+    - name: Greeting
+      run: echo "Hello from lint-frontend job!"
       continue-on-error: true
 
   test-backend:
@@ -30,6 +34,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v6
+
+      name: Greeting
     - run: echo "Hello from test-backend job!"
 
   build-stage:
@@ -39,7 +45,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v6
-    - run: echo "Hello from build-stage job!"
+
+    - name: Greeting
+      run: echo "Hello from build-stage job!"
 
   build-prod:
     name: Build for prod
@@ -48,7 +56,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v6
-    - run: echo "Hello from build-prod job!"
+
+    - name: Greeting
+      run: echo "Hello from build-prod job!"
 
   deploy-stage:
     name: Deploy to stage
@@ -57,7 +67,8 @@ jobs:
     runs-on: self-hosted
 
     steps:
-    - run: echo "Hello from deploy-stage job!"
+    - name: Greeting
+      run: echo "Hello from deploy-stage job!"
 
   deploy-prod:
     name: Deploy to prod
@@ -66,4 +77,5 @@ jobs:
     runs-on: self-hosted
 
     steps:
-    - run: echo "Hello from deploy-prod job!"
+    - name: Greeting
+      run: echo "Hello from deploy-prod job!"
