@@ -19,9 +19,6 @@ jobs:
       run: echo "Hello from lint-backend job!"
       continue-on-error: true
 
-    - name: Get info
-      run: git rev-parse --short HEAD
-
   lint-frontend:
     name: Lint frontend
     runs-on: ubuntu-latest
@@ -34,9 +31,6 @@ jobs:
     - name: Greeting
       run: echo "Hello from lint-frontend job!"
       continue-on-error: true
-
-    - name: Get info
-      run: git rev-parse --short HEAD
 
   test-backend:
     name: Test backend
