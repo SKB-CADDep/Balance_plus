@@ -28,6 +28,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v6
+      with:
+        ref: main
 
     - name: Greeting
       run: echo "Hello from lint-frontend job!"
@@ -42,9 +44,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v6
+      with:
+        ref: main
 
-      name: Greeting
-    - run: echo "Hello from test-backend job!"
+    - name: Greeting
+      run: echo "Hello from test-backend job!"
 
   build-stage:
     name: Build for stage
