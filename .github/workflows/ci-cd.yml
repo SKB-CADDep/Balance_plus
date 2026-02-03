@@ -70,6 +70,9 @@ jobs:
     - name: Greeting
       run: echo "Hello from test-backend job!"
 
+    - name: Install poetry
+      run: pip install poetry
+
     - name: Install backend dependencies
       working-directory: services/balance-orchestrator/backend
       run: poetry install
