@@ -26,7 +26,7 @@ jobs:
 
     - name: Install backend dependencies
       working-directory: services/balance-orchestrator/backend
-      run: poetry install
+      run: poetry install --only dev
 
     - name: Run backend lints
       working-directory: services/balance-orchestrator/backend
