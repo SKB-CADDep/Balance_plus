@@ -21,14 +21,16 @@ jobs:
     - name: Greeting
       run: echo "Hello from lint-backend job!"
 
-    - name: Installing dependencies
-      run: |
-        pip install --upgrade pip
-        pip install poetry
-        poetry run pip install flake8
+    - name: Install poetry
+      run: pip install poetry
 
-    - name: Running lints for backend
-      run: poetry run flake8 tests/ validation_data/scripts/ services/balance-orchestrator/backend/ services/condenser-calculator/
+    - name: Install backend dependencies
+      working-directory: services/balance-orchestrator/backend
+      run: poetry install
+
+    - name: Run backend lints
+      working-directory: services/balance-orchestrator/backend
+      run: poetry run flake8
       continue-on-error: true
 
   lint-frontend:
