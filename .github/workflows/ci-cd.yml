@@ -14,9 +14,21 @@ jobs:
     - uses: actions/checkout@v6
       with:
         ref: main
+    - uses: actions/setup-python@v6
+      with:
+        python-version: "3.12"
 
     - name: Greeting
       run: echo "Hello from lint-backend job!"
+
+    - name: Installing dependencies
+      run: |
+        pip install --upgrade pip
+        pip install poetry
+        poetry run pip install flake8
+
+    - name: Running lints for backend
+      run: poetry run flake8 tests/ validation_data/scripts/ services/balance-orchestrator/backend/ services/condenser-calculator/
       continue-on-error: true
 
   lint-frontend:
@@ -27,9 +39,18 @@ jobs:
     - uses: actions/checkout@v6
       with:
         ref: main
+    - uses: actions/setup-node@v6
+      with:
+        node-version: 24
 
     - name: Greeting
       run: echo "Hello from lint-frontend job!"
+
+    - name: Installing dependencies
+      run: npm ci --prefix services/balance-orchestrator/frontend
+
+    - name: Running lints for frontend
+      run: npm run lint --prefix services/balance-orchestrator/frontend
       continue-on-error: true
 
   test-backend:
@@ -40,9 +61,21 @@ jobs:
     - uses: actions/checkout@v6
       with:
         ref: main
+    - uses: actions/setup-python@v6
+      with:
+        python-version: "3.12"
 
     - name: Greeting
       run: echo "Hello from test-backend job!"
+
+    - name: Installing dependencies
+      run: |
+        pip install --upgrade pip
+        pip install poetry
+        poetry -C services/balance-orchestrator/backend install
+
+    - name: Running tests for backend
+      run: poetry run pytest tests/
 
   build-stage:
     name: Build for stage
