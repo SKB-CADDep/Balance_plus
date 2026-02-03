@@ -70,14 +70,13 @@ jobs:
     - name: Greeting
       run: echo "Hello from test-backend job!"
 
-    - name: Installing dependencies
-      run: |
-        pip install --upgrade pip
-        pip install poetry
-        poetry -C services/balance-orchestrator/backend install
+    - name: Install backend dependencies
+      working-directory: services/balance-orchestrator/backend
+      run: poetry install
 
-    - name: Running tests for backend
-      run: poetry run pytest tests/
+    - name: Run backend tests
+      working-directory: services/balance-orchestrator/backend
+      run: poetry run pytest ../../../tests/
 
   build-stage:
     name: Build for stage
