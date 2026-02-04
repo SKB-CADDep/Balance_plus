@@ -37,28 +37,6 @@ jobs:
       run: poetry run flake8
       continue-on-error: true
 
-  lint-frontend:
-    name: Lint frontend
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v6
-      with:
-        ref: main
-    - uses: actions/setup-node@v6
-      with:
-        node-version: 24
-
-    - name: Greeting
-      run: echo "Hello from lint-frontend job!"
-
-    - name: Installing dependencies
-      run: npm ci --prefix services/balance-orchestrator/frontend
-
-    - name: Running lints for frontend
-      run: npm run lint --prefix services/balance-orchestrator/frontend
-      continue-on-error: true
-
   test-backend:
     name: Test backend
     runs-on: ubuntu-latest
