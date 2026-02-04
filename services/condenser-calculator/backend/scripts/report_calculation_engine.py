@@ -1,10 +1,13 @@
 from _common import setup_path
+
+
 setup_path()
 
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.optimize import curve_fit
 from scipy.interpolate import CubicSpline
+from scipy.optimize import curve_fit
+
 from app.utils.calculation_engine import k_interpolation_data
 
 
@@ -21,7 +24,7 @@ def plot_hybrid_extrapolation():
     print("Применение гибридной модели с ручной коррекцией от 0 до 0.4 м/с...")
 
     plt.style.use("ggplot")
-    fig, ax = plt.subplots(figsize=(15, 10))
+    _fig, ax = plt.subplots(figsize=(15, 10))
 
     for i, temp in enumerate(temperatures):
         k_values_for_temp = k_values_matrix[:, i]

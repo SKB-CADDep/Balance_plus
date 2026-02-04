@@ -1,7 +1,7 @@
 # schemas/task.py
+from datetime import date, datetime
+
 from pydantic import BaseModel, computed_field
-from typing import Optional, List, Dict
-from datetime import datetime, date
 
 
 # --- КОНФИГУРАЦИЯ БЮРО И МОДУЛЕЙ ---
@@ -48,7 +48,7 @@ BUREAU_CONFIG = {
 
 # Обратный маппинг (module::code -> code)
 LABEL_TO_MODULE = {}
-for b_code, b_data in BUREAU_CONFIG.items():
+for _b_code, b_data in BUREAU_CONFIG.items():
     for m_code, m_name in b_data["modules"].items():
         # 1. Системный ключ (module::btr-balances)
         LABEL_TO_MODULE[f"module::{m_code}"] = m_code
@@ -84,12 +84,12 @@ class TaskInfo(BaseModel):
     project_id: int
     project_name: str
     title: str
-    description: Optional[str] = None
+    description: str | None = None
     state: str
-    labels: List[str] = []
-    assignee: Optional[str] = None
+    labels: list[str] = []
+    assignee: str | None = None
     created_at: datetime
-    due_date: Optional[date] = None
+    due_date: date | None = None
     web_url: str
 
     @computed_field
@@ -97,9 +97,9 @@ class TaskInfo(BaseModel):
         return self.created_at.strftime("%d.%m.%y")
 
     @computed_field
-    def bureau(self) -> Optional[Dict[str, str]]:
+    def bureau(self) -> dict[str, str] | None:
         """Определяет бюро по лейблу bureau::... / Бюро::... или по модулю"""
-        
+
         # 1. Явный лейбл бюро (Английский и Русский)
         for label in self.labels:
             # Английский: bureau::btr
@@ -107,7 +107,7 @@ class TaskInfo(BaseModel):
                 code = label.replace("bureau::", "")
                 if code in BUREAU_CONFIG:
                     return {"code": code, "name": BUREAU_CONFIG[code]["name"], "color": BUREAU_CONFIG[code]["color"]}
-            
+
             # Русский: Бюро::БТР
             if label.startswith("Бюро::"):
                 name = label.replace("Бюро::", "")
@@ -115,18 +115,21 @@ class TaskInfo(BaseModel):
                 for code, data in BUREAU_CONFIG.items():
                     if data["name"] == name:
                         return {"code": code, "name": data["name"], "color": data["color"]}
-        
+
         # 2. Неявный (через модуль) - если лейбла бюро нет, но есть модуль
         module_code = self.calc_type
         if module_code:
-            if module_code.startswith("btr-"): return {"code": "btr", "name": "БТР", "color": "#1976D2"}
-            if module_code.startswith("bpr-"): return {"code": "bpr", "name": "БПР", "color": "#26A69A"}
-            if module_code.startswith("bvp-"): return {"code": "bvp", "name": "БВП", "color": "#7E57C2"}
-        
+            if module_code.startswith("btr-"):
+                return {"code": "btr", "name": "БТР", "color": "#1976D2"}
+            if module_code.startswith("bpr-"):
+                return {"code": "bpr", "name": "БПР", "color": "#26A69A"}
+            if module_code.startswith("bvp-"):
+                return {"code": "bvp", "name": "БВП", "color": "#7E57C2"}
+
         return None
 
     @computed_field
-    def calc_type(self) -> Optional[str]:
+    def calc_type(self) -> str | None:
         """Возвращает код модуля (например, 'btr-valve-stems')"""
         for label in self.labels:
             # ИСПОЛЬЗУЕМ LABEL_TO_MODULE ВМЕСТО TYPE_MAPPING
@@ -140,9 +143,9 @@ class TaskInfo(BaseModel):
         code = self.calc_type
         if not code:
             return "Общая задача"
-        
+
         # Ищем в конфиге
-        for b_code, b_data in BUREAU_CONFIG.items():
+        for _b_code, b_data in BUREAU_CONFIG.items():
             if code in b_data["modules"]:
                 return b_data["modules"][code]
         return code
@@ -174,7 +177,7 @@ class TaskInfo(BaseModel):
 class TaskCreate(BaseModel):
     title: str
     description: str = ""
-    labels: List[str] = []
+    labels: list[str] = []
     project_id: int  # ОБЯЗАТЕЛЬНОЕ ПОЛЕ
 
 

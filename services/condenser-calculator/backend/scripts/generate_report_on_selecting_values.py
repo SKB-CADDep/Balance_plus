@@ -1,4 +1,6 @@
 from _common import setup_path
+
+
 setup_path()
 
 from compare_selection_methods import run_comparison
@@ -30,8 +32,7 @@ def create_markdown_table(results):
         # Собираем строку
         rows.append(f"| {method:<18} | {x_str:<18} | {iters_str:<8} | {time_str:<17} | {delta_str:<16} |")
 
-    return "\n".join([header, separator] + rows)
-
+    return "\n".join([header, separator, *rows])
 
 def generate_report_file(results, filename="report.md"):
     """Генерирует полный файл отчета в формате Markdown."""
@@ -78,7 +79,7 @@ def generate_report_file(results, filename="report.md"):
         with open(filename, "w", encoding="utf-8") as f:
             f.write(report_content.strip())
         print(f"Отчет успешно сгенерирован в файле: {filename}")
-    except IOError as e:
+    except OSError as e:
         print(f"Ошибка при записи файла: {e}")
 
 

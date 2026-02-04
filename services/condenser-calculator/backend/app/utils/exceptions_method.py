@@ -3,7 +3,7 @@ class CondenserExceptions:
         self.pressure_condenser = pressure_condenser
         self.temperature_cooling_water_1 = temperature_cooling_water_1
         self.pif = pif
-        
+
         self.pressure_flow_path_1: float | None = None
 
     def calculate_pressure(self) -> float | None:

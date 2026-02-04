@@ -1,15 +1,16 @@
-import pytest
-from unittest.mock import patch, MagicMock
-from fastapi import HTTPException
-import gitlab.exceptions
+from unittest.mock import MagicMock, patch
 
-from app.schemas.task import TaskCreate, BranchInfo, BranchCreateRequest
+import gitlab.exceptions
+import pytest
+from fastapi import HTTPException
+
 from app.api.routes.tasks import (
-    list_tasks,
-    get_task,
     create_task,
     create_task_branch,
+    get_task,
+    list_tasks,
 )
+from app.schemas.task import BranchCreateRequest, TaskCreate
 
 
 class TestListTasks:
@@ -68,7 +69,7 @@ class TestListTasks:
         with pytest.raises(HTTPException) as exc_info:
             await list_tasks()
         assert exc_info.value.status_code == 500
-        assert "Ошибка получения задач: Connection failed" == exc_info.value.detail
+        assert exc_info.value.detail == "Ошибка получения задач: Connection failed"
 
 
 class TestGetTask:
@@ -120,14 +121,14 @@ class TestGetTask:
         with pytest.raises(HTTPException) as exc_info:
             await get_task(999, project_id=123)
         assert exc_info.value.status_code == 404
-        assert "Задача #999 не найдена в GitLab" == exc_info.value.detail
+        assert exc_info.value.detail == "Задача #999 не найдена в GitLab"
 
     @pytest.mark.asyncio
     @patch("app.api.routes.tasks.gitlab_client")
     async def test_non_int_iid_passes_to_gitlab(self, mock_gitlab: MagicMock):
         """Should pass non-int issue_iid to gitlab_client (Python typing)."""
         mock_gitlab.get_issue.return_value = {"iid": "str"}
-        result = await get_task(123, project_id=456)
+        _ = await get_task(123, project_id=456)
         mock_gitlab.get_issue.assert_called_once_with(123, 456)
 
 
@@ -157,7 +158,7 @@ class TestCreateTask:
         task = TaskCreate(title="", description="", labels=[], project_id=123)
         mock_gitlab.create_issue.return_value = {"iid": 456, "project_id": 123}
         mock_gitlab.get_issue.return_value = {"iid": 456}
-        result = await create_task(task)
+        _ = await create_task(task)
         mock_gitlab.create_issue.assert_called_once_with(title="", description="", labels=[], project_id=123)
 
     @pytest.mark.asyncio
@@ -169,7 +170,7 @@ class TestCreateTask:
         with pytest.raises(HTTPException) as exc_info:
             await create_task(task)
         assert exc_info.value.status_code == 500
-        assert "Ошибка создания задачи: Validation failed" == exc_info.value.detail
+        assert exc_info.value.detail == "Ошибка создания задачи: Validation failed"
 
     @pytest.mark.asyncio
     @patch("app.api.routes.tasks.gitlab_client")
@@ -181,7 +182,7 @@ class TestCreateTask:
         with pytest.raises(HTTPException) as exc_info:
             await create_task(task)
         assert exc_info.value.status_code == 500
-        assert "Ошибка создания задачи: Fetch failed" == exc_info.value.detail
+        assert exc_info.value.detail == "Ошибка создания задачи: Fetch failed"
 
 
 class TestCreateTaskBranch:
@@ -254,7 +255,7 @@ class TestCreateTaskBranch:
         with pytest.raises(HTTPException) as exc_info:
             await create_task_branch(100, payload)
         assert exc_info.value.status_code == 500
-        assert "Ошибка создания ветки: Issue not found" == exc_info.value.detail
+        assert exc_info.value.detail == "Ошибка создания ветки: Issue not found"
 
     @pytest.mark.asyncio
     @patch("app.api.routes.tasks.gitlab_client")
@@ -270,5 +271,5 @@ class TestCreateTaskBranch:
         with pytest.raises(HTTPException) as exc_info:
             await create_task_branch(200, payload)
         assert exc_info.value.status_code == 500
-        assert "Ошибка создания ветки: Branch exists" == exc_info.value.detail
+        assert exc_info.value.detail == "Ошибка создания ветки: Branch exists"
 

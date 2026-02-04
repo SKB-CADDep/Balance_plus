@@ -1,8 +1,11 @@
 import math
+
 import numpy as np
-from scipy.interpolate import RegularGridInterpolator
 import seuif97
+from scipy.interpolate import RegularGridInterpolator
+
 from .uniconv import UnitConverter
+
 
 coefficient_B_const = 1.0
 
@@ -41,7 +44,9 @@ def calculate_pressure(params):
         fill_value=None
     )
 
-    get_heat_of_vaporization = lambda temp: (30 - temp) * 0.582 + 580.4
+    def get_heat_of_vaporization(temperature: float) -> float:
+        return (30 - temperature) * 0.582 + 580.4
+
     uc = UnitConverter()
 
     d_in = params['diameter_inside_of_pipes']
@@ -93,7 +98,7 @@ def calculate_pressure(params):
     delta_T_rel = 1 / (math.e ** ((K_zag * area_total) / (m_cw * 1000)) - 1)
     T_sat = T_cw2 + delta_T_rel * (T_cw2 - T_cw1)
 
-    T_K = uc.convert(T_sat, from_unit="°C", to_unit="K", parameter_type="temperature")
+    _T_K = uc.convert(T_sat, from_unit="°C", to_unit="K", parameter_type="temperature")
     p_MPa = seuif97.tx2p(T_sat, 1)
     p_kgf = uc.convert(p_MPa, from_unit="МПа", to_unit="кгс/см²", parameter_type="pressure")
 
@@ -117,9 +122,9 @@ def batch_calculate(params_template, varying_params: dict):
     results = []
     for combo in product(*values):
         params = params_template.copy()
-        params.update(dict(zip(keys, combo)))
+        params.update(dict(zip(keys, combo, strict=True)))
         res = calculate_pressure(params)
-        res.update(dict(zip(keys, combo)))
+        res.update(dict(zip(keys, combo, strict=True)))
         results.append(res)
 
     return results

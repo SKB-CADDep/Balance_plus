@@ -35,7 +35,7 @@ MONOREPO_ROOT = _find_monorepo_root(Path(__file__))
 VALIDATION_DATA_PATH = MONOREPO_ROOT / "validation_data"
 
 
-def pytest_configure(config):  # noqa: ANN001
+def pytest_configure(config):
     # Удобно видеть корень данных в отчёте (и отлаживать пути)
     config._condenser_validation_data_path = str(VALIDATION_DATA_PATH)
 

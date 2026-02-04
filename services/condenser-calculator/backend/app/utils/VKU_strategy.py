@@ -1,6 +1,7 @@
+from typing import Any, ClassVar
+
 import numpy as np
 from scipy.interpolate import RegularGridInterpolator
-from typing import List, Dict, Any
 
 
 class VKUStrategy:
@@ -10,7 +11,7 @@ class VKUStrategy:
     и температуре наружного воздуха с использованием 2D-интерполяции.
     """
     _TVOZD_CONST_DEFAULT = 20.0
-    _P_DATA: List = [
+    _P_DATA: ClassVar[list] = [
         [40, 35, 30, 25, 20],
         [40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140],
         [
@@ -58,7 +59,7 @@ class VKUStrategy:
             fill_value=None
         )
 
-    def calculate(self, params: Dict[str, Any]) -> Dict[str, float]:
+    def calculate(self, params: dict[str, Any]) -> dict[str, float]:
         """
         Выполняет расчет давления в конденсаторе.
 

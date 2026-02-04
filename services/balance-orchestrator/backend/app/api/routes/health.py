@@ -1,6 +1,7 @@
 # api/routes/health.py
 from fastapi import APIRouter
 
+
 router = APIRouter(tags=["Health"])
 
 
