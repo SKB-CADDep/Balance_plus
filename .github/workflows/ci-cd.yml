@@ -26,7 +26,11 @@ jobs:
 
     - name: Install backend dependencies
       working-directory: services/balance-orchestrator/backend
-      run: poetry install --only test
+      run: poetry install
+
+    - name: Install flake8
+      working-directory: services/balance-orchestrator/backend
+      run: poetry add flake8
 
     - name: Run backend lints
       working-directory: services/balance-orchestrator/backend
