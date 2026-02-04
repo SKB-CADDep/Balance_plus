@@ -1,5 +1,5 @@
 import math
-from utils.base_for_selection import ProblemDefinition
+from .base_for_selection import ProblemDefinition
 
 
 class AnalyticalSolver:  # Аналитически!
