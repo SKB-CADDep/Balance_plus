@@ -1,3 +1,6 @@
+from _common import setup_path
+setup_path()
+
 from compare_selection_methods import run_comparison
 
 

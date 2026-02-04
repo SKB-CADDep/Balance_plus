@@ -2,7 +2,7 @@ import math
 import numpy as np
 from scipy.interpolate import RegularGridInterpolator
 import seuif97
-from app.utils.uniconv import UnitConverter
+from .uniconv import UnitConverter
 
 coefficient_B_const = 1.0
 

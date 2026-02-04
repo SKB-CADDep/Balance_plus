@@ -1,3 +1,6 @@
+from _common import setup_path
+setup_path()
+
 # generate_berman_report.py
 from app.utils.berman_strategy import BermanStrategy
 

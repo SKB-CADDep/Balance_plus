@@ -1,3 +1,6 @@
+from _common import setup_path
+setup_path()
+
 from app.utils.metrovickers_strategy import MetroVickersStrategy
 
 
