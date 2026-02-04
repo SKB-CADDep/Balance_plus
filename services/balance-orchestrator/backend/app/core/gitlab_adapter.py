@@ -1,9 +1,12 @@
 # gitlab_adapter.py — ДОПОЛНЯЕМ существующий файл
 import os
 import time
+from typing import ClassVar
+
 import gitlab
-from gitlab.exceptions import GitlabGetError
 from dotenv import load_dotenv
+from gitlab.exceptions import GitlabGetError
+
 
 load_dotenv()
 
@@ -11,7 +14,7 @@ load_dotenv()
 class GitLabAdapter:
     # КЕШ ДЛЯ ПРОЕКТОВ (Чтобы не бомбить API)
     # Структура: { id: (project_obj, timestamp) }
-    _projects_cache: dict[int, tuple] = {}
+    _projects_cache: ClassVar[dict[int, tuple]] = {}
 
     def __init__(self):
         self.url = os.getenv("GITLAB_URL")
@@ -47,13 +50,13 @@ class GitLabAdapter:
     def get_project_by_id(self, project_id: int):
         """Получает проект по ID с кешированием и TTL"""
         now = time.time()
-        
+
         # Если есть в кеше и не протух
         if project_id in self._projects_cache:
             project, timestamp = self._projects_cache[project_id]
             if now - timestamp < self.CACHE_TTL:
                 return project
-        
+
         # Иначе запрашиваем свежий
         print(f"🔄 Обновляю кеш для проекта ID {project_id}...")
         project = self.gl.projects.get(project_id)
@@ -128,16 +131,24 @@ class GitLabAdapter:
         project = self.get_project_by_id(project_id) if project_id else self.get_project()
         try:
             return project.repository_tree(path=path, ref=ref, recursive=False)
-        except:
+        except GitlabGetError:
+        # Папка не найдена или нет доступа
             return []
-            
+        except gitlab.exceptions.GitlabError:
+            # Другие ошибки GitLab API
+            return []
+
     def get_file_content_decoded(self, file_path: str, ref: str, project_id: int | None = None) -> str | None:
         """Читает файл и декодирует контент"""
         try:
             project = self.get_project_by_id(project_id) if project_id else self.get_project()
             f = project.files.get(file_path=file_path, ref=ref)
             return f.decode().decode('utf-8')
-        except:
+        except GitlabGetError:
+        # Файл не найден
+            return None
+        except gitlab.exceptions.GitlabError:
+            # Другие ошибки GitLab API
             return None
 
     # ==================== РАБОТА С ВЕТКАМИ ====================
@@ -173,14 +184,14 @@ class GitLabAdapter:
         """
         project = self.get_project_by_id(project_id)
         str_iid = str(issue_iid)
-        
+
         # 1. Ищем все ветки, содержащие ID задачи (API search)
         try:
             branches = project.branches.list(search=str_iid)
         except Exception as e:
             print(f"Ошибка поиска веток: {e}")
             return None
-        
+
         if not branches:
             print(f"Ветки с ID {str_iid} не найдены через API search")
             return None
@@ -190,16 +201,16 @@ class GitLabAdapter:
         # 2. Фильтруем кандидатов
         for b in branches:
             name = b.name
-            
+
             # Проверка 1: Начинается с ID (4-fix...)
             if name.startswith(f"{str_iid}-"):
                 return name
-                
+
             # Проверка 2: Содержит ID после слэша (.../4-fix...)
             # Это покрывает 'issue/4-', 'feature/4-', 'bugfix/4-'
             if f"/{str_iid}-" in name:
                 return name
-                
+
             # Проверка 3: Точное совпадение (просто '4')
             if name == str_iid:
                 return name
@@ -309,7 +320,7 @@ class GitLabAdapter:
             "description": description,
             "remove_source_branch": True, # Удалять ветку после слияния
         }
-        
+
         if assignee_id:
             mr_data["assignee_id"] = assignee_id
 

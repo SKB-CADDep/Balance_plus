@@ -1,7 +1,9 @@
 # api/routes/projects.py
 import gitlab.exceptions
 from fastapi import APIRouter, HTTPException, Query
+
 from app.core.gitlab_adapter import gitlab_client
+
 
 router = APIRouter(prefix="/projects", tags=["Projects"])
 

@@ -3,8 +3,9 @@ import gitlab.exceptions
 from fastapi import APIRouter, HTTPException, Query
 from slugify import slugify
 
-from app.schemas.task import TaskInfo, TaskCreate, BranchCreate, BranchInfo, BranchCreateRequest
 from app.core.gitlab_adapter import gitlab_client
+from app.schemas.task import BranchCreateRequest, BranchInfo, TaskCreate, TaskInfo
+
 
 router = APIRouter(prefix="/tasks", tags=["Tasks"])
 
@@ -59,7 +60,7 @@ async def create_task(task: TaskCreate):
             labels=task.labels,
             project_id=task.project_id  # Передаем ID проекта
         )
-        
+
         # Возвращаем полную информацию через get_issue
         return gitlab_client.get_issue(issue_data["iid"], issue_data["project_id"])
     except gitlab.exceptions.GitlabAuthenticationError:
@@ -87,7 +88,7 @@ async def create_task_branch(issue_iid: int, payload: BranchCreateRequest):
         # 1. Генерируем безопасный slug (кириллица -> латиница, пробелы -> дефисы)
         # Пример: "Тестовый расчёт" -> "testovyi-raschet"
         safe_slug = slugify(issue["title"], max_length=40)
-        
+
         # Если заголовок был из одних спецсимволов, slug может быть пустым
         if not safe_slug:
             safe_slug = "task"
@@ -121,10 +122,10 @@ async def submit_task(issue_iid: int, project_id: int = Query(...)):
     try:
         # 1. Получаем информацию о задаче
         issue = gitlab_client.get_issue(issue_iid, project_id)
-        
+
         # 2. НАДЕЖНЫЙ ПОИСК ВЕТКИ
         branch_name = gitlab_client.find_branch_by_issue_iid(issue_iid, project_id)
-        
+
         if not branch_name:
              # Фоллбек: если ветки нет, попробуем сгенерировать (вдруг еще не создана?)
              # Но для сабмита это странно. Лучше вернуть ошибку.
@@ -146,7 +147,7 @@ async def submit_task(issue_iid: int, project_id: int = Query(...)):
             description=mr_desc,
             project_id=project_id
         )
-        
+
         return {"status": "success", "mr_url": result["web_url"], "mr_iid": result["iid"]}
 
     except gitlab.exceptions.GitlabAuthenticationError:

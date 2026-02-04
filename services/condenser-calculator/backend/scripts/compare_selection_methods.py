@@ -1,7 +1,10 @@
 from _common import setup_path
+
+
 setup_path()
 
 import time
+
 from app.utils.base_for_selection import ProblemDefinition
 from app.utils.selection_methods import AnalyticalSolver, BisectionSolver, NewtonSolver
 

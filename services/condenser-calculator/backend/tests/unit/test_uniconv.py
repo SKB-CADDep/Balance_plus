@@ -4,6 +4,7 @@
 Тесты написаны под `pytest` (pip install pytest).
 Запуск:  pytest -q
 """
+import contextlib
 
 import pytest
 
@@ -88,11 +89,8 @@ def test_get_base_and_available_units(uc: UnitConverter):
 def test_add_new_parameter_and_unit(uc: UnitConverter):
     """Добавляем 'length' c базовой единицей 'м' и проверяем конвертацию."""
     # Добавляем параметр (если он вдруг существует — пропускаем)
-    try:
+    with contextlib.suppress(ValueError):
         uc.add_parameter("length", base_unit_symbol="м", base_unit_name="метр")
-    except ValueError:
-        # уже был добавлен в другом тесте — ничего страшного
-        pass
 
     # Добавляем сантиметры как линейный коэффициент (1 см = 0.01 м)
     uc.add_unit(
@@ -113,7 +111,7 @@ def test_add_new_parameter_and_unit(uc: UnitConverter):
 def test_add_unit_non_linear(uc: UnitConverter):
     """Пример добавления нелинейной конверсии: °F ↔ °C."""
     # Возможно, unit уже добавлен в ранних запусках — тогда пропустится.
-    try:
+    with contextlib.suppress(ValueError):
         uc.add_unit(
             "temperature",
             unit_symbol="°F",
@@ -121,8 +119,7 @@ def test_add_unit_non_linear(uc: UnitConverter):
             to_base=lambda f: (f - 32) * 5.0 / 9.0,        # °F → °C
             from_base=lambda c: c * 9.0 / 5.0 + 32,        # °C → °F
         )
-    except ValueError:
-        pass  # Unit уже был
+
 
     # Проверка правильности
     temp_f = 212.0  # точка кипения воды

@@ -1,6 +1,8 @@
 import gitlab.exceptions
 from fastapi import APIRouter, HTTPException
+
 from app.core.gitlab_adapter import gitlab_client
+
 
 router = APIRouter(prefix="/user", tags=["User"])
 

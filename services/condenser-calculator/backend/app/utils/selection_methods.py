@@ -1,4 +1,5 @@
 import math
+
 from .base_for_selection import ProblemDefinition
 
 
@@ -35,7 +36,7 @@ class BisectionSolver:  # Дихотомии!
         if fa * fb >= 0:
             raise ValueError("На концах отрезка [a,b] функция имеет одинаковый знак.")
 
-        for i in range(self.max_iter):
+        for _i in range(self.max_iter):
             self.iterations += 1
             c = (a + b) / 2
             fc = self.problem.f(c, target_delta)
@@ -65,7 +66,7 @@ class NewtonSolver:  # Ньютоном!
         self.iterations = 0
         x = float(initial_guess)
 
-        for i in range(self.max_iter):
+        for _i in range(self.max_iter):
             self.iterations += 1
             fx = self.problem.f(x, target_delta)
 

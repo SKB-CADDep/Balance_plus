@@ -1,4 +1,5 @@
 import pytest
+
 from app.utils.VKU_strategy import VKUStrategy
 
 

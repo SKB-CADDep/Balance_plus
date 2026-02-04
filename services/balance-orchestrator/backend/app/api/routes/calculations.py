@@ -1,8 +1,11 @@
 import json
+
 import gitlab.exceptions
 from fastapi import APIRouter, HTTPException, Query
-from app.schemas.calculation import CalculationSaveRequest
+
 from app.core.gitlab_adapter import gitlab_client
+from app.schemas.calculation import CalculationSaveRequest
+
 
 router = APIRouter(prefix="/calculations", tags=["Calculations"])
 
@@ -16,11 +19,11 @@ async def save_calculation_result(req: CalculationSaveRequest):
         # 1. Ищем РЕАЛЬНУЮ ветку задачи (Умный поиск)
         # Передаем project_id, так как мы теперь в мульти-репо
         branch_name = gitlab_client.find_branch_by_issue_iid(req.task_iid, req.project_id)
-        
+
         # Строгая проверка: если ветка не найдена, немедленно возвращаем ошибку
         if not branch_name:
             raise HTTPException(
-                status_code=400, 
+                status_code=400,
                 detail=f"Ветка для задачи #{req.task_iid} не найдена в GitLab. Убедитесь, что работа над задачей начата."
             )
 
@@ -28,7 +31,7 @@ async def save_calculation_result(req: CalculationSaveRequest):
 
         # 2. Формируем фиксированный путь (перезаписываем файлы для работы Git Diff)
         base_path = f"calculations/{req.app_type}/current"
-        
+
         # 3. Готовим файлы
         files_to_commit = {
             f"{base_path}/input.json": json.dumps(req.input_data, indent=2, ensure_ascii=False),
@@ -44,8 +47,8 @@ async def save_calculation_result(req: CalculationSaveRequest):
         )
 
         return {
-            "status": "saved", 
-            "commit_id": commit.id, 
+            "status": "saved",
+            "commit_id": commit.id,
             "path": base_path,
             "web_url": commit.web_url
         }
@@ -72,7 +75,7 @@ async def get_latest_calculation(task_iid: int = Query(...), app_type: str = Que
     try:
         # 1. Ищем РЕАЛЬНУЮ ветку задачи (Умный поиск)
         branch_name = gitlab_client.find_branch_by_issue_iid(task_iid, project_id)
-        
+
         if not branch_name:
             return {"found": False, "reason": "Branch not found"}
 
@@ -80,7 +83,7 @@ async def get_latest_calculation(task_iid: int = Query(...), app_type: str = Que
         base_path = f"calculations/{app_type}/current"
         input_content = gitlab_client.get_file_content_decoded(f"{base_path}/input.json", ref=branch_name, project_id=project_id)
         result_content = gitlab_client.get_file_content_decoded(f"{base_path}/result.json", ref=branch_name, project_id=project_id)
-        
+
         if not input_content:
             return {"found": False, "reason": "Files missing"}
 

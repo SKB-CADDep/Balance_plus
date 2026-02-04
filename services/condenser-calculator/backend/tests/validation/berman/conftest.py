@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import pytest
 
@@ -62,7 +62,7 @@ RESULTS_PATH = BERMAN_DATA_PATH / "results"
 
 def load_json(filepath: Path) -> dict:
     """Загрузка JSON-файла."""
-    with open(filepath, "r", encoding="utf-8") as f:
+    with open(filepath, encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -141,14 +141,14 @@ def build_calculation_params(
 def generate_test_cases_from_results(
     results: dict,
     mode: dict,
-    include_ejectors: bool = False,  # noqa: ARG001 (оставлено для совместимости)
-) -> List[Dict[str, Any]]:
+    include_ejectors: bool = False,
+) -> list[dict[str, Any]]:
     """
     Генерация списка тестовых случаев из results_X.json.
 
     Возвращает список словарей с параметрами и ожидаемыми значениями.
     """
-    test_cases: List[Dict[str, Any]] = []
+    test_cases: list[dict[str, Any]] = []
 
     for mode_data in results["condenser_modes"]:
         W_main = mode_data["W_main"]
@@ -189,9 +189,9 @@ def generate_test_cases_from_results(
     return test_cases
 
 
-def generate_ejector_test_cases(results: dict) -> List[Dict[str, Any]]:
+def generate_ejector_test_cases(results: dict) -> list[dict[str, Any]]:
     """Генерация тестовых случаев для эжекторов."""
-    test_cases: List[Dict[str, Any]] = []
+    test_cases: list[dict[str, Any]] = []
 
     ejector_limits = results.get("ejector_limits", {})
     if not ejector_limits:
@@ -208,7 +208,7 @@ def generate_ejector_test_cases(results: dict) -> List[Dict[str, Any]]:
         else:
             continue
 
-        for t1, expected_P in zip(t1_axis, curve["values"]):
+        for t1, expected_P in zip(t1_axis, curve["values"],  strict=True):
             test_cases.append(
                 {
                     "num_ejectors": num_ejectors,
@@ -291,7 +291,7 @@ def results_4():
 
 def find_mode_in_results(
     results: dict, W_main: float, W_builtin: float, coefficient_b: float
-) -> Optional[dict]:
+) -> dict | None:
     """Поиск конкретного режима в results_X.json."""
     for mode in results["condenser_modes"]:
         if (

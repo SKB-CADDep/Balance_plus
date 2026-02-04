@@ -4,10 +4,13 @@
 """
 
 from __future__ import annotations
-from typing import Callable, Union, Dict, Any
 
-Number = Union[int, float]
-FactorOrFunc = Union[Number, Callable[[Number], Number]]
+from collections.abc import Callable
+from typing import Any
+
+
+Number = int | float
+FactorOrFunc = Number | Callable[[Number], Number]
 
 
 class UnknownParameterError(ValueError):
@@ -66,7 +69,7 @@ class UnitConverter:
     # API
     # -------------------------------------------------------------
     def __init__(self) -> None:
-        self.parameters: Dict[str, Dict[str, Any]] = {}
+        self.parameters: dict[str, dict[str, Any]] = {}
         self._build_defaults()
 
     # ------------------------ PUBLIC -----------------------------
@@ -151,7 +154,10 @@ class UnitConverter:
 
         # Превращаем фактор в функцию (если нужно)
         if not callable(to_base):
-            to_base_func = lambda v, f=float(to_base): v * f
+            factor = float(to_base)
+
+            def to_base_func(value: Number) -> Number:
+                return value * factor
         else:
             to_base_func = to_base
 
@@ -159,12 +165,16 @@ class UnitConverter:
             # для линейного случая достаточно обратного коэффициента
             if callable(to_base):
                 raise ValueError("from_base обязателен для нелинейных "
-                                 "конверсий")
+                                "конверсий")
             else:
                 from_base = 1 / float(to_base)
 
         if not callable(from_base):
-            from_base_func = lambda v, f=float(from_base): v * f
+            actor_inv = float(from_base)
+
+            def from_base_func(value: Number) -> Number:
+                return value * actor_inv
+
         else:
             from_base_func = from_base
 
@@ -180,7 +190,7 @@ class UnitConverter:
     def _norm_param(p: str) -> str:
         return p.strip().lower()
 
-    def _get_unit(self, parameter_type: str, unit_symbol: str) -> Dict[str, Any]:
+    def _get_unit(self, parameter_type: str, unit_symbol: str) -> dict[str, Any]:
         if parameter_type not in self.parameters:
             raise UnknownParameterError(parameter_type)
 
@@ -201,7 +211,7 @@ class UnitConverter:
                            base_unit_name="килограмм-сила на квадратный сантиметр")
 
         # линейные коэффициенты через фабрику _linear
-        to_base, from_base = _linear(1.0)  # identity для примера
+        _to_base, _from_base = _linear(1.0)  # identity для примера
         # (базовая записана выше; повтор добавлять не нужно)
 
         # Па
