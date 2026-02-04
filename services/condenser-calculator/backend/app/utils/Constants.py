@@ -1,4 +1,4 @@
-from typing import List
+
 
 coefficient_B_const = 0.974
 temperature_cooling_water_average_heating_const = 25.0
@@ -29,7 +29,7 @@ k_interpolation_data = {
             ]
         }
 _TVOZD_CONST_DEFAULT = 20.0
-_P_DATA: List = [
+_P_DATA: list = [
         [40, 35, 30, 25, 20],
         [40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140],
         [

@@ -1,4 +1,5 @@
 import pytest
+
 from app.utils.metrovickers_strategy import MetroVickersStrategy
 
 
@@ -26,14 +27,14 @@ class TestMetroVickersStrategy:
             'mass_flow_flow_path_1': 200.0,
             'degree_dryness_flow_path_1': 0.95,
         }
-        
+
         expected_pressure = 0.11498207272441292
 
         results = strategy.calculate(input_params)
-        
+
         actual_pressure = results['pressure_flow_path_1']
 
         assert actual_pressure == pytest.approx(
-            expected_pressure, 
+            expected_pressure,
             abs=1e-5
         ), f"Расчетное давление {actual_pressure} не совпадает с эталонным {expected_pressure}"

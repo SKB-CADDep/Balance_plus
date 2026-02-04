@@ -1,6 +1,8 @@
 # api/routes/config.py
 from fastapi import APIRouter
+
 from app.schemas.task import BUREAU_CONFIG
+
 
 router = APIRouter(prefix="/config", tags=["Config"])
 

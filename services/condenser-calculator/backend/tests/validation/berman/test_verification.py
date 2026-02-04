@@ -3,6 +3,7 @@
 """
 
 import pytest
+
 from .conftest import build_calculation_params, load_geometry, load_mode
 
 

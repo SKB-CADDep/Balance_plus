@@ -1,6 +1,6 @@
 # schemas/geometry.py
+
 from pydantic import BaseModel
-from typing import Optional
 
 
 class GeometryInfo(BaseModel):
@@ -8,7 +8,7 @@ class GeometryInfo(BaseModel):
     id: str
     name: str
     type: str
-    description: Optional[str] = None
+    description: str | None = None
     file: str
 
 

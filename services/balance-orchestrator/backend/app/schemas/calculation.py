@@ -1,10 +1,12 @@
+from typing import Any
+
 from pydantic import BaseModel
-from typing import Any, Dict, Optional
+
 
 class CalculationSaveRequest(BaseModel):
     task_iid: int
     project_id: int
     app_type: str            # например 'valves'
-    input_data: Dict[str, Any]
-    output_data: Dict[str, Any]
-    commit_message: Optional[str] = "Сохранение результатов расчёта"
+    input_data: dict[str, Any]
+    output_data: dict[str, Any]
+    commit_message: str | None = "Сохранение результатов расчёта"

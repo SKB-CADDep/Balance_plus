@@ -1,5 +1,5 @@
-import pytest
 import numpy as np
+import pytest
 
 from app.utils.division_range import split_into_parts
 

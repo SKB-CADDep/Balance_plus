@@ -1,24 +1,31 @@
 import math
+from typing import Any
+
 import numpy as np
-from scipy.interpolate import RegularGridInterpolator
-from typing import Dict, Any
 import seuif97
+from scipy.interpolate import RegularGridInterpolator
+
+from .Constants import (
+    coefficient_B_const,
+    k_interpolation_data,
+    speed_cooling_water_const,
+    temperature_cooling_water_average_heating_const,
+)
 from .uniconv import UnitConverter
-from .Constants import coefficient_B_const, k_interpolation_data, \
-    temperature_cooling_water_average_heating_const, speed_cooling_water_const
+
 
 class MetroVickersStrategy:
     def __init__(self):
         self._get_k_from_table_temp = RegularGridInterpolator(
             (k_interpolation_data["speed_points"], k_interpolation_data["temperature_points"]),
             np.array(k_interpolation_data["k_values_matrix"]),
-            bounds_error=False, 
+            bounds_error=False,
             method="nearest"
         )
         self._get_heat_of_vaporization = lambda temp: (30 - temp) * 0.582 + 580.4
         self.uc = UnitConverter()
 
-    def calculate(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    def calculate(self, params: dict[str, Any]) -> dict[str, Any]:
         diameter_inside_of_pipes = params['diameter_inside_of_pipes']
         thickness_pipe_wall = params['thickness_pipe_wall']
         length_cooling_tubes_of_the_main_bundle = params['length_cooling_tubes_of_the_main_bundle']
@@ -31,7 +38,7 @@ class MetroVickersStrategy:
         coefficient_b = params.get('coefficient_b', 1.0)
         mass_flow_flow_path_1 = params['mass_flow_flow_path_1']
         degree_dryness_flow_path_1 = params['degree_dryness_flow_path_1']
-        
+
         number_air_cooler_total_pipes = params.get('number_air_cooler_total_pipes')
         if number_air_cooler_total_pipes is None:
             total_tubes = number_cooling_tubes_of_the_main_bundle + number_cooling_tubes_of_the_built_in_bundle
@@ -43,7 +50,7 @@ class MetroVickersStrategy:
         area_tube_bundle_surface_total = (math.pi * length_cooling_tubes_of_the_main_bundle *
                                           (number_cooling_tubes_of_the_main_bundle + number_cooling_tubes_of_the_built_in_bundle) *
                                           diameter_outside_of_pipes * 1e-6) # p.2.1
-        
+
         # ==================== ДИАГНОСТИЧЕСКИЙ БЛОК ====================
         #print(math.pi, length_cooling_tubes_of_the_main_bundle, number_cooling_tubes_of_the_main_bundle, diameter_outside_of_pipes)
         # ==============================================================
@@ -55,23 +62,23 @@ class MetroVickersStrategy:
             coefficient_Kf = 1.0
         else:
             coefficient_Kf = 1 - 0.225 * (area_surface_of_the_air_cooler_tube_bundle / area_tube_bundle_surface_total) # p.3
-        
-        coefficient_R1 = ((2 * thickness_pipe_wall / 1000 * diameter_outside_of_pipes / 1000) / 
-                          ((diameter_outside_of_pipes / 1000 + diameter_inside_of_pipes / 1000) 
+
+        coefficient_R1 = ((2 * thickness_pipe_wall / 1000 * diameter_outside_of_pipes / 1000) /
+                          ((diameter_outside_of_pipes / 1000 + diameter_inside_of_pipes / 1000)
                            * thermal_conductivity_cooling_surface_tube_material)) # p.4
 
         max_iterations = 20
         tolerance = 0.001
-        
+
         coefficient_K_temp = self._get_k_from_table_temp((speed_cooling_water_const, temperature_cooling_water_average_heating_const)).item() # p.5
 
-        speed_cooling_water = ((mass_flow_cooling_water * number_cooling_water_passes_of_the_main_bundle) / 
-                                   (900 * math.pi * (number_cooling_tubes_of_the_main_bundle + 
+        speed_cooling_water = ((mass_flow_cooling_water * number_cooling_water_passes_of_the_main_bundle) /
+                                   (900 * math.pi * (number_cooling_tubes_of_the_main_bundle +
                                                      number_cooling_tubes_of_the_built_in_bundle) * (diameter_inside_of_pipes / 1000)**2)) # p.8
-            
+
         heat_of_vaporization = self._get_heat_of_vaporization(temperature_cooling_water_1) # p.9
 
-        delta_t_water = (mass_flow_flow_path_1 * heat_of_vaporization * degree_dryness_flow_path_1) / mass_flow_cooling_water 
+        delta_t_water = (mass_flow_flow_path_1 * heat_of_vaporization * degree_dryness_flow_path_1) / mass_flow_cooling_water
         temperature_cooling_water_2 = temperature_cooling_water_1 + delta_t_water # p.10
         temperature_cooling_water_average_heating = (temperature_cooling_water_1 + temperature_cooling_water_2) / 2 # p.11
 
@@ -84,8 +91,8 @@ class MetroVickersStrategy:
         # print(f"Границы таблицы по температуре: от {k_interpolation_data['temperature_points'][0]} до {k_interpolation_data['temperature_points'][-1]}")
         # print("-------------------------------------\n")
         # ===============================================================
-        
-        for i in range(max_iterations):   
+
+        for i in range(max_iterations):
 
             # ==================== ДИАГНОСТИЧЕСКИЙ БЛОК ====================
             # print(f"\n--- Итерация #{i} ---")
@@ -111,31 +118,31 @@ class MetroVickersStrategy:
                     f"Проверьте входные данные, особенно `diameter_inside_of_pipes` (должен быть в мм)."
                 )
                 raise ValueError(error_message) from e
-            
+
             '''
-                Сравниваем K_new и K_old. Если разница велика, 
-                то K_old становится равным K_new, повторяем, 
+                Сравниваем K_new и K_old. Если разница велика,
+                то K_old становится равным K_new, повторяем,
                 пока abs(K_new - K_old) не станет меньше tolerance
             '''
             if abs(k_temp_new - coefficient_K_temp) < tolerance:
                 coefficient_K_temp = k_temp_new # Сохраняем последнее значение
                 break
-            
+
             coefficient_K_temp = k_temp_new
-            
+
             if i == max_iterations - 1:
                 print("Warning: Iteration limit reached without convergence.")
-                
+
         k_clean_denominator = (1 / (coefficient_K_temp * 0.85 * coefficient_B_const * coefficient_Kf)) - 0.087 / 10000 + coefficient_R1 # p.12
-        coefficient_K = 1 / k_clean_denominator 
+        coefficient_K = 1 / k_clean_denominator
 
         coefficient_R = (1 / coefficient_K) * ((1 / coefficient_b) - 1) # p.7
-        
+
         k_zag_denominator = k_clean_denominator + coefficient_R # p.13
         coefficient_Kzag = 1 / k_zag_denominator
-        
+
         temperature_relative_underheating = 1 / (math.e ** ((coefficient_Kzag * area_tube_bundle_surface_total) / (mass_flow_cooling_water * 1000)) - 1) # p.14
-    
+
         temperature_saturation_steam = temperature_cooling_water_2 + temperature_relative_underheating * (temperature_cooling_water_2 - temperature_cooling_water_1) # p.15
 
         pressure_flow_path_1_mpa = seuif97.tx(temperature_saturation_steam, 1.0, 0)

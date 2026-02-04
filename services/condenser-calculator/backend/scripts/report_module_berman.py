@@ -1,4 +1,6 @@
 from _common import setup_path
+
+
 setup_path()
 
 # generate_berman_report.py
@@ -23,7 +25,7 @@ def create_markdown_table(headers, data_rows):
         formatted_row = [row[0]] + [f"{val:.3f}" if isinstance(val, (int, float)) else val for val in row[1:]]
         row_lines.append("| " + " | ".join(map(str, formatted_row)) + " |")
 
-    return "\n".join([header_line, separator_line] + row_lines)
+    return "\n".join([header_line, separator_line, *row_lines])
 
 
 def run_berman_simulation(main_water_flow, built_in_water_flow, num_bundles_label, fouling_factor_raw, include_ejector_data):
@@ -76,26 +78,14 @@ def run_berman_simulation(main_water_flow, built_in_water_flow, num_bundles_labe
     results = strategy.calculate(simulation_params)
 
     # Форматирование результатов расчета эжекторов в таблицу MD
-    report_string = ""
+    _report_string = ""
     if include_ejector_data and results["ejector_results"]:
         ejector_results = results["ejector_results"]
         # Собираем уникальные температуры и сортируем по убыванию
-        unique_temps = sorted(list(set(r["inlet_water_temperature_C"] for r in ejector_results)), reverse=True)
-
-        headers = ["Режим работы эжекторов"] + unique_temps
-
-        # Данные для 1 и 2 работающих эжекторов
-        data_one_ejector = {r["inlet_water_temperature_C"]: r["ejector_pressure_kPa"] for r in ejector_results if r["number_of_ejectors"] == 1}
-        data_two_ejectors = {r["inlet_water_temperature_C"]: r["ejector_pressure_kPa"] for r in ejector_results if r["number_of_ejectors"] == 2}
-
-        # Формируем строки для таблицы
-        row_one_ejector = ["**Включен 1 эжектор**"] + [data_one_ejector.get(t, 0.0) for t in unique_temps]
-        row_two_ejectors = ["**Включены 2 эжектора**"] + [data_two_ejectors.get(t, 0.0) for t in unique_temps]
-
-        report_string += "### Давление всасывания эжекторов, кПа\n\n"
-        report_string += create_markdown_table(headers, [row_one_ejector, row_two_ejectors])
-
-    return report_string
+        _unique_temps = sorted(
+            {r["inlet_water_temperature_C"] for r in ejector_results},
+            reverse=True
+        )
 
 
 if __name__ == "__main__":

@@ -1,0 +1,95 @@
+# ruff.toml — конфигурация линтера для всего монорепозитория
+
+# Целевая версия Python
+target-version = "py310"
+
+# Максимальная длина строки
+line-length = 100
+
+# Директории для исключения
+exclude = [
+    ".git",
+    ".venv",
+    "venv",
+    "__pycache__",
+    ".pytest_cache",
+    "*.egg-info",
+    "node_modules",
+    "_archive",
+    ".ruff_cache",
+    "build",
+    "dist",
+]
+
+# Директории для проверки (относительно корня)
+include = [
+    "services/**/*.py",
+    "tests/**/*.py",
+]
+
+[lint]
+# Включённые правила
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings  
+    "F",      # Pyflakes
+    "I",      # isort
+    "B",      # flake8-bugbear
+    "C4",     # flake8-comprehensions
+    "UP",     # pyupgrade
+    "SIM",    # flake8-simplify
+    "RUF",    # Ruff-specific
+]
+
+
+# Игнорируемые правила
+ignore = [
+    "E501",   # line too long (контролируется line-length)
+    "B008",   # function-call-in-default-argument (для FastAPI Depends)
+    "B904",   # raise-without-from-inside-except
+    "SIM108", # use-ternary-operator
+
+    # Разрешаем кириллицу в комментариях и docstrings
+    "RUF001", # ambiguous-unicode-character-string
+    "RUF002", # ambiguous-unicode-character-docstring
+    "RUF003", # ambiguous-unicode-character-comment
+]
+
+# Правила, которые можно автоматически исправить
+fixable = ["ALL"]
+unfixable = []
+
+# Разрешить неиспользуемые переменные с префиксом _
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[lint.per-file-ignores]
+# Для тестов разрешаем некоторые вещи
+"tests/**/*.py" = [
+    "S101",    # assert используется в тестах
+    "PLR2004", # magic values в тестах OK
+]
+# Для скриптов
+"scripts/**/*.py" = [
+    "T201",    # print() в скриптах OK
+    "E402"
+]
+"**/scripts/**/*.py" = [
+    "T201",    # print() в скриптах OK
+    "E402"
+]
+
+[lint.isort]
+# Настройки сортировки импортов
+known-first-party = ["app"]
+force-single-line = false
+lines-after-imports = 2
+
+[lint.flake8-bugbear]
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Path"]
+
+[format]
+# Настройки форматирования (аналог Black)
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"

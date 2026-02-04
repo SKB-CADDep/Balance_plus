@@ -4,12 +4,13 @@
 """
 
 import pytest
+
 from .conftest import (
-    build_calculation_params,
-    generate_test_cases_from_results,
-    find_mode_in_results,
-    get_expected_pressure,
     assert_pressure_approx,
+    build_calculation_params,
+    find_mode_in_results,
+    generate_test_cases_from_results,
+    get_expected_pressure,
     load_geometry,
     load_mode,
     load_results,

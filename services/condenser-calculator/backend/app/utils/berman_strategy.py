@@ -1,5 +1,7 @@
 import math
+
 from seuif97 import *
+
 
 class BermanStrategy:
     """
@@ -79,28 +81,33 @@ class BermanStrategy:
         fouling_resistances = [0.0] * size_r
 
         # Заполнение матриц из входных списков (с 1-индексацией, как в оригинале)
-        for i, val in enumerate(W[0], 1): W_matrix[i][1] = val
+        for i, val in enumerate(W[0], 1):
+            W_matrix[i][1] = val
         if len(W) > 1 and W[1]:
-            for i, val in enumerate(W[1], 1): W_matrix[i][2] = val
+            for i, val in enumerate(W[1], 1):
+                W_matrix[i][2] = val
 
         max_temp_idx = 0
         # Заполняем Main
         for i, val in enumerate(t1[0], 1):
             t_matrix[i][1] = val
             # Обновляем макс индекс
-            if val != 0 and i > max_temp_idx: max_temp_idx = i
+            if val != 0 and i > max_temp_idx:
+                max_temp_idx = i
 
         # Заполняем Built-in и тоже обновляем max_temp_idx
         if len(t1) > 1 and t1[1]:
             for i, val in enumerate(t1[1], 1):
                 t_matrix[i][2] = val
                 # Обновляем макс индекс, если ВП длиннее или единственный
-                if val != 0 and i > max_temp_idx: max_temp_idx = i
+                if val != 0 and i > max_temp_idx:
+                    max_temp_idx = i
 
         max_steam_flow_idx = 0
         for i, val in enumerate(G, 1):
             steam_flows[i] = val
-            if val != 0: max_steam_flow_idx = i
+            if val != 0:
+                max_steam_flow_idx = i
 
         # Расчет R* по коэффициенту бета: R* = (417.3 - 417.2 * beta) * 10^-6
         for i, beta in enumerate(coefficient_b_list, 1):
@@ -137,14 +144,14 @@ class BermanStrategy:
             F[2] = pi * L[2] * N[2] * (d_in + 2.0 * S_tube)
         else:
             F[2] = 0.0
-
         F_total = F[1] + F[2]
         g_k_nom = (G_nom * 1000.0 / F_total) if F_total != 0 else 0.0
 
         # Внешние циклы по всем вариантам входных данных
         for i in range(1, size_w):
             # Если оба расхода 0, прерываем (но если один есть - работаем)
-            if W_matrix[i][1] == 0 and W_matrix[i][2] == 0: break
+            if W_matrix[i][1] == 0 and W_matrix[i][2] == 0:
+                break
 
             # Определяем статус активности каждого пучка отдельно
             is_op_active = (F[1] > 0) and (W_matrix[i][1] > 0)
@@ -154,11 +161,14 @@ class BermanStrategy:
 
             # Считаем активную площадь
             current_F_total = 0.0
-            if is_op_active: current_F_total += F[1]
-            if is_vp_active: current_F_total += F[2]
+            if is_op_active:
+                current_F_total += F[1]
+            if is_vp_active:
+                current_F_total += F[2]
 
             # Защита от деления на ноль, если все отключено (хотя break сработает раньше)
-            if current_F_total == 0: continue
+            if current_F_total == 0:
+                continue
 
             # Расчет скорости воды в трубках для каждого пучка
             if N[1] > 0 and d_in > 0:
@@ -173,11 +183,13 @@ class BermanStrategy:
 
             for m in range(1, len(coefficient_b_list) + 1):
                 current_fouling_resistance = fouling_resistances[m]
-                if current_fouling_resistance == 0 and m > 1: break
+                if current_fouling_resistance == 0 and m > 1:
+                    break
 
                 for j in range(1, max_temp_idx + 1):
                     # Прерываем, только если данных нет ни для ОП, ни для ВП
-                    if t_matrix[j][1] == 0 and t_matrix[j][2] == 0: break
+                    if t_matrix[j][1] == 0 and t_matrix[j][2] == 0:
+                        break
 
                     # Если температура задана только для одного пучка, копируем её во второй
                     if t_matrix[j][1] == 0 and t_matrix[j][2] != 0:
@@ -185,9 +197,10 @@ class BermanStrategy:
                     elif t_matrix[j][2] == 0 and t_matrix[j][1] != 0:
                         t_matrix[j][2] = t_matrix[j][1]
 
-                    for l in range(1, max_steam_flow_idx + 1):
-                        current_steam_flow = steam_flows[l]
-                        if current_steam_flow == 0: break
+                    for steam_idx in range(1, max_steam_flow_idx + 1):
+                        current_steam_flow = steam_flows[steam_idx]
+                        if current_steam_flow == 0:
+                            break
 
                         delta_t_heat[1], delta_t_heat[2] = 0.0, 0.0
 
@@ -195,8 +208,10 @@ class BermanStrategy:
                         for _ in range(1):
                             for bundle_idx in range(1, 3):
                                 # Универсальная проверка активности
-                                if bundle_idx == 1 and not is_op_active: continue
-                                if bundle_idx == 2 and not is_vp_active: continue
+                                if bundle_idx == 1 and not is_op_active:
+                                    continue
+                                if bundle_idx == 2 and not is_vp_active:
+                                    continue
                                 avg_water_temps[bundle_idx] = t_matrix[j][bundle_idx] + delta_t_heat[bundle_idx]
 
                                 # Коэффициент скорости воды
@@ -227,8 +242,10 @@ class BermanStrategy:
 
                             for bundle_idx in range(1, 3):
                                 # Универсальная проверка активности
-                                if bundle_idx == 1 and not is_op_active: continue
-                                if bundle_idx == 2 and not is_vp_active: continue
+                                if bundle_idx == 1 and not is_op_active:
+                                    continue
+                                if bundle_idx == 2 and not is_vp_active:
+                                    continue
 
                                 # Считаем удельную нагрузку на основе АКТИВНОЙ площади.
                                 g_k = current_steam_flow * 1000.0 / current_F_total if current_F_total != 0 else 0.0
@@ -273,9 +290,11 @@ class BermanStrategy:
                                     t_sat[bundle_idx] = t_matrix[j][bundle_idx] + delta_t_heat[bundle_idx] + delta_t[bundle_idx]
 
                                 temp_diff = t_sat[1] - t_sat[2]
-                                if temp_diff_check * temp_diff < 0: temp_diff_step /= 5.0
+                                if temp_diff_check * temp_diff < 0:
+                                    temp_diff_step /= 5.0
                                 temp_diff_check = temp_diff
-                                if abs(temp_diff) <= 0.000001: break
+                                if abs(temp_diff) <= 0.000001:
+                                    break
 
                                 step_direction = -temp_diff_step if temp_diff > 0 else temp_diff_step
                                 delta_t_heat[1] += step_direction
@@ -314,7 +333,7 @@ class BermanStrategy:
                             P_steam_seuif_Pa = tx(t_sat_final,1.0,0) * 1000
                             P_steam_seuif_atm = P_steam_seuif_Pa / 98.0665
                         except (ValueError, ZeroDivisionError):
-                            condenser_pressure_Pa = 0.0
+                            _condenser_pressure_Pa = 0.0
 
                         # Температура на выходе
                         t2_main = t_matrix[j][1] + delta_t_heat[1]
