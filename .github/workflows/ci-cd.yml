@@ -60,8 +60,8 @@ jobs:
       run: poetry run ruff check .
       continue-on-error: true
 
-  test-backend:
-    name: Test backend
+  test-backend-balance:
+    name: Test the backend balance
     runs-on: ubuntu-latest
 
     steps:
@@ -73,7 +73,7 @@ jobs:
         python-version: "3.12"
 
     - name: Greeting
-      run: echo "Hello from test-backend job!"
+      run: echo "Hello from test-backend-balance job!"
 
     - name: Install poetry
       run: pip install poetry
@@ -84,7 +84,7 @@ jobs:
 
     - name: Run backend tests
       working-directory: services/balance-orchestrator/backend
-      run: poetry run pytest ../../../tests/
+      run: poetry run pytest
 
   build-stage:
     name: Build for stage
