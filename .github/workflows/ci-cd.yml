@@ -112,16 +112,18 @@ jobs:
       working-directory: services/condenser-calculator/backend
       run: poetry run pytest
 
-  build-stage:
-    name: Build for stage
-    needs: test-backend
+  build-stage-balance:
+    name: Build balance service for stage
+    needs: test-backend-balance
     runs-on: self-hosted
 
     steps:
     - uses: actions/checkout@v6
+      with:
+        ref: main
 
     - name: Greeting
-      run: echo "Hello from build-stage job!"
+      run: echo "Hello from build-stage-balance job!"
 
   build-prod:
     name: Build for prod
