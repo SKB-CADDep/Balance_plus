@@ -86,6 +86,32 @@ jobs:
       working-directory: services/balance-orchestrator/backend
       run: poetry run pytest
 
+  test-backend-condenser:
+    name: Test the backend condenser
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        ref: main
+    - uses: actions/setup-python@v6
+      with:
+        python-version: "3.12"
+
+    - name: Greeting
+      run: echo "Hello from test-backend-condenser job!"
+
+    - name: Install poetry
+      run: pip install poetry
+
+    - name: Install backend dependencies
+      working-directory: services/condenser-calculator/backend
+      run: poetry install
+
+    - name: Run backend tests
+      working-directory: services/condenser-calculator/backend
+      run: poetry run pytest
+
   build-stage:
     name: Build for stage
     needs: test-backend
