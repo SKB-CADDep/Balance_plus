@@ -125,6 +125,19 @@ jobs:
     - name: Greeting
       run: echo "Hello from build-stage-balance job!"
 
+  build-stage-condenser:
+    name: Build condenser service for stage
+    needs: test-backend-condenser
+    runs-on: self-hosted
+
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        ref: main
+
+    - name: Greeting
+      run: echo "Hello from build-stage-condenser job!"
+
   build-prod:
     name: Build for prod
     needs: test-backend
