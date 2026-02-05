@@ -33,6 +33,33 @@ jobs:
       run: poetry run ruff check .
       continue-on-error: true
 
+  lint-backend-condenser:
+    name: Lint the backend condenser
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        ref: main
+    - uses: actions/setup-python@v6
+      with:
+        python-version: "3.12"
+
+    - name: Greeting
+      run: echo "Hello from lint-backend-condenser job!"
+
+    - name: Install poetry
+      run: pip install poetry
+
+    - name: Install backend dependencies
+      working-directory: services/condenser-calculator/backend
+      run: poetry install
+
+    - name: Run backend lints
+      working-directory: services/condenser-calculator/backend
+      run: poetry run ruff check .
+      continue-on-error: true
+
   test-backend:
     name: Test backend
     runs-on: ubuntu-latest
