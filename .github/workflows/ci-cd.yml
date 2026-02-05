@@ -6,8 +6,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  lint-backend:
-    name: Lint backend
+  lint-backend-balance:
+    name: Lint the backend balance
     runs-on: ubuntu-latest
 
     steps:
@@ -19,7 +19,7 @@ jobs:
         python-version: "3.12"
 
     - name: Greeting
-      run: echo "Hello from lint-backend job!"
+      run: echo "Hello from lint-backend-balance job!"
 
     - name: Install poetry
       run: pip install poetry
@@ -28,13 +28,9 @@ jobs:
       working-directory: services/balance-orchestrator/backend
       run: poetry install
 
-    - name: Install flake8
-      working-directory: services/balance-orchestrator/backend
-      run: poetry add flake8
-
     - name: Run backend lints
       working-directory: services/balance-orchestrator/backend
-      run: poetry run flake8
+      run: poetry run ruff check .
       continue-on-error: true
 
   test-backend:
