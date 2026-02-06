@@ -31,7 +31,6 @@ jobs:
     - name: Run backend lints
       working-directory: services/balance-orchestrator/backend
       run: poetry run ruff check .
-      continue-on-error: true
 
   lint-backend-condenser:
     name: Lint the backend condenser
@@ -58,7 +57,6 @@ jobs:
     - name: Run backend lints
       working-directory: services/condenser-calculator/backend
       run: poetry run ruff check .
-      continue-on-error: true
 
   test-backend-balance:
     name: Test the backend balance
