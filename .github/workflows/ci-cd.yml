@@ -153,7 +153,7 @@ jobs:
 
   build-prod-balance:
     name: Build balance service for prod
-    needs: test-backend-balance
+    needs: build-stage-balance
     runs-on: self-hosted
 
     steps:
@@ -166,7 +166,7 @@ jobs:
 
   build-prod-condenser:
     name: Build condenser service for prod
-    needs: test-backend-condenser
+    needs: build-stage-condenser
     runs-on: self-hosted
 
     steps:
@@ -192,7 +192,7 @@ jobs:
 
   deploy-stage:
     name: Deploy to stage
-    needs: [test-backend, build-stage]
+    needs: build-stage-frontend
     environment: staging
     runs-on: self-hosted
 
@@ -202,7 +202,7 @@ jobs:
 
   deploy-prod:
     name: Deploy to prod
-    needs: [test-backend, build-prod, deploy-stage]
+    needs: deploy-stage
     environment: production
     runs-on: self-hosted
 
