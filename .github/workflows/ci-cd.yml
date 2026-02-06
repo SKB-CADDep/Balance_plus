@@ -202,7 +202,7 @@ jobs:
 
   deploy-prod:
     name: Deploy to prod
-    needs: deploy-stage
+    needs: [build-prod-frontend, deploy-stage]
     environment: production
     runs-on: self-hosted
 
