@@ -139,6 +139,32 @@ jobs:
       working-directory: services/condenser-calculator/backend
       run: poetry run pytest
 
+  test-backend-valve:
+    name: Test the backend valve
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        ref: main
+    - uses: actions/setup-python@v6
+      with:
+        python-version: "3.12"
+
+    - name: Greeting
+      run: echo "Hello from test-backend-valve job!"
+
+    - name: Install poetry
+      run: pip install poetry
+
+    - name: Install backend dependencies
+      working-directory: services/valve-calculator/backend
+      run: poetry install
+
+    - name: Run backend tests
+      working-directory: services/valve-calculator/backend
+      run: poetry run pytest
+
   build-stage-balance:
     name: Build balance service for stage
     needs: test-backend-balance
