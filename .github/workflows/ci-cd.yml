@@ -243,9 +243,22 @@ jobs:
     - name: Greeting
       run: echo "Hello from build-prod-condenser job!"
 
+  build-prod-valve:
+    name: Build valve service for prod
+    needs: build-stage-valve
+    runs-on: self-hosted
+
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        ref: main
+
+    - name: Greeting
+      run: echo "Hello from build-prod-valve job!"
+
   build-prod-frontend:
     name: Build frontend for prod
-    needs: [build-prod-balance, build-prod-condenser]
+    needs: [build-prod-balance, build-prod-condenser, build-prod-valve]
     runs-on: self-hosted
 
     steps:
