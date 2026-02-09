@@ -60,6 +60,33 @@ jobs:
       run: poetry run ruff check .
       continue-on-error: true
 
+  lint-backend-valve:
+    name: Lint the backend valve
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        ref: main
+    - uses: actions/setup-python@v6
+      with:
+        python-version: "3.12"
+
+    - name: Greeting
+      run: echo "Hello from lint-backend-valve job!"
+
+    - name: Install poetry
+      run: pip install poetry
+
+    - name: Install backend dependencies
+      working-directory: services/valve-calculator/backend
+      run: poetry install
+
+    - name: Run backend lints
+      working-directory: services/valve-calculator/backend
+      run: poetry run ruff check .
+      continue-on-error: true
+
   test-backend-balance:
     name: Test the backend balance
     runs-on: ubuntu-latest
