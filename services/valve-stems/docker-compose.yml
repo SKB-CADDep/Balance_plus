@@ -1,0 +1,116 @@
+name: automation_of_construction
+
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  backend:
+    build:
+      context: ./backend
+    container_name: clapans_calculator_backend
+    restart: always
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_SERVER=${POSTGRES_SERVER}
+      - POSTGRES_PORT=${POSTGRES_PORT:-5432}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - PROJECT_NAME=${PROJECT_NAME}
+      - BACKEND_CORS_ORIGINS=${BACKEND_CORS_ORIGINS}
+      - ENVIRONMENT=local
+    ports:
+      - "5253:5253"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./backend/app:/app/app
+      - ./backend/alembic.ini:/app/alembic.ini
+      - ./backend/entrypoint.sh:/app/entrypoint.sh
+    healthcheck:
+      test:
+        - "CMD-SHELL"
+        - >
+          curl -fsS http://127.0.0.1:5253/openapi.json >/dev/null
+          || curl -fsS http://127.0.0.1:5253/health >/dev/null
+          || wget -q -O- http://127.0.0.1:5253/health >/dev/null
+          || python -c 'import socket; s=socket.create_connection(("127.0.0.1",5253),2); s.close()'
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    logging: *default-logging
+    labels:
+      app_name: automation_of_construction
+      component_type: application
+      environment: staging
+      version: "1.0.0"
+      log: "enabled"
+
+  frontend:
+    build: ./frontend
+    container_name: clapans_calculator_frontend
+    restart: always
+    env_file:
+      - .env
+    environment:
+      - VITE_API_URL=${VITE_API_URL}
+    ports:
+      - "5252:5252"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - "CMD-SHELL"
+        - >
+          wget -q -O- http://127.0.0.1:5252/ >/dev/null
+          || curl -fsS http://127.0.0.1:5252/ >/dev/null
+          || python -c 'import socket; s=socket.create_connection(("127.0.0.1",5252),2); s.close()'
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    logging: *default-logging
+    labels:
+      app_name: automation_of_construction
+      component_type: application
+      environment: staging
+      version: "1.0.0"
+      log: "enabled"
+
+  db:
+    image: postgres:17
+    container_name: clapans_calculator_db
+    restart: always
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - ./db/init.dump:/docker-entrypoint-initdb.d/init.dump
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5254:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    logging: *default-logging
+    labels:
+      app_name: automation_of_construction
+      component_type: database
+      environment: staging
+      version: "1.0.0"
+      log: "enabled"
+
+volumes:
+  pgdata:
