@@ -200,9 +200,18 @@ jobs:
     - name: Greeting
       run: echo "Hello from deploy-stage job!"
 
+  end-to-end-test:
+    name: End to end test
+    needs: [build-prod-frontend, deploy-stage]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Greeting
+        run: echo "Hello from end-to-end-test job!"
+
   deploy-prod:
     name: Deploy to prod
-    needs: [build-prod-frontend, deploy-stage]
+    needs: end-to-end-test
     environment: production
     runs-on: self-hosted
 
