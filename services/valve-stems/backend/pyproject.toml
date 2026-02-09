@@ -1,0 +1,49 @@
+[project]
+name = "valve-stems"
+version = "2.0.0"
+description = "Расчётный модуль утечек через штоки клапанов (Valve Stems)"
+authors = [
+    {name = "lrshlyogin", email = "ooooooorrrrr@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi[standard] (>=0.115.0,<1.0.0)",
+    "uvicorn[standard] (>=0.32.0,<1.0.0)",
+    "httptools (>=0.6.4,<1.0.0)",
+    "orjson (>=3.9.0,<4.0.0)",
+    "tenacity (>=8.2.3,<9.0.0)",
+    "pydantic (>=2.0.0,<3.0.0)",
+    "pydantic-settings (>=2.2.1,<3.0.0)",
+    "jinja2 (>=3.1.4,<4.0.0)",
+    "alembic (>=1.12.1,<2.0.0)",
+    "httpx (>=0.25.1,<1.0.0)",
+    "psycopg[binary] (>=3.1.13,<4.0.0)",
+    "sqlmodel (>=0.0.21,<1.0.0)",
+    "seuif97 (==1.2.0)",
+    "wsaproperties (>=0.1.4)",
+    "openpyxl (>=3.1.0,<4.0.0)",
+    "scipy (>=1.17.0,<2.0.0)",
+]
+
+[tool.poetry]
+package-mode = false
+
+[tool.poetry.group.dev.dependencies]
+pytest = ">=7.4.3,<9.0.0"
+pytest-cov = "^6.0.0"
+pytest-asyncio = "^1.3.0"
+mypy = ">=1.8.0,<2.0.0"
+coverage = ">=7.4.3,<8.0.0"
+ruff = "^0.15.0"
+
+[tool.pytest.ini_options]
+testpaths = ["app/tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
