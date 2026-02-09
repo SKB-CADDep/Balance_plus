@@ -1,69 +1,48 @@
 [project]
-name = "app"
-version = "1.0.2"
-requires-python = ">=3.10,<4.0"
+name = "valve-stems"
+version = "2.0.0"
+description = "Расчётный модуль утечек через штоки клапанов (Valve Stems)"
+authors = [
+    {name = "lrshlyogin", email = "ooooooorrrrr@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.12"
 dependencies = [
-    "fastapi[standard]>=0.115,<1.0",
-    "uvicorn[standard]>=0.32",
-    "httptools>=0.6.4",
-    "uvloop>=0.20",
-    "orjson>=3.9",
-    "tenacity<9,>=8.2.3",
-    "pydantic>2.0",
-    "jinja2<4,>=3.1.4",
-    "alembic<2,>=1.12.1",
-    "httpx<1,>=0.25.1",
-    "psycopg[binary]<4,>=3.1.13",
-    "sqlmodel<1,>=0.0.21",
-    "pydantic-settings<3,>=2.2.1",
-    "seuif97==1.2.0",
-    "wsaproperties>=0.1.4",
-    "scipy",
+    "fastapi[standard] (>=0.115.0,<1.0.0)",
+    "uvicorn[standard] (>=0.32.0,<1.0.0)",
+    "httptools (>=0.6.4,<1.0.0)",
+    "orjson (>=3.9.0,<4.0.0)",
+    "tenacity (>=8.2.3,<9.0.0)",
+    "pydantic (>=2.0.0,<3.0.0)",
+    "pydantic-settings (>=2.2.1,<3.0.0)",
+    "jinja2 (>=3.1.4,<4.0.0)",
+    "alembic (>=1.12.1,<2.0.0)",
+    "httpx (>=0.25.1,<1.0.0)",
+    "psycopg[binary] (>=3.1.13,<4.0.0)",
+    "sqlmodel (>=0.0.21,<1.0.0)",
+    "seuif97 (==1.2.0)",
+    "wsaproperties (>=0.1.4)",
+    "openpyxl (>=3.1.0,<4.0.0)",
 ]
 
-[tool.hatch.build.targets.wheel]
-packages = ["app"]
+[tool.poetry]
+package-mode = false
 
-[tool.uv]
-dev-dependencies = [
-    "pytest<8.0.0,>=7.4.3",
-    "mypy<2.0.0,>=1.8.0",
-    "ruff<1.0.0,>=0.2.2",
-    "pre-commit<4.0.0,>=3.6.2",
-    "types-passlib<2.0.0.0,>=1.7.7.20240106",
-    "coverage<8.0.0,>=7.4.3",
-]
+[tool.poetry.group.dev.dependencies]
+pytest = ">=7.4.3,<9.0.0"
+pytest-cov = "^6.0.0"
+pytest-asyncio = "^1.3.0"
+mypy = ">=1.8.0,<2.0.0"
+coverage = ">=7.4.3,<8.0.0"
+ruff = "^0.15.0"
+
+[tool.pytest.ini_options]
+testpaths = ["app/tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
 
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[tool.mypy]
-strict = true
-exclude = ["venv", ".venv", "alembic"]
-
-[tool.ruff]
-target-version = "py310"
-exclude = ["alembic"]
-
-[tool.ruff.lint]
-select = [
-    "E", # pycodestyle errors
-    "W", # pycodestyle warnings
-    "F", # pyflakes
-    "I", # isort
-    "B", # flake8-bugbear
-    "C4", # flake8-comprehensions
-    "UP", # pyupgrade
-    "ARG001", # unused arguments in functions
-]
-ignore = [
-    "E501", # line too long, handled by black
-    "B008", # do not perform function calls in argument defaults
-    "W191", # indentation contains tabs
-    "B904", # Allow raising exceptions without from e, for HTTPException
-]
-
-[tool.ruff.lint.pyupgrade]
-# Preserve types, even if a file imports `from __future__ import annotations`.
-keep-runtime-typing = true
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
