@@ -179,3 +179,19 @@ def get_valve_by_id(db: Session, valve_id: int) -> Optional[models.Valve]:
     except Exception as e:
         logger.error(f"Ошибка базы данных при получении клапана по ID {valve_id}: {str(e)}")
         return None
+
+
+def get_valve_by_drawing(db: Session, valve_drawing: str) -> Optional[models.Valve]:
+    """
+    Получает клапан по его названию (чертежу).
+    """
+    try:
+        valve = (
+            db.query(models.Valve)
+            .filter(models.Valve.name == valve_drawing)
+            .first()
+        )
+        return valve
+    except Exception as e:
+        logger.error(f"Ошибка при получении клапана по чертежу {valve_drawing}: {str(e)}")
+        return None
