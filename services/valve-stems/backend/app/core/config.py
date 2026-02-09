@@ -5,7 +5,6 @@ from pydantic import (
     AnyUrl,
     BeforeValidator,
     computed_field,
-    PostgresDsn,
 )
 from pydantic_core import MultiHostUrl
 from pydantic_settings import BaseSettings, SettingsConfigDict

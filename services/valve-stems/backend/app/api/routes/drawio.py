@@ -2,10 +2,13 @@ import logging
 import os
 import xml.etree.ElementTree as ET
 from datetime import datetime
-from typing import Optional, Dict, Any
-from fastapi import HTTPException, APIRouter
+from typing import Any
+
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
+
 from .schemas import ValveInfo
+
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -24,8 +27,8 @@ class DiagramModifier:
             template_path (str): Путь к исходному XML-файлу шаблона.
         """
         self.template_path = template_path
-        self.tree: Optional[ET.ElementTree] = None
-        self.root: Optional[ET.Element] = None
+        self.tree: ET.ElementTree | None = None
+        self.root: ET.Element | None = None
         self._load_template()
 
     def _load_template(self) -> None:
@@ -93,7 +96,7 @@ class ParameterMapper:
         """
         self.count_parts = count_parts
         # Базовое сопоставление параметров (может быть расширено для каждого шаблона)
-        self.mapping: Dict[str, Dict[str, Any]] = {
+        self.mapping: dict[str, dict[str, Any]] = {
             "clearance": {
                 "cell_id": f"clearance_{count_parts}_parts",
                 "label": "delt",
@@ -134,7 +137,7 @@ class ParameterMapper:
             f'</font>'
         )
 
-    def map_parameters(self, valve_info: ValveInfo) -> Dict[str, str]:
+    def map_parameters(self, valve_info: ValveInfo) -> dict[str, str]:
         """
         Сопоставляет параметры ValveInfo с элементами XML.
 
@@ -180,7 +183,7 @@ class DiagramGenerator:
             5: os.path.join(templates_dir, "template_5_parts.xml")
         }
 
-    def _validate_count_parts(self, count_parts: Optional[int]) -> int:
+    def _validate_count_parts(self, count_parts: int | None) -> int:
         """
         Проверяет корректность значения count_parts.
 

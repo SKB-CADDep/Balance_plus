@@ -1,13 +1,20 @@
-from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status, Response
-from sqlalchemy.orm import Session
 import json
-from app.models import Valve, CalculationResultDB
-from app.schemas import CalculationParams, CalculationResultDB as CalculationResultDBSchema, ValveInfo
-from app.crud import create_calculation_result, get_results_by_valve_drawing, get_calculation_result_by_id
-from app.dependencies import get_db
-from app.services.calculator import ValveCalculator, CalculationError
 import logging
+
+from fastapi import APIRouter, Depends, HTTPException, Response, status
+from sqlalchemy.orm import Session
+
+from app.crud import (
+    create_calculation_result,
+    get_calculation_result_by_id,
+    get_results_by_valve_drawing,
+)
+from app.dependencies import get_db
+from app.models import CalculationResultDB, Valve
+from app.schemas import CalculationParams, ValveInfo
+from app.schemas import CalculationResultDB as CalculationResultDBSchema
+from app.services.calculator import CalculationError, ValveCalculator
+
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -50,7 +57,7 @@ async def calculate(params: CalculationParams, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                             detail=f"Не удалось выполнить расчёты: {e}")
 
-@router.get("/valves/{valve_name:path}/results/", response_model=List[CalculationResultDBSchema], summary="Получить результаты расчётов")
+@router.get("/valves/{valve_name:path}/results/", response_model=list[CalculationResultDBSchema], summary="Получить результаты расчётов")
 async def get_calculation_results(valve_name: str, db: Session = Depends(get_db)):
     try:
         db_results = get_results_by_valve_drawing(db, valve_drawing=valve_name)

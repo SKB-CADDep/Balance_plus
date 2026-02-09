@@ -1,5 +1,6 @@
+
 from pydantic import BaseModel, ConfigDict, computed_field
-from typing import List, Optional
+
 
 class SimpleValveInfo(BaseModel):
     id: int
@@ -9,27 +10,27 @@ class SimpleValveInfo(BaseModel):
 
 class ValveCreate(BaseModel):
     name: str
-    type: Optional[str] = None
-    diameter: Optional[float] = None
-    clearance: Optional[float] = None
-    count_parts: Optional[int] = None
-    len_part1: Optional[float] = None
-    len_part2: Optional[float] = None
-    len_part3: Optional[float] = None
-    len_part4: Optional[float] = None
-    len_part5: Optional[float] = None
-    round_radius: Optional[float] = None
-    turbine_id: Optional[int] = None
+    type: str | None = None
+    diameter: float | None = None
+    clearance: float | None = None
+    count_parts: int | None = None
+    len_part1: float | None = None
+    len_part2: float | None = None
+    len_part3: float | None = None
+    len_part4: float | None = None
+    len_part5: float | None = None
+    round_radius: float | None = None
+    turbine_id: int | None = None
 
 class ValveInfo(ValveCreate):
     """
     Наследуемся от ValveCreate, добавляя ID и вычисляемое поле.
     """
-    id: Optional[int] = None
+    id: int | None = None
 
     @computed_field
     @property
-    def section_lengths(self) -> List[Optional[float]]:
+    def section_lengths(self) -> list[float | None]:
         return [
             self.len_part1,
             self.len_part2,

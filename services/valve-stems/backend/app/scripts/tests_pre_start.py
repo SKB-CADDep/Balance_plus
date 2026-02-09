@@ -6,6 +6,7 @@ from tenacity import after_log, before_log, retry, stop_after_attempt, wait_fixe
 
 from app.core.database import engine
 
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 

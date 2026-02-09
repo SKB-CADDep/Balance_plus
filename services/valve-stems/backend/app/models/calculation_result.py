@@ -1,6 +1,7 @@
-from sqlalchemy import Column, Integer, String, DateTime, JSON, ForeignKey
-from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
+
+from sqlalchemy import JSON, Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy.orm import relationship
 
 from app.core.database import Base
 

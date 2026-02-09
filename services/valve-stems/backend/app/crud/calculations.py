@@ -1,18 +1,18 @@
-from typing import Optional, List
-from sqlalchemy.orm import Session
-from fastapi import HTTPException, status
-from datetime import datetime, timezone
-import json
 import logging
+from datetime import datetime, timezone
+
+from fastapi import HTTPException, status
+from sqlalchemy.orm import Session
 
 from app.models import CalculationResultDB
 from app.schemas import CalculationParams, CalculationResult
 
+
 logger = logging.getLogger(__name__)
 
 def create_calculation_result(
-    db: Session, 
-    parameters: CalculationParams, 
+    db: Session,
+    parameters: CalculationParams,
     results: CalculationResult,
     valve_id: int
 ) -> CalculationResultDB:
@@ -31,7 +31,7 @@ def create_calculation_result(
             # Оставим json.dumps для совместимости, если колонка текстовая или драйвер требует.
             # Если колонка реально JSONB, то лучше передавать dict.
             # В старом коде было: input_data=json.dumps(...)
-            input_data=parameters.model_dump(mode='json'), 
+            input_data=parameters.model_dump(mode='json'),
             output_data=results.model_dump(mode='json'),
             valve_id=valve_id
         )
@@ -41,11 +41,11 @@ def create_calculation_result(
         return db_result
     except Exception as e:
         db.rollback()
-        logger.error(f"Ошибка базы данных при сохранении результата расчета: {str(e)}")
+        logger.error(f"Ошибка базы данных при сохранении результата расчета: {e!s}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                             detail=f"Не удалось сохранить результат расчета: {e}")
 
-def get_results_by_valve_drawing(db: Session, valve_drawing: str) -> List[CalculationResultDB]:
+def get_results_by_valve_drawing(db: Session, valve_drawing: str) -> list[CalculationResultDB]:
     """
     Получает результаты расчетов по названию клапана.
     """
@@ -58,11 +58,11 @@ def get_results_by_valve_drawing(db: Session, valve_drawing: str) -> List[Calcul
         )
         return results
     except Exception as e:
-        logger.error(f"Ошибка базы данных при получении результатов по клапану: {str(e)}")
+        logger.error(f"Ошибка базы данных при получении результатов по клапану: {e!s}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                             detail=f"Не удалось получить результаты: {e}")
 
-def get_calculation_result_by_id(db: Session, result_id: int) -> Optional[CalculationResultDB]:
+def get_calculation_result_by_id(db: Session, result_id: int) -> CalculationResultDB | None:
     """
     Получает один результат расчета по его ID.
     """
@@ -70,5 +70,5 @@ def get_calculation_result_by_id(db: Session, result_id: int) -> Optional[Calcul
         result = db.query(CalculationResultDB).filter(CalculationResultDB.id == result_id).first()
         return result
     except Exception as e:
-        logger.error(f"Ошибка базы данных при получении результата расчета по ID {result_id}: {str(e)}")
+        logger.error(f"Ошибка базы данных при получении результата расчета по ID {result_id}: {e!s}")
         return None

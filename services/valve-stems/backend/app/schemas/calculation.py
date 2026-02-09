@@ -1,37 +1,39 @@
-from pydantic import BaseModel, ConfigDict
-from typing import List, Dict, Any, Optional
 from datetime import datetime
+from typing import Any
+
+from pydantic import BaseModel, ConfigDict
+
 
 class CalculationParams(BaseModel):
-    turbine_name: Optional[str] = None
-    valve_drawing: Optional[str] = None
-    valve_id: Optional[int] = None
+    turbine_name: str | None = None
+    valve_drawing: str | None = None
+    valve_id: int | None = None
     temperature_start: float
     t_air: float
     count_valves: int
-    p_ejector: List[float]
-    p_values: List[float]
+    p_ejector: list[float]
+    p_values: list[float]
 
 class CalculationResult(BaseModel):
-    Gi: List[float]
-    Pi_in: List[float]
-    Ti: List[float]
-    Hi: List[float]
-    deaerator_props: List[float]
-    ejector_props: List[Dict[str, float]]
+    Gi: list[float]
+    Pi_in: list[float]
+    Ti: list[float]
+    Hi: list[float]
+    deaerator_props: list[float]
+    ejector_props: list[dict[str, float]]
 
 class CalculationResultDB(BaseModel):
     id: int
-    user_name: Optional[str] = None
+    user_name: str | None = None
     stock_name: str
     turbine_name: str
     calc_timestamp: datetime
-    input_data: Dict[str, Any]
-    output_data: Dict[str, Any]
+    input_data: dict[str, Any]
+    output_data: dict[str, Any]
 
     model_config = ConfigDict(from_attributes=True)
 
 class ErrorResponse(BaseModel):
     error: bool
     message: str
-    detail: Optional[str] = None
+    detail: str | None = None

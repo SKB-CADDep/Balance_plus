@@ -58,4 +58,3 @@ def override_get_db(db_session):
         finally:
             pass
     return _get_db
-    

@@ -1,8 +1,9 @@
+from datetime import datetime, timezone
+
 import pytest
 from sqlalchemy.orm import Session
 
 from app import crud, models, schemas
-from datetime import datetime, timezone
 
 
 # ===== Хелперы для создания тестовых данных =====
@@ -15,7 +16,7 @@ def create_test_turbine(db: Session, turbine_name: str = "Test Turbine"):
     return turbine
 
 
-def create_test_valve(db: Session, valve_name: str = "VD-001", turbine_id: int = None):
+def create_test_valve(db: Session, valve_name: str = "VD-001", turbine_id: int | None = None):
     valve = models.Valve(
         name=valve_name,
         type="Type A",

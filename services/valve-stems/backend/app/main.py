@@ -1,9 +1,12 @@
 import logging
+
 from fastapi import FastAPI
-from fastapi.routing import APIRoute
 from fastapi.middleware.cors import CORSMiddleware
-from app.core.config import settings
+from fastapi.routing import APIRoute
+
 from app.api.main import api_router
+from app.core.config import settings
+
 
 # Настройка логирования
 logging.basicConfig(

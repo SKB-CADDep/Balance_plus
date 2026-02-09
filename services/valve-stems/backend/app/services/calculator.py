@@ -1,17 +1,16 @@
 from __future__ import annotations
 
 import logging
-from math import sqrt, pi
-from typing import List, Optional, Tuple
-
-# Схемы pydantic/dataclass'ы
-from app.schemas import CalculationParams, ValveInfo, CalculationResult
+from math import pi, sqrt
 
 # IF97
-from seuif97 import pt2h, ph, ph2v, ph2t
+from seuif97 import ph, ph2t, ph2v, pt2h
 
 # Вспомогательные (наши)
 from WSAProperties import air_calc, ksi_calc, lambda_calc
+
+# Схемы pydantic/dataclass'ы
+from app.schemas import CalculationParams, CalculationResult, ValveInfo
 
 
 # Логирование
@@ -212,7 +211,7 @@ class ValveCalculator:
             raw_lengths = list(getattr(valve_info, "section_lengths", []) or [])
             if not raw_lengths:
                 raise CalculationError("Не заданы длины участков клапана.")
-            self.len_parts: List[float] = []
+            self.len_parts: list[float] = []
             for i, L in enumerate(raw_lengths):
                 if L is None:
                     break
@@ -233,14 +232,14 @@ class ValveCalculator:
             if any(p <= 0 for p in p_values_in):
                 raise CalculationError("Все входные давления по участкам должны быть > 0.")
 
-            self.P_values: List[float] = [convert_pressure_to_mpa(p, unit=pressure_unit_input) for p in p_values_in]
+            self.P_values: list[float] = [convert_pressure_to_mpa(p, unit=pressure_unit_input) for p in p_values_in]
 
             # Давление в деаэратор: берём P2
             self.p_deaerator: float = self.P_values[1]
 
             # Давления отсосов эжектора (-> МПа)
             p_suctions_raw = list(getattr(params, "p_ejector", []) or [])
-            self.p_suctions: List[float] = [convert_pressure_to_mpa(p, unit=pressure_unit_input) for p in p_suctions_raw]
+            self.p_suctions: list[float] = [convert_pressure_to_mpa(p, unit=pressure_unit_input) for p in p_suctions_raw]
 
             need_suctions = _expected_suctions(self.count_parts)
             if len(self.p_suctions) < need_suctions:
@@ -266,7 +265,7 @@ class ValveCalculator:
             self.din_vis_parts = [0.0] * self.count_parts
 
             # Текущее давление эжектора (в ходе расчётов)
-            self.p_ejector: Optional[float] = None
+            self.p_ejector: float | None = None
 
             # Лог входных
             logger.info(
@@ -307,7 +306,7 @@ class ValveCalculator:
                 "deaerator_props": [dea_g, dea_t, dea_h, dea_p],
                 "ejector_props": [
                     {"g": g, "t": t, "h": h, "p": p}
-                    for g, t, h, p in zip(ej_g, ej_t, ej_h, ej_p)
+                    for g, t, h, p in zip(ej_g, ej_t, ej_h, ej_p, strict=True)
                 ],
             }
 
@@ -505,7 +504,7 @@ class ValveCalculator:
         )
 
     # --------------------------- Отсосы: деаэратор/эжектор --------------------------- #
-    def deaerator_options(self) -> Tuple[float, float, float, float]:
+    def deaerator_options(self) -> tuple[float, float, float, float]:
         """
         Отсос в деаэратор. Возвращает (g, t, h, p).
         """
@@ -533,7 +532,7 @@ class ValveCalculator:
         logger.info("Deaerator: g=%.6f, t=%.2f, h=%.4f, p=%.6f", g, t_dea, h_dea, p_dea)
         return g, t_dea, h_dea, p_dea
 
-    def ejector_options(self) -> Tuple[Tuple[float, ...], Tuple[float, ...], Tuple[float, ...], Tuple[float, ...]]:
+    def ejector_options(self) -> tuple[tuple[float, ...], tuple[float, ...], tuple[float, ...], tuple[float, ...]]:
         """
         Отсосы в эжектор(ы).
         Возвращает кортеж списков одинаковой длины: (g_list, t_list, h_list, p_list).

@@ -1,16 +1,18 @@
-from typing import List
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session, selectinload
+
+from app.crud import get_turbine_by_id, get_valves_by_turbine
+from app.dependencies import get_db
 from app.models import Turbine
 from app.schemas import TurbineInfo, TurbineValves, TurbineWithValvesInfo
-from app.crud import get_valves_by_turbine, get_turbine_by_id
-from app.dependencies import get_db
-import logging
+
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-@router.get("/", response_model=List[TurbineWithValvesInfo], summary="Получить все турбины с клапанами")
+@router.get("/", response_model=list[TurbineWithValvesInfo], summary="Получить все турбины с клапанами")
 async def get_all_turbines_with_valves(db: Session = Depends(get_db)):
     """
     Получить список всех турбин вместе с их клапанами.

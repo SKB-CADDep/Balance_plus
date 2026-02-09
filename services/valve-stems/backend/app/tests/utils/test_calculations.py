@@ -1,9 +1,9 @@
-from typing import Optional, List
 import logging
-from app.services.calculator import ValveCalculator
-from app.schemas import CalculationParams, ValveInfo, CalculationResult
 import unittest
-from math import sqrt, pi
+
+from app.schemas import CalculationParams, ValveInfo
+from app.services.calculator import ValveCalculator
+
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)

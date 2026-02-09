@@ -1,13 +1,15 @@
-from typing import Optional
-from sqlalchemy.orm import Session
+import logging
+
 from fastapi import HTTPException, status
+from sqlalchemy.orm import Session
+
 from app.models import Turbine
 from app.schemas import TurbineValves, ValveInfo
-import logging
+
 
 logger = logging.getLogger(__name__)
 
-def get_turbine_by_id(db: Session, turbine_id: int) -> Optional[Turbine]:
+def get_turbine_by_id(db: Session, turbine_id: int) -> Turbine | None:
     """
     Получает одну турбину по ее ID.
     """
@@ -15,10 +17,10 @@ def get_turbine_by_id(db: Session, turbine_id: int) -> Optional[Turbine]:
         turbine = db.query(Turbine).filter(Turbine.id == turbine_id).first()
         return turbine
     except Exception as e:
-        logger.error(f"Ошибка базы данных при получении турбины по ID {turbine_id}: {str(e)}")
+        logger.error(f"Ошибка базы данных при получении турбины по ID {turbine_id}: {e!s}")
         return None
 
-def get_valves_by_turbine(db: Session, turbine_name: str) -> Optional[TurbineValves]:
+def get_valves_by_turbine(db: Session, turbine_name: str) -> TurbineValves | None:
     """
     Получает список клапанов для заданной турбины.
     """
@@ -43,6 +45,6 @@ def get_valves_by_turbine(db: Session, turbine_name: str) -> Optional[TurbineVal
             valves=valve_info_list
         )
     except Exception as e:
-        logger.error(f"Ошибка базы данных при получении клапанов по турбине: {str(e)}")
+        logger.error(f"Ошибка базы данных при получении клапанов по турбине: {e!s}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                             detail=f"Не удалось получить клапаны: {e}")

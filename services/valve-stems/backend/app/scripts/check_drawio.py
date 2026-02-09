@@ -1,6 +1,8 @@
 import os
+
 from app.api.routes.drawio import DiagramModifier, ParameterMapper
 from app.schemas import ValveInfo
+
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE_PATH = os.path.join(SCRIPT_DIR, "templates", "template_2_parts.xml")
