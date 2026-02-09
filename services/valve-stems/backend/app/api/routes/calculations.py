@@ -19,7 +19,7 @@ from app.services.calculator import CalculationError, ValveCalculator
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-@router.post("", response_model=CalculationResultDBSchema, summary="Выполнить расчет")
+@router.post("/calculate", response_model=CalculationResultDBSchema, summary="Выполнить расчет")
 async def calculate(params: CalculationParams, db: Session = Depends(get_db)):
     try:
         valve = db.query(Valve).filter(Valve.name == params.valve_drawing).first()

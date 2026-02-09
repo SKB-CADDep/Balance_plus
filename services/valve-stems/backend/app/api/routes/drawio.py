@@ -7,7 +7,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 
-from .schemas import ValveInfo
+from app.schemas import ValveInfo
 
 
 # Настройка логирования
