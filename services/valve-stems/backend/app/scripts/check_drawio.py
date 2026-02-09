@@ -1,5 +1,5 @@
 import os
-from app.save_to_drowio import DiagramModifier, ParameterMapper
+from app.api.routes.drawio import DiagramModifier, ParameterMapper
 from app.schemas import ValveInfo
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))

@@ -1,6 +1,6 @@
 from typing import Optional, List
 import logging
-from app.utils import ValveCalculator
+from app.services.calculator import ValveCalculator
 from app.schemas import CalculationParams, ValveInfo, CalculationResult
 import unittest
 from math import sqrt, pi

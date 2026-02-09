@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String, DateTime, JSON, ForeignKey
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
 
-from app.database import Base
+from app.core.database import Base
 
 
 class CalculationResultDB(Base):
