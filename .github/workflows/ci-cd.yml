@@ -79,11 +79,11 @@ jobs:
       run: pip install poetry
 
     - name: Install backend dependencies
-      working-directory: services/valve-calculator/backend
+      working-directory: services/valve-stems/backend
       run: poetry install
 
     - name: Run backend lints
-      working-directory: services/valve-calculator/backend
+      working-directory: services/valve-stems/backend
       run: poetry run ruff check .
       continue-on-error: true
 
@@ -158,11 +158,11 @@ jobs:
       run: pip install poetry
 
     - name: Install backend dependencies
-      working-directory: services/valve-calculator/backend
+      working-directory: services/valve-stems/backend
       run: poetry install
 
     - name: Run backend tests
-      working-directory: services/valve-calculator/backend
+      working-directory: services/valve-stems/backend
       run: poetry run pytest
 
   build-stage-balance:
