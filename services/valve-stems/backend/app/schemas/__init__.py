@@ -1,6 +1,7 @@
 from .calculation import CalculationParams, CalculationResult, CalculationResultDB, ErrorResponse
 from .turbine import TurbineInfo, TurbineValves, TurbineWithValvesInfo
 from .valve import SimpleValveInfo, ValveCreate, ValveInfo
+from .project import ProjectCreate, ProjectResponse
 
 
 __all__ = [
@@ -13,5 +14,7 @@ __all__ = [
     "TurbineValves",
     "TurbineWithValvesInfo",
     "ValveCreate",
-    "ValveInfo"
+    "ValveInfo",
+    "ProjectCreate",
+    "ProjectResponse"
 ]
