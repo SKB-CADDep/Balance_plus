@@ -21,17 +21,17 @@ jobs:
     - name: Greeting
       run: echo "Hello from lint-backend-balance job!"
 
-    # - name: Install poetry
-    #   run: pip install poetry
+    - name: Install poetry
+      run: pip install poetry
 
-    # - name: Install backend dependencies
-    #   working-directory: services/balance-orchestrator/backend
-    #   run: poetry install
+    - name: Install backend dependencies
+      working-directory: services/balance-orchestrator/backend
+      run: poetry install
 
-    # - name: Run backend lints
-    #   working-directory: services/balance-orchestrator/backend
-    #   run: poetry run ruff check . --config ../../../ruff.toml
-    #   continue-on-error: true
+    - name: Run backend lints
+      working-directory: services/balance-orchestrator/backend
+      run: poetry run ruff check . --config ../../../ruff.toml
+      continue-on-error: true
 
   lint-backend-condenser:
     name: Lint the backend condenser
@@ -48,17 +48,17 @@ jobs:
     - name: Greeting
       run: echo "Hello from lint-backend-condenser job!"
 
-    # - name: Install poetry
-    #   run: pip install poetry
+    - name: Install poetry
+      run: pip install poetry
 
-    # - name: Install backend dependencies
-    #   working-directory: services/condenser-calculator/backend
-    #   run: poetry install
+    - name: Install backend dependencies
+      working-directory: services/condenser-calculator/backend
+      run: poetry install
 
-    # - name: Run backend lints
-    #   working-directory: services/condenser-calculator/backend
-    #   run: poetry run ruff check . --config ../../../ruff.toml
-    #   continue-on-error: true
+    - name: Run backend lints
+      working-directory: services/condenser-calculator/backend
+      run: poetry run ruff check . --config ../../../ruff.toml
+      continue-on-error: true
 
   lint-backend-valve:
     name: Lint the backend valve
@@ -75,17 +75,17 @@ jobs:
     - name: Greeting
       run: echo "Hello from lint-backend-valve job!"
 
-    # - name: Install poetry
-    #   run: pip install poetry
+    - name: Install poetry
+      run: pip install poetry
 
-    # - name: Install backend dependencies
-    #   working-directory: services/valve-stems/backend
-    #   run: poetry install
+    - name: Install backend dependencies
+      working-directory: services/valve-stems/backend
+      run: poetry install
 
-    # - name: Run backend lints
-    #   working-directory: services/valve-stems/backend
-    #   run: poetry run ruff check . --config ../../../ruff.toml
-    #   continue-on-error: true
+    - name: Run backend lints
+      working-directory: services/valve-stems/backend
+      run: poetry run ruff check . --config ../../../ruff.toml
+      continue-on-error: true
 
   test-backend-balance:
     name: Test the backend balance
@@ -102,16 +102,16 @@ jobs:
     - name: Greeting
       run: echo "Hello from test-backend-balance job!"
 
-    # - name: Install poetry
-    #   run: pip install poetry
+    - name: Install poetry
+      run: pip install poetry
 
-    # - name: Install backend dependencies
-    #   working-directory: services/balance-orchestrator/backend
-    #   run: poetry install
+    - name: Install backend dependencies
+      working-directory: services/balance-orchestrator/backend
+      run: poetry install
 
-    # - name: Run backend tests
-    #   working-directory: services/balance-orchestrator/backend
-    #   run: poetry run pytest
+    - name: Run backend tests
+      working-directory: services/balance-orchestrator/backend
+      run: poetry run pytest
 
   test-backend-condenser:
     name: Test the backend condenser
@@ -128,16 +128,16 @@ jobs:
     - name: Greeting
       run: echo "Hello from test-backend-condenser job!"
 
-    # - name: Install poetry
-    #   run: pip install poetry
+    - name: Install poetry
+      run: pip install poetry
 
-    # - name: Install backend dependencies
-    #   working-directory: services/condenser-calculator/backend
-    #   run: poetry install
+    - name: Install backend dependencies
+      working-directory: services/condenser-calculator/backend
+      run: poetry install
 
-    # - name: Run backend tests
-    #   working-directory: services/condenser-calculator/backend
-    #   run: poetry run pytest
+    - name: Run backend tests
+      working-directory: services/condenser-calculator/backend
+      run: poetry run pytest
 
   test-backend-valve:
     name: Test the backend valve
@@ -154,16 +154,16 @@ jobs:
     - name: Greeting
       run: echo "Hello from test-backend-valve job!"
 
-    # - name: Install poetry
-    #   run: pip install poetry
+    - name: Install poetry
+      run: pip install poetry
 
-    # - name: Install backend dependencies
-    #   working-directory: services/valve-stems/backend
-    #   run: poetry install
+    - name: Install backend dependencies
+      working-directory: services/valve-stems/backend
+      run: poetry install
 
-    # - name: Run backend tests
-    #   working-directory: services/valve-stems/backend
-    #   run: poetry run pytest
+    - name: Run backend tests
+      working-directory: services/valve-stems/backend
+      run: poetry run pytest
 
   build-stage-balance:
     name: Build balance service for stage
