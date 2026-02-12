@@ -5,6 +5,9 @@ on:
     branches: [feat/add-ci-cd]
   workflow_dispatch:
 
+env:
+  PYTHON_VERSION: "3.12"
+
 jobs:
   lint-backend-balance:
     name: Lint the backend balance
@@ -16,7 +19,7 @@ jobs:
         ref: main
     - uses: actions/setup-python@v6
       with:
-        python-version: "3.12"
+        python-version: ${{ env.PYTHON_VERSION }}
 
     - name: Greeting
       run: echo "Hello from lint-backend-balance job!"
@@ -43,7 +46,7 @@ jobs:
         ref: main
     - uses: actions/setup-python@v6
       with:
-        python-version: "3.12"
+        python-version: ${{ env.PYTHON_VERSION }}
 
     - name: Greeting
       run: echo "Hello from lint-backend-condenser job!"
@@ -70,7 +73,7 @@ jobs:
         ref: main
     - uses: actions/setup-python@v6
       with:
-        python-version: "3.12"
+        python-version: ${{ env.PYTHON_VERSION }}
 
     - name: Greeting
       run: echo "Hello from lint-backend-valve job!"
@@ -97,7 +100,7 @@ jobs:
         ref: main
     - uses: actions/setup-python@v6
       with:
-        python-version: "3.12"
+        python-version: ${{ env.PYTHON_VERSION }}
 
     - name: Greeting
       run: echo "Hello from test-backend-balance job!"
@@ -123,7 +126,7 @@ jobs:
         ref: main
     - uses: actions/setup-python@v6
       with:
-        python-version: "3.12"
+        python-version: ${{ env.PYTHON_VERSION }}
 
     - name: Greeting
       run: echo "Hello from test-backend-condenser job!"
@@ -149,7 +152,7 @@ jobs:
         ref: main
     - uses: actions/setup-python@v6
       with:
-        python-version: "3.12"
+        python-version: ${{ env.PYTHON_VERSION }}
 
     - name: Greeting
       run: echo "Hello from test-backend-valve job!"
