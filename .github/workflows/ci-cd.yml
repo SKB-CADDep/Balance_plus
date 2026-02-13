@@ -370,6 +370,20 @@ jobs:
     - name: Greeting
       run: echo "Hello from build-prod-frontend job!"
 
+    - name: Extract short SHA
+      run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
+
+    - name: Build frontend
+      working-directory: services/balance-orchestrator/frontend
+      run: |
+        docker build -t ${{ vars.HARBOR_URL }}/${{ vars.PROJECT_NAME }}/frontend:prod .
+        docker build -t ${{ vars.HARBOR_URL }}/${{ vars.PROJECT_NAME }}/frontend:$SHORT_SHA .
+
+    - name: Push frontend
+      run: |
+        docker push ${{ vars.HARBOR_URL }}/${{ vars.PROJECT_NAME }}/frontend:prod
+        docker push ${{ vars.HARBOR_URL }}/${{ vars.PROJECT_NAME }}/frontend:$SHORT_SHA
+
   deploy-stage:
     name: Deploy to stage
     needs: build-stage-frontend
