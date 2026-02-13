@@ -208,6 +208,20 @@ jobs:
     - name: Greeting
       run: echo "Hello from build-stage-condenser job!"
 
+    - name: Extract short SHA
+      run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
+
+    - name: Build condenser service
+      working-directory: services/condenser-calculator/backend
+      run: |
+        docker build -t ${{ vars.HARBOR_URL }}/${{ vars.PROJECT_NAME }}/condenser-service:stage .
+        docker build -t ${{ vars.HARBOR_URL }}/${{ vars.PROJECT_NAME }}/condenser-service:$SHORT_SHA .
+
+    - name: Push condenser service
+      run: |
+        docker push ${{ vars.HARBOR_URL }}/${{ vars.PROJECT_NAME }}/condenser-service:stage
+        docker push ${{ vars.HARBOR_URL }}/${{ vars.PROJECT_NAME }}/condenser-service:$SHORT_SHA
+
   build-stage-valve:
     name: Build valve service for stage
     needs: test-backend-valve
