@@ -9,6 +9,14 @@ env:
   PYTHON_VERSION: "3.12"
 
 jobs:
+  test-variables:
+    name: Test the variables
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Output the variables
+      run: echo ${{ github.sha }} && echo ${{ vars.PROJECT_NAME }}
+
   lint-backend-balance:
     name: Lint the backend balance
     runs-on: ubuntu-latest
