@@ -235,6 +235,20 @@ jobs:
     - name: Greeting
       run: echo "Hello from build-stage-valve job!"
 
+    - name: Extract short SHA
+      run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
+
+    - name: Build valve service
+      working-directory: services/valve-stems/backend
+      run: |
+        docker build -t ${{ vars.HARBOR_URL }}/${{ vars.PROJECT_NAME }}/valve-service:stage .
+        docker build -t ${{ vars.HARBOR_URL }}/${{ vars.PROJECT_NAME }}/valve-service:$SHORT_SHA .
+
+    - name: Push valve service
+      run: |
+        docker push ${{ vars.HARBOR_URL }}/${{ vars.PROJECT_NAME }}/valve-service:stage
+        docker push ${{ vars.HARBOR_URL }}/${{ vars.PROJECT_NAME }}/valve-service:$SHORT_SHA
+
   build-stage-frontend:
     name: Build frontend for stage
     needs: [build-stage-balance, build-stage-condenser, build-stage-valve]
