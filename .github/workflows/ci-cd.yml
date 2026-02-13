@@ -289,6 +289,20 @@ jobs:
     - name: Greeting
       run: echo "Hello from build-prod-balance job!"
 
+    - name: Extract short SHA
+      run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
+
+    - name: Build balance service
+      working-directory: services/balance-orchestrator/backend
+      run: |
+        docker build -t ${{ vars.HARBOR_URL }}/${{ vars.PROJECT_NAME }}/balance-service:prod .
+        docker build -t ${{ vars.HARBOR_URL }}/${{ vars.PROJECT_NAME }}/balance-service:$SHORT_SHA .
+
+    - name: Push balance service
+      run: |
+        docker push ${{ vars.HARBOR_URL }}/${{ vars.PROJECT_NAME }}/balance-service:prod
+        docker push ${{ vars.HARBOR_URL }}/${{ vars.PROJECT_NAME }}/balance-service:$SHORT_SHA
+
   build-prod-condenser:
     name: Build condenser service for prod
     needs: build-stage-condenser
