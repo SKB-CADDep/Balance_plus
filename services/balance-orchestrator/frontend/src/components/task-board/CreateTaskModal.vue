@@ -78,7 +78,7 @@
     modules: { id: string; label: string }[]
   }
   
-  const props = defineProps<{
+  defineProps<{
     bureaus: Bureau[]
   }>()
   
