@@ -9,7 +9,7 @@ from pathlib import Path
 # КОНФИГУРАЦИЯ
 # ═══════════════════════════════════════════════════════════════
 
-OPENROUTER_MODEL = "tngtech/deepseek-r1t2-chimera:free"
+OPENROUTER_MODEL = "arcee-ai/trinity-large-preview:free"
 MAX_DIFF_CHARS = 100000
 
 
@@ -39,16 +39,14 @@ def truncate_diff(diff, max_chars=MAX_DIFF_CHARS):
 
 
 def clean_thinking_tags(text):
-    """Удаляет <think>...</think> теги из ответа DeepSeek R1"""
-    # Убираем блоки размышлений
+    """Удаляет <think>...</think> теги из ответа"""
     cleaned = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL)
-    # Убираем возможные незакрытые теги
     cleaned = re.sub(r'<think>.*', '', cleaned, flags=re.DOTALL)
     return cleaned.strip()
 
 
 def call_openrouter(system_prompt, user_prompt):
-    api_key = os.environ.get("OPENROUTER_API_KEY")
+    api_key = os.environ.get("OPENROUTER_API_KEY", "").strip()
     if not api_key:
         raise ValueError("OPENROUTER_API_KEY not set")
 
@@ -68,8 +66,12 @@ def call_openrouter(system_prompt, user_prompt):
             ],
             "temperature": 0.2,
             "max_tokens": 8192,
+            # Включаем reasoning для более глубокого анализа
+            "reasoning": {
+                "enabled": True,
+            },
         },
-        timeout=180,  # DeepSeek может думать дольше
+        timeout=300,
     )
 
     print(f"OpenRouter status: {response.status_code}")
@@ -78,9 +80,13 @@ def call_openrouter(system_prompt, user_prompt):
         raise Exception(f"API Error {response.status_code}: {response.text[:500]}")
 
     data = response.json()
+
+    if "error" in data:
+        raise Exception(f"API error: {data['error']}")
+
     content = data["choices"][0]["message"]["content"]
-    
-    # Очищаем от thinking tags
+
+    # Очищаем от thinking tags (на случай если модель вернёт их в content)
     return clean_thinking_tags(content)
 
 
@@ -121,11 +127,11 @@ def main():
         "---\n\nПроведи код-ревью этого PR."
     )
 
-    print("Calling DeepSeek R1T2 Chimera...")
+    print("Calling Trinity Large Preview...")
 
     try:
         review_text = call_openrouter(system_prompt, user_prompt)
-        print("Got review")
+        print(f"Got review ({len(review_text)} chars)")
     except Exception as e:
         review_text = f"**Ошибка:** {e}"
         print(f"Error: {e}")
@@ -141,7 +147,7 @@ def main():
             "## 🤖 AI Code Review\n\n"
             f"{review_text}\n\n"
             "---\n"
-            "<sub>DeepSeek R1T2 Chimera via OpenRouter</sub>"
+            "<sub>Trinity Large Preview via OpenRouter</sub>"
         )
 
         pr.create_issue_comment(comment)
