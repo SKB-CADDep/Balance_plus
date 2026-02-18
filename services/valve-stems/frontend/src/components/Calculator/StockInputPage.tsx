@@ -11,7 +11,6 @@ import {
     NumberInputStepper,
     NumberIncrementStepper,
     NumberDecrementStepper,
-    Select,
     VStack,
     HStack,
     Heading,
@@ -75,7 +74,6 @@ const StockInputPage: React.FC<Props> = ({stock, turbine, onSubmit, initialData,
         register,
         handleSubmit,
         control,
-        watch,
         reset,
         formState: {errors, isSubmitting},
     } = useForm<FormInputValues>({
@@ -97,8 +95,6 @@ const StockInputPage: React.FC<Props> = ({stock, turbine, onSubmit, initialData,
         mode: 'onBlur',
     });
 
-    const watchedCountParts = watch('count_parts_select', defaultCountParts);
-
     const {fields: pValueFields, append: appendPValue, remove: removePValue} = useFieldArray({
         control,
         name: 'p_values',
@@ -111,7 +107,7 @@ const StockInputPage: React.FC<Props> = ({stock, turbine, onSubmit, initialData,
 
     useEffect(() => {
         const currentPValuesLength = pValueFields.length;
-        const targetLength = Number(watchedCountParts) || 0;
+        const targetLength = Number(defaultCountParts) || 0;
 
         if (targetLength > currentPValuesLength) {
             for (let i = 0; i < targetLength - currentPValuesLength; i++) {
@@ -134,7 +130,7 @@ const StockInputPage: React.FC<Props> = ({stock, turbine, onSubmit, initialData,
             }
         }
     }, [
-        watchedCountParts,
+        defaultCountParts,
         appendPValue,
         removePValue,
         pValueFields.length,
@@ -210,42 +206,7 @@ const StockInputPage: React.FC<Props> = ({stock, turbine, onSubmit, initialData,
             <input type="hidden" {...register("turbine_name")} />
             <input type="hidden" {...register("valve_drawing")} />
             <input type="hidden" {...register("valve_id")} />
-
-            <FormControl isInvalid={!!errors.count_parts_select}>
-                <FormLabel htmlFor="count_parts_select">
-                    Количество участков (от 2 до {pValueFields.length > 0 ? Math.max(2, pValueFields.length) : 4} ):
-                </FormLabel>
-                <Select
-                    id="count_parts_select"
-                    {...register("count_parts_select", {
-                        valueAsNumber: true,
-                        onChange: (e) => {
-                            const newCount = parseInt(e.target.value, 10);
-                            const currentPValuesLength = pValueFields.length;
-                            if (newCount > currentPValuesLength) {
-                                for (let i = 0; i < newCount - currentPValuesLength; i++) appendPValue({value: ''});
-                            } else if (newCount < currentPValuesLength) {
-                                for (let i = currentPValuesLength - 1; i >= newCount; i--) removePValue(i);
-                            }
-                            const currentPEjectorsLength = pEjectorFields.length;
-                            if (newCount > currentPEjectorsLength) {
-                                for (let i = 0; i < newCount - currentPEjectorsLength; i++) appendPEjector({value: ''});
-                            } else if (newCount < currentPEjectorsLength) {
-                                for (let i = currentPEjectorsLength - 1; i >= newCount; i--) removePEjector(i);
-                            }
-                            return newCount;
-                        }
-                    })}
-                    defaultValue={defaultCountParts}
-                >
-                    {[2, 3, 4].map((value) => (
-                        <option key={value} value={value}>
-                            {value}
-                        </option>
-                    ))}
-                </Select>
-                <FormErrorMessage>{errors.count_parts_select?.message}</FormErrorMessage>
-            </FormControl>
+            <input type="hidden" {...register("count_parts_select")} />
 
             {/* Количество клапанов: (целое число) */}
             <FormControl isRequired isInvalid={!!errors.count_valves}>
