@@ -373,6 +373,15 @@ jobs:
     - name: Greeting
       run: echo "Hello from end-to-end-test job!"
 
+    - name: Start test environment
+      run: docker compose up -d
+
+    - name: Start end to end tests
+      run: docker exec backend poetry run pytest
+
+    - name: Remove test environment
+      run: docker compose down -v
+
   deploy-prod:
     name: Deploy to prod
     needs: end-to-end-test
