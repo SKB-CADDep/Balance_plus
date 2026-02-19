@@ -352,6 +352,11 @@ jobs:
     - name: Greeting
       run: echo "Hello from deploy-stage job!"
 
+    - name: Deploy to staging environment
+      run: |
+        ssh -i ~/.ssh/staging -o StrictHostKeyChecking=no ${{ vars.SERVER_USER }}@$${{ vars.STAGING_SERVER_IP }} "docker-compose -f ~/balanse_plus/docker-compose-stage.yml pull"
+        ssh -i ~/.ssh/staging -o StrictHostKeyChecking=no ${{ vars.SERVER_USER }}@$${{ vars.STAGING_SERVER_IP }} "docker-compose -f ~/balanse_plus/docker-compose-stage.yml up -d --remove-orphans"
+
   end-to-end-test:
     name: End to end test
     needs: [build-prod-frontend, deploy-stage]
@@ -377,3 +382,8 @@ jobs:
     steps:
     - name: Greeting
       run: echo "Hello from deploy-prod job!"
+
+    - name: Deploy to production environment
+      run: |
+        docker-compose -f ~/balanse_plus/docker-compose-stage.yml pull
+        docker-compose -f ~/balanse_plus/docker-compose-stage.yml up -d --remove-orphans
