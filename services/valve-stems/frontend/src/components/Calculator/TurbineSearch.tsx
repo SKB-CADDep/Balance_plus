@@ -1,32 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
-    Box,
-    Button,
-    Card,
-    CardBody,
-    Flex,
-    FormControl,
-    FormLabel,
-    Heading,
-    Icon,
-    Input,
-    List,
-    ListItem,
-    Spinner,
-    Stack,
-    Tag,
-    Text,
-    useColorModeValue,
-    VStack,
-    Wrap,
-    WrapItem,
-    InputGroup,
-    InputRightElement
+    Box, Button, Card, CardBody, Flex, FormControl, FormLabel,
+    Heading, Icon, Input, List, ListItem, Spinner, Stack, Tag, Text,
+    useColorModeValue, VStack, Wrap, WrapItem, InputGroup, InputRightElement
 } from '@chakra-ui/react';
 import { FiSearch, FiChevronRight, FiX } from 'react-icons/fi';
 
 import { type TurbineWithValvesInfo } from '../../client';
+import { request as __request } from '../../client/core/request';
 import { OpenAPI } from '../../client/core/OpenAPI';
 
 function useDebounce<T>(value: T, delay: number): [T] {
@@ -51,36 +33,29 @@ type Props = {
     onSelectTurbine: (turbine: ExtendedTurbine, autoSelectValveId?: number) => void;
 };
 
+// ИСПОЛЬЗУЕМ ВНУТРЕННИЙ КЛИЕНТ ПРИЛОЖЕНИЯ (ОБХОДИТ ВСЕ ПРОБЛЕМЫ С CORS!)
 const searchTurbinesAPI = async (filters: {
     q: string;
     station: string;
     factory: string;
     valve: string;
 }): Promise<ExtendedTurbine[]> => {
-    const params = new URLSearchParams();
-    if (filters.q) params.append('q', filters.q);
-    if (filters.station) params.append('station', filters.station);
-    if (filters.factory) params.append('factory', filters.factory);
-    if (filters.valve) params.append('valve', filters.valve);
+    const queryParams: Record<string, string> = {};
+    if (filters.q) queryParams.q = filters.q;
+    if (filters.station) queryParams.station = filters.station;
+    if (filters.factory) queryParams.factory = filters.factory;
+    if (filters.valve) queryParams.valve = filters.valve;
 
-    // Достаем базовый URL проекта (IP и порт бэкенда)
-    const baseUrl = OpenAPI.BASE || import.meta.env.VITE_API_URL || '';
-    const cleanBaseUrl = baseUrl.replace(/\/$/, ''); // убираем слеш на конце если есть
-    const url = `${cleanBaseUrl}/api/v1/turbines/search?${params.toString()}`;
-
-    const response = await fetch(url, {
-        headers: { 
-            'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
-            'Accept': 'application/json'
-        } 
-    });
-
-    if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(`Ошибка сервера ${response.status}: ${errText}`);
+    try {
+        const result = await __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/turbines/search',
+            query: queryParams
+        });
+        return result as ExtendedTurbine[];
+    } catch (err: any) {
+        throw new Error(err?.body?.detail || err.message || 'Ошибка сервера');
     }
-    
-    return response.json();
 };
 
 const TurbineSearch: React.FC<Props> = ({ onSelectTurbine }) => {
@@ -90,7 +65,6 @@ const TurbineSearch: React.FC<Props> = ({ onSelectTurbine }) => {
 
     const [debouncedFilters] = useDebounce(filters, 500);
 
-    // Проверяем, есть ли хоть один заполненный фильтр
     const hasFilters = Object.values(debouncedFilters).some((v) => String(v).trim().length > 0);
 
     const {
@@ -102,7 +76,7 @@ const TurbineSearch: React.FC<Props> = ({ onSelectTurbine }) => {
         queryKey: ['turbinesSearch', debouncedFilters],
         queryFn: () => searchTurbinesAPI(debouncedFilters),
         enabled: hasFilters,
-        retry: false // Не пытаемся повторить при ошибке, чтобы сразу её увидеть
+        retry: false
     });
 
     const handleInputChange = (field: keyof typeof filters, value: string) => {
@@ -184,36 +158,36 @@ const TurbineSearch: React.FC<Props> = ({ onSelectTurbine }) => {
 
             <Box minH="300px">
                 {/* 1. Идет загрузка */}
-                {isLoading && (
+                {isLoading && hasFilters && (
                     <Flex justify="center" p={10}>
                         <Spinner size="xl" color="teal.500" />
                     </Flex>
                 )}
 
-                {/* 2. Произошла ОШИБКА */}
-                {!isLoading && isError && (
+                {/* 2. Стартовый экран */}
+                {!hasFilters && (
+                    <Text textAlign="center" color="gray.400" mt={10}>
+                        Введите параметры для поиска
+                    </Text>
+                )}
+
+                {/* 3. Ошибка */}
+                {isError && (
                     <Box textAlign="center" mt={10} p={4} borderWidth="1px" borderColor="red.300" borderRadius="md" bg="red.50">
                         <Text color="red.600" fontWeight="bold" fontSize="lg">Произошла ошибка при поиске!</Text>
                         <Text color="red.500" mt={2}>{error?.message}</Text>
                     </Box>
                 )}
 
-                {/* 3. Успешно, но ничего не найдено */}
-                {!isLoading && !isError && turbines && turbines.length === 0 && (
+                {/* 4. Ничего не найдено */}
+                {!isLoading && !isError && hasFilters && turbines && turbines.length === 0 && (
                     <Text textAlign="center" color="gray.500" mt={10}>
                         Проекты не найдены. Попробуйте изменить критерии поиска.
                     </Text>
                 )}
 
-                {/* 4. Фильтры пустые (стартовый экран) */}
-                {!isLoading && !isError && !turbines && !hasFilters && (
-                    <Text textAlign="center" color="gray.400" mt={10}>
-                        Введите параметры для поиска
-                    </Text>
-                )}
-
                 {/* 5. Успешно нашли данные! */}
-                {turbines && turbines.length > 0 && (
+                {!isLoading && !isError && turbines && turbines.length > 0 && (
                     <List spacing={3}>
                         {turbines.map((turbine) => (
                             <ListItem
