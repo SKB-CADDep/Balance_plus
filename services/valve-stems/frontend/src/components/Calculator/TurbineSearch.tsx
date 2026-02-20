@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { OpenAPI } from '../../client/core/OpenAPI';
 import { useQuery } from '@tanstack/react-query';
 import {
     Box,
@@ -65,13 +66,15 @@ const searchTurbinesAPI = async (filters: {
     if (filters.factory) params.append('factory', filters.factory);
     if (filters.valve) params.append('valve', filters.valve);
 
-    const response = await fetch(`/api/v1/turbines/search?${params.toString()}`, {
+    // Достаем правильный базовый URL, чтобы избежать обрезки в Nginx
+    const baseUrl = OpenAPI.BASE || import.meta.env.VITE_API_URL || '';
+
+    const response = await fetch(`${baseUrl}/api/v1/turbines/search?${params.toString()}`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token') || ''}` } 
     });
     if (!response.ok) throw new Error('Network response was not ok');
     return response.json();
 };
-
 const TurbineSearch: React.FC<Props> = ({ onSelectTurbine }) => {
     const [filters, setFilters] = useState({
         q: '',
