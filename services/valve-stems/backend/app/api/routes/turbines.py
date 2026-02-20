@@ -1,8 +1,11 @@
 import logging
 
+from typing import Any, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session, selectinload
 
+from app.api import dependencies
+from app.crud import turbines as crud_turbines
 from app.crud import get_turbine_by_id, get_valves_by_turbine
 from app.dependencies import get_db
 from app.models import Turbine
@@ -11,6 +14,39 @@ from app.schemas import TurbineInfo, TurbineValves, TurbineWithValvesInfo
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
+@router.get("/search", response_model=List[TurbineWithValvesInfo])
+def search_turbines(
+    q: Optional[str] = None, # Марка турбины
+    station: Optional[str] = None,
+    factory: Optional[str] = None,
+    valve: Optional[str] = None,
+    db: Session = Depends(dependencies.get_db),
+) -> Any:
+    """
+    Поиск проектов по множеству критериев.
+    """
+    results = crud_turbines.search_turbines(
+        db, query=q, station=station, factory_num=factory, valve_drawing=valve
+    )
+    
+    # Собираем ответ
+    response = []
+    for t in results:
+        t_info = TurbineWithValvesInfo.model_validate(t)
+        response.append(t_info)
+    
+    return response
+
+@router.get("/{turbine_id}/valves/", response_model=TurbineValves)
+def get_valves_by_turbine(
+    turbine_id: int,
+    db: Session = Depends(dependencies.get_db),
+) -> Any:
+    valves = crud_turbines.get_valves_by_turbine_id(db, turbine_id=turbine_id)
+    if not valves:
+        raise HTTPException(status_code=404, detail="Турбина или клапаны не найдены")
+    return valves
 
 @router.get("/", response_model=list[TurbineWithValvesInfo], summary="Получить все турбины с клапанами")
 async def get_all_turbines_with_valves(db: Session = Depends(get_db)):
@@ -26,18 +62,6 @@ async def get_all_turbines_with_valves(db: Session = Depends(get_db)):
         logger.error(f"Ошибка при получении всех турбин с клапанами: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                             detail=f"Не удалось получить турбины: {e}")
-
-@router.get("/{turbine_name:path}/valves/", response_model=TurbineValves, summary="Получить клапаны по имени турбины")
-async def get_valves_by_turbine_endpoint(turbine_name: str, db: Session = Depends(get_db)):
-    try:
-        turbine_valves = get_valves_by_turbine(db, turbine_name=turbine_name)
-        if turbine_valves is None:
-            raise HTTPException(status_code=404,
-                                detail=f"Турбина с именем '{turbine_name}' не найдена или у неё нет клапанов")
-        return turbine_valves
-    except Exception as e:
-        logger.error(f"Ошибка при получении клапанов для турбины {turbine_name}: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Внутренняя ошибка сервера: {e}")
 
 @router.post("", response_model=TurbineInfo, status_code=status.HTTP_201_CREATED, summary="Создать турбину")
 async def create_turbine(turbine: TurbineInfo, db: Session = Depends(get_db)):
