@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { request as __request } from '../../client/core/request';
 import { OpenAPI } from '../../client/core/OpenAPI';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -60,21 +61,21 @@ const searchTurbinesAPI = async (filters: {
     factory: string;
     valve: string;
 }): Promise<ExtendedTurbine[]> => {
-    const params = new URLSearchParams();
-    if (filters.q) params.append('q', filters.q);
-    if (filters.station) params.append('station', filters.station);
-    if (filters.factory) params.append('factory', filters.factory);
-    if (filters.valve) params.append('valve', filters.valve);
+    // Собираем только заполненные фильтры
+    const queryParams: Record<string, string> = {};
+    if (filters.q) queryParams.q = filters.q;
+    if (filters.station) queryParams.station = filters.station;
+    if (filters.factory) queryParams.factory = filters.factory;
+    if (filters.valve) queryParams.valve = filters.valve;
 
-    // Достаем правильный базовый URL, чтобы избежать обрезки в Nginx
-    const baseUrl = OpenAPI.BASE || import.meta.env.VITE_API_URL || '';
-
-    const response = await fetch(`${baseUrl}/api/v1/turbines/search?${params.toString()}`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token') || ''}` } 
+    // Используем встроенный клиент, он сам подставит нужный базовый URL и токены!
+    return __request(OpenAPI, {
+        method: 'GET',
+        url: '/api/v1/turbines/search',
+        query: queryParams
     });
-    if (!response.ok) throw new Error('Network response was not ok');
-    return response.json();
 };
+
 const TurbineSearch: React.FC<Props> = ({ onSelectTurbine }) => {
     const [filters, setFilters] = useState({
         q: '',
