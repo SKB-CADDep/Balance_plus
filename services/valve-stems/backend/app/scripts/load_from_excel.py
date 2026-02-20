@@ -4,21 +4,18 @@ import os
 import pandas as pd
 from pathlib import Path
 
-# Добавляем путь для импорта модулей app
 sys.path.append(os.getcwd())
 
-from app.core.database import SessionLocal, engine
-from app.models import Turbine, Valve, Base
+from app.core.database import SessionLocal, engine, Base
+from app.models import Turbine, Valve
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Путь к файлу. Если запускать из /backend, то db лежит на уровень выше
-# Адаптируйте путь в зависимости от того, откуда запускаете скрипт.
-EXCEL_PATH = Path(os.getcwd()).parent / "db" / "Data.xlsx"
+# Путь для работы внутри Docker-контейнера
+EXCEL_PATH = Path("/app/Data.xlsx")
 
 def clean_value(val):
-    """Очистка значений от NaN и преобразование чисел в строки без .0"""
     if pd.isna(val):
         return None
     if isinstance(val, float) and val.is_integer():
@@ -26,10 +23,8 @@ def clean_value(val):
     return str(val).strip()
 
 def extract_valves(cell_value):
-    """Разбивает строку вида 'БТ-123, БТ-456' на список"""
     if pd.isna(cell_value) or str(cell_value).strip() == "":
         return []
-    # Заменяем переносы строк на запятые и разбиваем
     raw_str = str(cell_value).replace('\n', ',')
     valves = [v.strip() for v in raw_str.split(',') if v.strip()]
     return valves
@@ -45,7 +40,6 @@ def init_db_from_excel():
     db = SessionLocal()
     
     try:
-        # ВНИМАНИЕ: Это удалит текущие таблицы турбин и клапанов!
         logger.info("Пересоздание таблиц БД...")
         Base.metadata.drop_all(bind=engine)
         Base.metadata.create_all(bind=engine)
@@ -60,7 +54,7 @@ def init_db_from_excel():
             st_num = clean_value(row.get('Станц. №'))
 
             if not mark:
-                continue # Пропускаем пустые строки
+                continue
 
             turbine = Turbine(
                 name=mark,
@@ -69,10 +63,9 @@ def init_db_from_excel():
                 factory_number=factory_num
             )
             db.add(turbine)
-            db.flush() # Получаем ID турбины
+            db.flush()
             count_turbines += 1
 
-            # Добавление клапанов
             sk_list = extract_valves(row.get('СК'))
             rk_list = extract_valves(row.get('РК'))
             srk_list = extract_valves(row.get('СРК'))
@@ -84,7 +77,7 @@ def init_db_from_excel():
                         name=v_name,
                         type=v_type,
                         turbine_id=turbine.id,
-                        count_parts=3 # По умолчанию, чтобы расчеты не падали
+                        count_parts=3
                     )
                     db.add(valve)
                     count_valves += 1
