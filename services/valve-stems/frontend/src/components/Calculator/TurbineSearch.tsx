@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { request as __request } from '../../client/core/request';
-import { OpenAPI } from '../../client/core/OpenAPI';
 import { useQuery } from '@tanstack/react-query';
 import {
     Box,
@@ -29,17 +27,15 @@ import {
 import { FiSearch, FiChevronRight, FiX } from 'react-icons/fi';
 
 import { type TurbineWithValvesInfo } from '../../client';
+import { OpenAPI } from '../../client/core/OpenAPI';
 
-// Встроенный хук (чтобы не устанавливать внешнюю библиотеку use-debounce)
 function useDebounce<T>(value: T, delay: number): [T] {
     const [debouncedValue, setDebouncedValue] = useState<T>(value);
     useEffect(() => {
         const handler = setTimeout(() => {
             setDebouncedValue(value);
         }, delay);
-        return () => {
-            clearTimeout(handler);
-        };
+        return () => clearTimeout(handler);
     }, [value, delay]);
     return [debouncedValue];
 }
@@ -61,39 +57,52 @@ const searchTurbinesAPI = async (filters: {
     factory: string;
     valve: string;
 }): Promise<ExtendedTurbine[]> => {
-    // Собираем только заполненные фильтры
-    const queryParams: Record<string, string> = {};
-    if (filters.q) queryParams.q = filters.q;
-    if (filters.station) queryParams.station = filters.station;
-    if (filters.factory) queryParams.factory = filters.factory;
-    if (filters.valve) queryParams.valve = filters.valve;
+    const params = new URLSearchParams();
+    if (filters.q) params.append('q', filters.q);
+    if (filters.station) params.append('station', filters.station);
+    if (filters.factory) params.append('factory', filters.factory);
+    if (filters.valve) params.append('valve', filters.valve);
 
-    // Используем встроенный клиент, он сам подставит нужный базовый URL и токены!
-    return __request(OpenAPI, {
-        method: 'GET',
-        url: '/api/v1/turbines/search',
-        query: queryParams
+    // Достаем базовый URL проекта (IP и порт бэкенда)
+    const baseUrl = OpenAPI.BASE || import.meta.env.VITE_API_URL || '';
+    const cleanBaseUrl = baseUrl.replace(/\/$/, ''); // убираем слеш на конце если есть
+    const url = `${cleanBaseUrl}/api/v1/turbines/search?${params.toString()}`;
+
+    const response = await fetch(url, {
+        headers: { 
+            'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
+            'Accept': 'application/json'
+        } 
     });
+
+    if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`Ошибка сервера ${response.status}: ${errText}`);
+    }
+    
+    return response.json();
 };
 
 const TurbineSearch: React.FC<Props> = ({ onSelectTurbine }) => {
     const [filters, setFilters] = useState({
-        q: '',
-        station: '',
-        factory: '',
-        valve: ''
+        q: '', station: '', factory: '', valve: ''
     });
 
     const [debouncedFilters] = useDebounce(filters, 500);
 
+    // Проверяем, есть ли хоть один заполненный фильтр
+    const hasFilters = Object.values(debouncedFilters).some((v) => String(v).trim().length > 0);
+
     const {
         data: turbines,
         isLoading,
+        isError,
+        error
     } = useQuery<ExtendedTurbine[], Error>({
         queryKey: ['turbinesSearch', debouncedFilters],
         queryFn: () => searchTurbinesAPI(debouncedFilters),
-        // Исправлена ошибка с unknown type
-        enabled: Object.values(debouncedFilters).some((v) => String(v).length > 0),
+        enabled: hasFilters,
+        retry: false // Не пытаемся повторить при ошибке, чтобы сразу её увидеть
     });
 
     const handleInputChange = (field: keyof typeof filters, value: string) => {
@@ -174,77 +183,91 @@ const TurbineSearch: React.FC<Props> = ({ onSelectTurbine }) => {
             </Card>
 
             <Box minH="300px">
+                {/* 1. Идет загрузка */}
                 {isLoading && (
                     <Flex justify="center" p={10}>
                         <Spinner size="xl" color="teal.500" />
                     </Flex>
                 )}
 
-                {!isLoading && turbines && turbines.length === 0 && (
+                {/* 2. Произошла ОШИБКА */}
+                {!isLoading && isError && (
+                    <Box textAlign="center" mt={10} p={4} borderWidth="1px" borderColor="red.300" borderRadius="md" bg="red.50">
+                        <Text color="red.600" fontWeight="bold" fontSize="lg">Произошла ошибка при поиске!</Text>
+                        <Text color="red.500" mt={2}>{error?.message}</Text>
+                    </Box>
+                )}
+
+                {/* 3. Успешно, но ничего не найдено */}
+                {!isLoading && !isError && turbines && turbines.length === 0 && (
                     <Text textAlign="center" color="gray.500" mt={10}>
                         Проекты не найдены. Попробуйте изменить критерии поиска.
                     </Text>
                 )}
 
-                {!isLoading && !turbines && (
+                {/* 4. Фильтры пустые (стартовый экран) */}
+                {!isLoading && !isError && !turbines && !hasFilters && (
                     <Text textAlign="center" color="gray.400" mt={10}>
                         Введите параметры для поиска
                     </Text>
                 )}
 
-                <List spacing={3}>
-                    {turbines?.map((turbine) => (
-                        <ListItem
-                            key={turbine.id}
-                            onClick={() => onSelectTurbine(turbine)}
-                            p={4}
-                            borderWidth="1px"
-                            borderRadius="lg"
-                            borderColor={borderColor}
-                            bg={cardBg}
-                            _hover={{
-                                bg: hoverBg,
-                                cursor: 'pointer',
-                                borderColor: 'teal.300',
-                                transform: 'translateY(-2px)',
-                                shadow: 'md'
-                            }}
-                            transition="all 0.2s"
-                        >
-                            <Flex justify="space-between" align="center">
-                                <VStack align="start" spacing={1}>
-                                    <Flex align="center" gap={2}>
-                                        <Heading size="md" color="teal.600">{turbine.name}</Heading>
-                                        {turbine.factory_number && (
-                                            <Tag size="sm" colorScheme="gray">Зав.№ {turbine.factory_number}</Tag>
+                {/* 5. Успешно нашли данные! */}
+                {turbines && turbines.length > 0 && (
+                    <List spacing={3}>
+                        {turbines.map((turbine) => (
+                            <ListItem
+                                key={turbine.id}
+                                onClick={() => onSelectTurbine(turbine)}
+                                p={4}
+                                borderWidth="1px"
+                                borderRadius="lg"
+                                borderColor={borderColor}
+                                bg={cardBg}
+                                _hover={{
+                                    bg: hoverBg,
+                                    cursor: 'pointer',
+                                    borderColor: 'teal.300',
+                                    transform: 'translateY(-2px)',
+                                    shadow: 'md'
+                                }}
+                                transition="all 0.2s"
+                            >
+                                <Flex justify="space-between" align="center">
+                                    <VStack align="start" spacing={1}>
+                                        <Flex align="center" gap={2}>
+                                            <Heading size="md" color="teal.600">{turbine.name}</Heading>
+                                            {turbine.factory_number && (
+                                                <Tag size="sm" colorScheme="gray">Зав.№ {turbine.factory_number}</Tag>
+                                            )}
+                                        </Flex>
+                                        <Text fontSize="md" fontWeight="medium">
+                                            {turbine.station_name} {turbine.station_number ? `(Ст. №${turbine.station_number})` : ''}
+                                        </Text>
+                                        
+                                        {turbine.valves && turbine.valves.length > 0 && (
+                                            <Wrap mt={2} spacing={2}>
+                                                {turbine.valves.slice(0, 5).map(v => (
+                                                    <WrapItem key={v.id}>
+                                                        <Tag 
+                                                            size="sm" 
+                                                            colorScheme={filters.valve && v.name.toLowerCase().includes(filters.valve.toLowerCase()) ? "orange" : "cyan"}
+                                                            variant="subtle"
+                                                        >
+                                                            {v.name}
+                                                        </Tag>
+                                                    </WrapItem>
+                                                ))}
+                                                {turbine.valves.length > 5 && <Tag size="sm">+{turbine.valves.length - 5}</Tag>}
+                                            </Wrap>
                                         )}
-                                    </Flex>
-                                    <Text fontSize="md" fontWeight="medium">
-                                        {turbine.station_name} {turbine.station_number ? `(Ст. №${turbine.station_number})` : ''}
-                                    </Text>
-                                    
-                                    {turbine.valves && turbine.valves.length > 0 && (
-                                        <Wrap mt={2} spacing={2}>
-                                            {turbine.valves.slice(0, 5).map(v => (
-                                                <WrapItem key={v.id}>
-                                                    <Tag 
-                                                        size="sm" 
-                                                        colorScheme={filters.valve && v.name.toLowerCase().includes(filters.valve.toLowerCase()) ? "orange" : "cyan"}
-                                                        variant="subtle"
-                                                    >
-                                                        {v.name}
-                                                    </Tag>
-                                                </WrapItem>
-                                            ))}
-                                            {turbine.valves.length > 5 && <Tag size="sm">+{turbine.valves.length - 5}</Tag>}
-                                        </Wrap>
-                                    )}
-                                </VStack>
-                                <Icon as={FiChevronRight} color="gray.400" boxSize={6} />
-                            </Flex>
-                        </ListItem>
-                    ))}
-                </List>
+                                    </VStack>
+                                    <Icon as={FiChevronRight} color="gray.400" boxSize={6} />
+                                </Flex>
+                            </ListItem>
+                        ))}
+                    </List>
+                )}
             </Box>
         </VStack>
     );
