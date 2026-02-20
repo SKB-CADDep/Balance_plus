@@ -7,7 +7,6 @@ from fastapi.routing import APIRoute
 from app.api.main import api_router
 from app.core.config import settings
 
-
 # Настройка логирования
 logging.basicConfig(
     level=logging.INFO,
@@ -25,10 +24,10 @@ app = FastAPI(
     generate_unique_id_function=custom_generate_unique_id,
 )
 
-# Настройка CORS (берите настройки из settings, это правильнее)
+# ИСПРАВЛЕННЫЙ CORS: разрешаем любые адреса (магическая строка allow_origin_regex=".*")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[str(origin) for origin in settings.BACKEND_CORS_ORIGINS],
+    allow_origin_regex=".*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
