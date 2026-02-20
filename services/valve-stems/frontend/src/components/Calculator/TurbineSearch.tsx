@@ -5,7 +5,6 @@ import {
     Button,
     Card,
     CardBody,
-    Collapse,
     Flex,
     FormControl,
     FormLabel,
@@ -23,19 +22,26 @@ import {
     Wrap,
     WrapItem,
     InputGroup,
-    InputRightElement,
-    IconButton
+    InputRightElement
 } from '@chakra-ui/react';
-import { FiSearch, FiChevronRight, FiFilter, FiX } from 'react-icons/fi';
-import { useDebounce } from 'use-debounce'; // Рекомендую установить: npm i use-debounce
+import { FiSearch, FiChevronRight, FiX } from 'react-icons/fi';
 
-import {
-    type SimpleValveInfo,
-    TurbinesService,
-    type TurbineWithValvesInfo,
-} from '../../client';
+import { type TurbineWithValvesInfo } from '../../client';
 
-// Расширяем тип, так как мы добавили поля в бэкенд, но клиент мог еще не обновиться
+// Встроенный хук (чтобы не устанавливать внешнюю библиотеку use-debounce)
+function useDebounce<T>(value: T, delay: number): [T] {
+    const [debouncedValue, setDebouncedValue] = useState<T>(value);
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedValue(value);
+        }, delay);
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [value, delay]);
+    return [debouncedValue];
+}
+
 interface ExtendedTurbine extends TurbineWithValvesInfo {
     station_name?: string;
     station_number?: string;
@@ -47,18 +53,12 @@ type Props = {
     onSelectTurbine: (turbine: ExtendedTurbine, autoSelectValveId?: number) => void;
 };
 
-// Функция API вызова с фильтрами
 const searchTurbinesAPI = async (filters: {
     q: string;
     station: string;
     factory: string;
     valve: string;
 }): Promise<ExtendedTurbine[]> => {
-    // В реальном коде вам нужно обновить `client/services.ts`, 
-    // но пока можно использовать прямой fetch или axios, если авто-генератор еще не запущен
-    // Ниже пример через сгенерированный сервис (предполагая, что вы обновили OpenAPI)
-    
-    // Если вы еще не обновили клиент, придется формировать URL вручную:
     const params = new URLSearchParams();
     if (filters.q) params.append('q', filters.q);
     if (filters.station) params.append('station', filters.station);
@@ -73,26 +73,23 @@ const searchTurbinesAPI = async (filters: {
 };
 
 const TurbineSearch: React.FC<Props> = ({ onSelectTurbine }) => {
-    // Состояние фильтров
     const [filters, setFilters] = useState({
-        q: '',        // Марка турбины
-        station: '',  // Станция
-        factory: '',  // Зав №
-        valve: ''     // Чертеж
+        q: '',
+        station: '',
+        factory: '',
+        valve: ''
     });
 
-    // Дебаунс для предотвращения запросов при каждом нажатии клавиши
     const [debouncedFilters] = useDebounce(filters, 500);
 
     const {
         data: turbines,
         isLoading,
-        isError,
     } = useQuery<ExtendedTurbine[], Error>({
         queryKey: ['turbinesSearch', debouncedFilters],
         queryFn: () => searchTurbinesAPI(debouncedFilters),
-        // Не делать запрос, если все поля пустые
-        enabled: Object.values(debouncedFilters).some(v => v.length > 0),
+        // Исправлена ошибка с unknown type
+        enabled: Object.values(debouncedFilters).some((v) => String(v).length > 0),
     });
 
     const handleInputChange = (field: keyof typeof filters, value: string) => {
@@ -103,15 +100,6 @@ const TurbineSearch: React.FC<Props> = ({ onSelectTurbine }) => {
         setFilters({ q: '', station: '', factory: '', valve: '' });
     };
 
-    // Авто-выбор, если поиск по клапану дал точное совпадение
-    useEffect(() => {
-        if (filters.valve && turbines && turbines.length === 1) {
-            // Если найден ровно 1 проект с таким клапаном -> можно подсветить или предложить авто-переход
-            // Но лучше оставить явный клик пользователю, чтобы он убедился, что это та станция
-        }
-    }, [turbines, filters.valve]);
-
-    // Стили
     const cardBg = useColorModeValue('white', 'gray.750');
     const borderColor = useColorModeValue('gray.200', 'gray.600');
     const hoverBg = useColorModeValue('teal.50', 'gray.700');
@@ -122,7 +110,6 @@ const TurbineSearch: React.FC<Props> = ({ onSelectTurbine }) => {
                 Поиск проекта
             </Heading>
 
-            {/* Панель фильтров */}
             <Card variant="outline" bg={cardBg} shadow="sm">
                 <CardBody>
                     <Stack spacing={4}>
@@ -182,7 +169,6 @@ const TurbineSearch: React.FC<Props> = ({ onSelectTurbine }) => {
                 </CardBody>
             </Card>
 
-            {/* Результаты */}
             <Box minH="300px">
                 {isLoading && (
                     <Flex justify="center" p={10}>
@@ -233,14 +219,12 @@ const TurbineSearch: React.FC<Props> = ({ onSelectTurbine }) => {
                                         {turbine.station_name} {turbine.station_number ? `(Ст. №${turbine.station_number})` : ''}
                                     </Text>
                                     
-                                    {/* Отображение клапанов */}
                                     {turbine.valves && turbine.valves.length > 0 && (
                                         <Wrap mt={2} spacing={2}>
                                             {turbine.valves.slice(0, 5).map(v => (
                                                 <WrapItem key={v.id}>
                                                     <Tag 
                                                         size="sm" 
-                                                        // Подсвечиваем клапан, если искали именно его
                                                         colorScheme={filters.valve && v.name.toLowerCase().includes(filters.valve.toLowerCase()) ? "orange" : "cyan"}
                                                         variant="subtle"
                                                     >
