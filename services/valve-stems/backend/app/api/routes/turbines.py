@@ -4,9 +4,9 @@ from typing import Any, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session, selectinload
 
-from app.api import dependencies
+from app import dependencies
 from app.crud import turbines as crud_turbines
-from app.crud import get_turbine_by_id, get_valves_by_turbine
+from app.crud import get_turbine_by_id
 from app.dependencies import get_db
 from app.models import Turbine
 from app.schemas import TurbineInfo, TurbineValves, TurbineWithValvesInfo
