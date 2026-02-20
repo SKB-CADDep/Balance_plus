@@ -153,6 +153,7 @@ jobs:
   build-stage-balance:
     name: Build balance service for stage
     needs: test-backend-balance
+    if: github.event_name == 'push' && github.ref_name == 'develop'
     runs-on: self-hosted
 
     steps:
@@ -177,6 +178,7 @@ jobs:
   build-stage-condenser:
     name: Build condenser service for stage
     needs: test-backend-condenser
+    if: github.event_name == 'push' && github.ref_name == 'develop'
     runs-on: self-hosted
 
     steps:
@@ -201,6 +203,7 @@ jobs:
   build-stage-valve:
     name: Build valve service for stage
     needs: test-backend-valve
+    if: github.event_name == 'push' && github.ref_name == 'develop'
     runs-on: self-hosted
 
     steps:
@@ -225,6 +228,7 @@ jobs:
   build-stage-frontend:
     name: Build frontend for stage
     needs: [build-stage-balance, build-stage-condenser, build-stage-valve]
+    if: github.event_name == 'push' && github.ref_name == 'develop'
     runs-on: self-hosted
 
     steps:
@@ -249,6 +253,7 @@ jobs:
   build-prod-balance:
     name: Build balance service for prod
     needs: build-stage-balance
+    if: github.event_name == 'push' && github.ref_name == 'main'
     runs-on: self-hosted
 
     steps:
@@ -273,6 +278,7 @@ jobs:
   build-prod-condenser:
     name: Build condenser service for prod
     needs: build-stage-condenser
+    if: github.event_name == 'push' && github.ref_name == 'main'
     runs-on: self-hosted
 
     steps:
@@ -297,6 +303,7 @@ jobs:
   build-prod-valve:
     name: Build valve service for prod
     needs: build-stage-valve
+    if: github.event_name == 'push' && github.ref_name == 'main'
     runs-on: self-hosted
 
     steps:
@@ -321,6 +328,7 @@ jobs:
   build-prod-frontend:
     name: Build frontend for prod
     needs: [build-prod-balance, build-prod-condenser, build-prod-valve]
+    if: github.event_name == 'push' && github.ref_name == 'main'
     runs-on: self-hosted
 
     steps:
@@ -346,6 +354,7 @@ jobs:
     name: Deploy to stage
     needs: build-stage-frontend
     environment: staging
+    if: github.event_name == 'push' && github.ref_name == 'develop'
     runs-on: self-hosted
 
     steps:
@@ -360,6 +369,7 @@ jobs:
   end-to-end-test:
     name: End to end test
     needs: [build-prod-frontend, deploy-stage]
+    if: github.event_name == 'push' && github.ref_name == 'main'
     runs-on: ubuntu-latest
 
     steps:
@@ -386,6 +396,7 @@ jobs:
     name: Deploy to prod
     needs: end-to-end-test
     environment: production
+    if: github.event_name == 'push' && github.ref_name == 'main'
     runs-on: self-hosted
 
     steps:
