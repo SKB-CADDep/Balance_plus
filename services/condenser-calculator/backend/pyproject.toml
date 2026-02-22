@@ -7,6 +7,7 @@ dependencies = [
     "numpy>=1.24.0,<3.0.0",
     "scipy>=1.10.0,<2.0.0",
     "seuif97 (==1.2.0)",
+    "uniconv (>=1.0.1,<2.0.0)",
 ]
 
 [tool.poetry]

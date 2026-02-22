@@ -1,49 +1,45 @@
 import json
-
 import gitlab.exceptions
 from fastapi import APIRouter, HTTPException, Query
 
 from app.core.gitlab_adapter import gitlab_client
 from app.schemas.calculation import CalculationSaveRequest
 
-
 router = APIRouter(prefix="/calculations", tags=["Calculations"])
-
 
 @router.post("/save")
 async def save_calculation_result(req: CalculationSaveRequest):
     """
     Сохраняет результаты расчёта в ветку задачи.
+    Входящие параметры УЖЕ конвертированы в базовые ед. изм.
     """
     try:
-        # 1. Ищем РЕАЛЬНУЮ ветку задачи (Умный поиск)
-        # Передаем project_id, так как мы теперь в мульти-репо
         branch_name = gitlab_client.find_branch_by_issue_iid(req.task_iid, req.project_id)
 
-        # Строгая проверка: если ветка не найдена, немедленно возвращаем ошибку
         if not branch_name:
             raise HTTPException(
                 status_code=400,
-                detail=f"Ветка для задачи #{req.task_iid} не найдена в GitLab. Убедитесь, что работа над задачей начата."
+                detail=f"Ветка для задачи #{req.task_iid} не найдена в GitLab."
             )
 
         print(f"💾 Сохраняем в ветку: {branch_name} (Проект ID: {req.project_id})")
+        
+        # Для дебага: видим, что сохраняются килограммы и цельсии
+        # print("Конвертированные данные:", req.input_data)
 
-        # 2. Формируем фиксированный путь (перезаписываем файлы для работы Git Diff)
         base_path = f"calculations/{req.app_type}/current"
 
-        # 3. Готовим файлы
+        # Данные уже в нужных единицах благодаря валидатору
         files_to_commit = {
             f"{base_path}/input.json": json.dumps(req.input_data, indent=2, ensure_ascii=False),
             f"{base_path}/result.json": json.dumps(req.output_data, indent=2, ensure_ascii=False)
         }
 
-        # 4. Коммитим (с указанием project_id!)
         commit = gitlab_client.create_commit_multiple(
             files=files_to_commit,
             commit_message=f"Calc Result: {req.commit_message}",
             branch=branch_name,
-            project_id=req.project_id # <--- Важно!
+            project_id=req.project_id
         )
 
         return {
