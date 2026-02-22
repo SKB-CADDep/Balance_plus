@@ -1,19 +1,23 @@
-
 from pydantic import BaseModel, ConfigDict
+from typing import Optional
 
-# Теперь можно смело импортировать, т.к. valve.py не импортирует turbine.py
 from .valve import SimpleValveInfo, ValveInfo
 
 
 class TurbineInfo(BaseModel):
     id: int
     name: str
+    station_name: Optional[str] = None
+    station_number: Optional[str] = None
+    factory_number: Optional[str] = None
+    
     model_config = ConfigDict(from_attributes=True)
 
-class TurbineWithValvesInfo(BaseModel):
-    id: int
-    name: str
+class TurbineWithValvesInfo(TurbineInfo):
     valves: list[SimpleValveInfo] = []
+    # Полезно знать, нашли ли мы эту турбину через конкретный клапан
+    matched_valve_id: Optional[int] = None 
+    
     model_config = ConfigDict(from_attributes=True)
 
 class TurbineValves(BaseModel):
