@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Dict, List, Union
 from uniconv import UnitConverter
 
 uc = UnitConverter()
@@ -16,7 +16,9 @@ TARGET_UNITS = {
     "quality": "%"                 # X, Y - степень сухости/влажности
 }
 
-def convert_input_data_units(data: Any) -> Any:
+InputData = Union[Dict[str, Any], List[Any], float, int, str, None]
+
+def convert_input_data_units(data: InputData) -> InputData:
     """
     Рекурсивно обходит структуру данных и ищет объекты параметров.
     Ожидаемый формат объекта от фронтенда:

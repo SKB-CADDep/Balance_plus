@@ -23,13 +23,9 @@ async def save_calculation_result(req: CalculationSaveRequest):
             )
 
         print(f"💾 Сохраняем в ветку: {branch_name} (Проект ID: {req.project_id})")
-        
-        # Для дебага: видим, что сохраняются килограммы и цельсии
-        # print("Конвертированные данные:", req.input_data)
 
         base_path = f"calculations/{req.app_type}/current"
-
-        # Данные уже в нужных единицах благодаря валидатору
+        
         files_to_commit = {
             f"{base_path}/input.json": json.dumps(req.input_data, indent=2, ensure_ascii=False),
             f"{base_path}/result.json": json.dumps(req.output_data, indent=2, ensure_ascii=False)
