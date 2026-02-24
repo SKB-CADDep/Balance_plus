@@ -28,7 +28,12 @@ interface ExpectedOutputData {
     Ti?: number[];
     Hi?: number[];
     deaerator_props?: any[];
-    ejector_props?: Array<Record<string, number>>;
+    ejector_props?: Array<{
+        g: number;
+        t: number;
+        h: number;
+        p: number;
+    }>;
 }
 
 type CalculatorStep =
