@@ -1,0 +1,19 @@
+{
+  "project_id": 15,
+  "p_fresh": { "value": 240, "unit": "kgf/cm2" },
+  "t_fresh": { "value": 540, "unit": "C" },
+  "valves": [
+    {
+      "valve_id": 101,
+      "quantity": 2,
+      "custom_leak_offs": [
+        { "value": 40, "unit": "kgf/cm2" },
+        { "value": 1.2, "unit": "kgf/cm2" }
+      ]
+    },
+    {
+      "valve_id": 205,
+      "quantity": 4
+    }
+  ]
+}

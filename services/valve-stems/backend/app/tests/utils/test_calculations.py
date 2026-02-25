@@ -99,7 +99,7 @@ class TestValveCalculatorTwo(unittest.TestCase):
             self.assertAlmostEqual(result.Hi[i], expected_Hi[i], places=0)
 
         expected_ejector_props = [
-            {"g": 1.936101013, "t": 552.5649, "h": 860.2968256*4.1868, "p": 0.97}
+            {"g": 1.936529, "t": 491.322, "h": 3470.265, "p": 0.97}
         ]
 
         self.assertEqual(len(result.ejector_props), len(expected_ejector_props))

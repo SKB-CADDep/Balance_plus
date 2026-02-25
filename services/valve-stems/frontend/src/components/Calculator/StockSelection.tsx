@@ -1,10 +1,11 @@
 import React from 'react';
-import {useQuery} from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import {
     Box,
     Button,
     Flex,
-    Heading, Icon,
+    Heading,
+    Icon,
     List,
     ListItem,
     Spinner,
@@ -13,6 +14,7 @@ import {
     useColorModeValue,
     VStack,
 } from '@chakra-ui/react';
+import { FiChevronLeft } from "react-icons/fi";
 
 import {
     type TurbineInfo,
@@ -20,25 +22,28 @@ import {
     type TurbineValves as ClientTurbineValvesResponse,
     type ValveInfo_Output as ClientValveInfo
 } from '../../client';
-import {FiChevronLeft} from "react-icons/fi";
 
 type Valve = ClientValveInfo;
 
 type Props = {
-    turbine: TurbineInfo | null;
+    // Временно расширяем тип для новых полей, пока клиент OpenAPI не обновлен
+    turbine: (TurbineInfo & { station_name?: string; station_number?: string; factory_number?: string }) | null;
     onSelectValve: (valve: Valve) => void;
     onGoBack?: () => void;
 };
 
-const fetchValvesForTurbineAPI = async (turbineName: string) => {
-    if (!turbineName) {
-        return {count: 0, valves: []};
+const fetchValvesForTurbineAPI = async (turbineId: number) => {
+    if (!turbineId) {
+        return { count: 0, valves: [] };
     }
-    return TurbinesService.turbinesGetValvesByTurbineEndpoint({turbineName});
+    // ВНИМАНИЕ: Если вы перегенерируете OpenAPI клиент, ключ здесь изменится с turbineName на turbineId
+    // Пока оставляем как в старом клиенте, но передаем строковое значение ID
+    return TurbinesService.turbinesGetValvesByTurbineEndpoint({ turbineName: turbineId.toString() as any });
 };
 
-const StockSelection: React.FC<Props> = ({turbine, onSelectValve, onGoBack}) => {
-    const turbineName = turbine?.name || '';
+const StockSelection: React.FC<Props> = ({ turbine, onSelectValve, onGoBack }) => {
+    // Используем ID вместо имени для уникальности
+    const turbineId = turbine?.id;
 
     const {
         data: turbineValvesResponse,
@@ -46,9 +51,9 @@ const StockSelection: React.FC<Props> = ({turbine, onSelectValve, onGoBack}) => 
         isError,
         error,
     } = useQuery<ClientTurbineValvesResponse, Error>({
-        queryKey: ['valvesForTurbine', turbineName],
-        queryFn: () => fetchValvesForTurbineAPI(turbineName),
-        enabled: !!turbineName,
+        queryKey: ['valvesForTurbine', turbineId],
+        queryFn: () => fetchValvesForTurbineAPI(turbineId!),
+        enabled: !!turbineId,
     });
 
     const listItemHoverBg = useColorModeValue('teal.50', 'gray.700');
@@ -60,36 +65,22 @@ const StockSelection: React.FC<Props> = ({turbine, onSelectValve, onGoBack}) => 
         return (
             <VStack spacing={4} p={5} align="center" justify="center" minH="200px">
                 <Text>Турбина не выбрана.</Text>
-                {onGoBack && <Button onClick={onGoBack} colorScheme="teal">Вернуться к выбору турбины</Button>}
-            </VStack>
-        );
-    }
-
-    if (isLoading) {
-        return (
-            <VStack spacing={4} align="center" justify="center" minH="200px">
-                <Spinner size="xl" color="teal.500"/>
-                <Text>Загрузка клапанов для турбины {turbine.name}...</Text>
-            </VStack>
-        );
-    }
-
-    if (isError) {
-        return (
-            <VStack spacing={4} align="center" justify="center" minH="200px" color="red.500">
-                <Heading as="h3" size="md">Ошибка при загрузке клапанов:</Heading>
-                <Text>{error?.message || 'Произошла неизвестная ошибка'}</Text>
-                {onGoBack &&
-                    <Button onClick={onGoBack} colorScheme="teal" variant="outline">Вернуться к выбору турбины</Button>}
+                {onGoBack && <Button onClick={onGoBack} colorScheme="teal">Вернуться к выбору проекта</Button>}
             </VStack>
         );
     }
 
     return (
         <VStack spacing={6} p={5} align="stretch" w="100%" maxW="container.md" mx="auto">
-            <Heading as="h2" size="lg" textAlign="center">
-                Выбранная турбина: <Text as="span" color="teal.500">{turbine.name}</Text>
-            </Heading>
+            <VStack spacing={1}>
+                <Heading as="h2" size="lg" textAlign="center">
+                    Выбранный проект: <Text as="span" color="teal.500">{turbine.name}</Text>
+                </Heading>
+                <Text fontSize="md" color="gray.500">
+                    {turbine.station_name || "Станция не указана"} {turbine.station_number ? `(Ст. №${turbine.station_number})` : ''} 
+                    {turbine.factory_number ? ` | Зав. №${turbine.factory_number}` : ''}
+                </Text>
+            </VStack>
 
             {onGoBack && (
                 <Box width="100%" textAlign="center" mb={2}>
@@ -98,9 +89,9 @@ const StockSelection: React.FC<Props> = ({turbine, onSelectValve, onGoBack}) => 
                         variant="outline"
                         colorScheme="teal"
                         size="sm"
-                        leftIcon={<Icon as={FiChevronLeft}/>}
+                        leftIcon={<Icon as={FiChevronLeft} />}
                     >
-                        Изменить турбину
+                        Изменить проект
                     </Button>
                 </Box>
             )}
@@ -109,7 +100,16 @@ const StockSelection: React.FC<Props> = ({turbine, onSelectValve, onGoBack}) => 
                 Выберите клапан для расчёта
             </Heading>
 
-            {valves.length > 0 ? (
+            {isLoading ? (
+                <VStack spacing={4} align="center" justify="center" minH="150px">
+                    <Spinner size="xl" color="teal.500" />
+                    <Text>Загрузка клапанов...</Text>
+                </VStack>
+            ) : isError ? (
+                <VStack spacing={4} align="center" justify="center" minH="150px" color="red.500">
+                    <Text>Ошибка при загрузке клапанов: {error?.message}</Text>
+                </VStack>
+            ) : valves.length > 0 ? (
                 <List spacing={3} w="100%" mt={4}>
                     {valves.map((valve) => (
                         <ListItem
@@ -124,7 +124,7 @@ const StockSelection: React.FC<Props> = ({turbine, onSelectValve, onGoBack}) => 
                                 shadow: 'md',
                                 borderColor: listItemHoverBorderColor,
                             }}
-                            transition="background-color 0.2s, box-shadow 0.2s, border-color 0.2s"
+                            transition="all 0.2s"
                         >
                             <Flex justify="space-between" align="center">
                                 <Text fontSize="lg" fontWeight="medium">{valve.name}</Text>
@@ -134,9 +134,8 @@ const StockSelection: React.FC<Props> = ({turbine, onSelectValve, onGoBack}) => 
                     ))}
                 </List>
             ) : (
-                <Text textAlign="center" color="gray.500" p={4} borderWidth="1px" borderRadius="md"
-                      borderStyle="dashed">
-                    Для данной турбины клапаны не найдены.
+                <Text textAlign="center" color="gray.500" p={4} borderWidth="1px" borderRadius="md" borderStyle="dashed">
+                    Для данного проекта клапаны не найдены.
                 </Text>
             )}
         </VStack>

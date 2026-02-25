@@ -1,0 +1,17 @@
+{
+  "summary": {
+    "total_flow_sk": 150.5,
+    "total_flow_rk": 45.2,
+    "total_flow_all": 195.7
+  },
+  "details": [
+    {
+      "valve_name": "СК-1",
+      "valve_type": "СК",
+      "flow_per_one": 75.25,
+      "flow_total": 150.5,
+      "segments": [...]
+    }
+    ...
+  ]
+}

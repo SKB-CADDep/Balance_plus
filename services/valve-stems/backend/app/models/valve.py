@@ -9,8 +9,9 @@ class Valve(Base):
     __table_args__ = {"schema": "autocalc"}
 
     id = Column(Integer, primary_key=True)
-    name = Column(String, nullable=False, unique=True, index=True)
-    type = Column(String, nullable=True)
+    # УБРАЛИ unique=True, так как один чертеж может быть у разных турбин
+    name = Column(String, nullable=False, index=True) 
+    type = Column(String, nullable=True) # 'СК', 'РК', 'СРК' или полное название
     diameter = Column(Float, nullable=True)
     clearance = Column(Float, nullable=True)
     count_parts = Column(Integer, nullable=True)
@@ -27,4 +28,4 @@ class Valve(Base):
     calculation_results = relationship("CalculationResultDB", back_populates="valve")
 
     def __repr__(self):
-        return f"<Valve(name='{self.name}', valve_type='{self.type}')>"
+        return f"<Valve(name='{self.name}', type='{self.type}')>"

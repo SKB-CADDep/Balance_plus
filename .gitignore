@@ -12,6 +12,7 @@ venv/
 .env/
 .venv/
 Pipfile.lock
+uv.lock
 
 # C extensions
 *.so
