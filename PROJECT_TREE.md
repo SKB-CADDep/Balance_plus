@@ -1,7 +1,7 @@
 # 🌳 Дерево проекта: Balance_plus-1
 
-> Автоматически сгенерировано: `2026-02-11 11:39:05`  
-> Директорий: **101** | Файлов: **296**
+> Автоматически сгенерировано: `2026-02-26 20:25:14`  
+> Директорий: **102** | Файлов: **305**
 
 ```
 Balance_plus-1/
@@ -29,6 +29,10 @@ Balance_plus-1/
 │   │   │   ├── 📝 observability.md
 │   │   │   └── 📝 postgresql-database.md
 │   │   ├── 📁 services/
+│   │   │   ├── 📁 valve-stems/
+│   │   │   │   ├── 📝 ER-диаграмма.md
+│   │   │   │   ├── 📋 Request_calculations_multi.json
+│   │   │   │   └── 📋 Response_calculations_multi.json
 │   │   │   ├── 📝 api-gateway.md
 │   │   │   ├── 📝 condenser_worker.md
 │   │   │   ├── 📝 frontend-ide.md
@@ -60,6 +64,7 @@ Balance_plus-1/
 │   ├── 📁 specifications/
 │   │   ├── 📝 condensercalculator.md
 │   │   ├── 📝 taskmanager.md
+│   │   ├── 📝 uniconv.md
 │   │   └── 📝 valvecalculator.md
 │   └── 📖 README.md
 ├── 📁 GitLAB_pipeline/
@@ -266,6 +271,7 @@ Balance_plus-1/
 │       │   │   │   ├── 🐍 backend_pre_start.py
 │       │   │   │   ├── 🐍 check_drawio.py
 │       │   │   │   ├── 🐍 initial_data.py
+│       │   │   │   ├── 🐍 load_from_excel.py
 │       │   │   │   └── 🐍 tests_pre_start.py
 │       │   │   ├── 📁 services/
 │       │   │   │   └── 🐍 calculator.py
@@ -296,6 +302,7 @@ Balance_plus-1/
 │       │   ├── 📦 pyproject.toml
 │       │   └── 📖 README.md
 │       ├── 📁 db/
+│       │   ├── 📊 Data.xlsx
 │       │   ├── 📄 init.dump
 │       │   └── ⚡ restore.sh
 │       ├── 📁 frontend/
@@ -363,6 +370,7 @@ Balance_plus-1/
 │       │   └── 📜 vite.config.ts
 │       ├── 📄 .env
 │       ├── ⚙️ docker-compose.yml
+│       ├── 📋 package-lock.json
 │       └── 📖 README.md
 ├── 📁 tests/
 │   └── 📁 e2e/
@@ -400,8 +408,10 @@ Balance_plus-1/
 ├── 📝 CONTRIBUTING.md
 ├── ⚙️ docker-compose.yml
 ├── 🐍 generate_tree.py
+├── 📋 package-lock.json
 ├── 📖 README.md
-└── ⚙️ ruff.toml
+├── ⚙️ ruff.toml
+└── 📄 valve-stems-deploy.tar.gz
 ```
 
 ---
