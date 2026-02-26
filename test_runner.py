@@ -2,6 +2,8 @@ import os
 import re
 import sys
 import yaml
+import subprocess
+import time
 
 # --- ANSI Цвета для UI ---
 class Colors:
@@ -126,16 +128,41 @@ def draw_header(title):
     print(f"{Colors.CYAN}{'='*65}{Colors.RESET}")
 
 def run_tests(selected_files):
-    """ЗАГЛУШКА: Здесь будет логика запуска pytest и yaml."""
     clear_screen()
     draw_header("▶ ЗАПУСК ТЕСТОВ")
-    print(f"\n{Colors.YELLOW}Движок выполнения в разработке...{Colors.RESET}\n")
-    print("Будут запущены следующие файлы:")
-    for f in selected_files:
-        icon = "🐍" if f['type'] == 'python' else "📄"
-        print(f"  {icon} {f['path']}")
-    
-    print(f"\n{Colors.GRAY}Нажмите Enter, чтобы вернуться...{Colors.RESET}")
+
+    py_files = [f['path'] for f in selected_files if f['type'] == 'python']
+    yaml_files = [f['path'] for f in selected_files if f['type'] == 'yaml']
+
+    if py_files:
+        print(f"\n{Colors.CYAN}🐍 Запуск Python-тестов (файлов: {len(py_files)})...{Colors.RESET}\n")
+        
+        cmd = [sys.executable, "-m", "pytest"] + py_files +["-v", "--tb=short", "--color=yes"]
+        
+        start_time = time.time()
+        try:
+            result = subprocess.run(cmd)
+            
+            elapsed = time.time() - start_time
+            
+            if result.returncode == 0:
+                print(f"\n{Colors.GREEN}✅ Все Python-тесты прошли успешно! ({elapsed:.2f} сек){Colors.RESET}")
+            elif result.returncode == 5:
+                print(f"\n{Colors.YELLOW}⚠️ В выбранных файлах не найдено ни одного теста.{Colors.RESET}")
+            else:
+                print(f"\n{Colors.RED}❌ Завершено с ошибками. Проверьте логи выше. ({elapsed:.2f} сек){Colors.RESET}")
+                
+        except Exception as e:
+            print(f"\n{Colors.RED}💥 Критическая ошибка при вызове pytest: {e}{Colors.RESET}")
+
+    if yaml_files:
+        print(f"\n{Colors.CYAN}📄 Запуск Data-Driven YAML-тестов (файлов: {len(yaml_files)})...{Colors.RESET}")
+        print(f"{Colors.YELLOW}Движок YAML в разработке (переход к Этапу 3)...{Colors.RESET}\n")
+        for f in yaml_files:
+            print(f"  - {f}")
+
+    print(f"\n{Colors.GRAY}{'-'*65}{Colors.RESET}")
+    print(f"{Colors.BOLD}Нажмите Enter, чтобы вернуться в меню...{Colors.RESET}")
     input()
 
 def main_menu():
