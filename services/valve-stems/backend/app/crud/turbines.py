@@ -20,9 +20,12 @@ def search_turbines(
         sql_query = db.query(Turbine).options(joinedload(Turbine.valves))
         filters = []
 
-        if query: filters.append(Turbine.name.ilike(f"%{query}%"))
-        if station: filters.append(Turbine.station_name.ilike(f"%{station}%"))
-        if factory_num: filters.append(Turbine.factory_number.ilike(f"%{factory_num}%"))
+        if query:
+            filters.append(Turbine.name.ilike(f"%{query}%"))
+        if station:
+            filters.append(Turbine.station_name.ilike(f"%{station}%"))
+        if factory_num:
+            filters.append(Turbine.factory_number.ilike(f"%{factory_num}%"))
         if valve_drawing:
             sql_query = sql_query.join(Turbine.valves).filter(Valve.name.ilike(f"%{valve_drawing}%"))
 

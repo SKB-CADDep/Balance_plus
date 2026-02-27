@@ -20,8 +20,8 @@ class AdapterError(Exception):
 
 class CalculationAdapter:
     """
-    Адаптер-Оркестратор. 
-    Переводит данные с языка Web (Pydantic + юзерские единицы) 
+    Адаптер-Оркестратор.
+    Переводит данные с языка Web (Pydantic + юзерские единицы)
     на язык Domain (Dataclass + СИ/МПа) и обратно.
     """
 

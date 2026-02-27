@@ -4,7 +4,7 @@ from dataclasses import dataclass
 @dataclass(frozen=True)
 class ValveGeometry:
     """
-    Физическая геометрия клапана. 
+    Физическая геометрия клапана.
     Никаких миллиметров! Все линейные размеры строго в МЕТРАХ.
     """
     count_parts: int

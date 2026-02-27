@@ -36,7 +36,7 @@ class CalculationParams(BaseModel):
     def check_temperature_and_enthalpy(self) -> "CalculationParams":
         """
         Валидатор проверяет, что указана либо температура, либо энтальпия.
-        Любая выброшенная здесь ValueError автоматически превратится 
+        Любая выброшенная здесь ValueError автоматически превратится
         FastAPI в красивую ошибку 422 Unprocessable Entity для фронтенда.
         """
         t_given = self.temperature_start is not None

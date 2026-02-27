@@ -25,15 +25,21 @@ def calculate_enthalpy_for_air(t_air_c: float) -> float:
 
 def _expected_suctions(count_parts: int) -> int:
     """Сколько нужно давлений отсоса эжектора по числу участков."""
-    if count_parts <= 1: return 0
-    if count_parts == 2: return 1
+    if count_parts <= 1:
+        return 0
+    if count_parts == 2:
+        return 1
     return max(count_parts - 2, 0)
 
 def _suction_index_for_area(count_parts: int, area_n: int) -> int:
-    if area_n == 2: return 0
-    if area_n == 3: return 0 if count_parts == 3 else 1
-    if area_n == 4: return 1 if count_parts == 4 else 2
-    if area_n == 5: return 2
+    if area_n == 2:
+        return 0
+    if area_n == 3:
+        return 0 if count_parts == 3 else 1
+    if area_n == 4:
+        return 1 if count_parts == 4 else 2
+    if area_n == 5:
+        return 2
     raise PhysicsEngineError(f"Нет отсоса для участка {area_n} при count_parts={count_parts}")
 
 def _compute_G(last_part: bool, alpha: float, p1_pa: float, p2_pa: float, v: float, area_S: float) -> float:
@@ -76,11 +82,14 @@ def _part_props_detection(
         g = _compute_G(last_part, alpha, p1_pa, p2_pa, v, area_S)
         w_calc = v * (g / 3.6) / area_S
 
-        if (w_mid - w_calc) > 0.0: w_max = w_mid
-        else: w_min = w_mid
+        if (w_mid - w_calc) > 0.0:
+            w_max = w_mid
+        else:
+            w_min = w_mid
 
         iters += 1
-        if iters > 1000: break
+        if iters > 1000:
+            break
 
     w_res = 0.5 * (w_min + w_max)
     re = (w_res * 2.0 * delta_clearance_m) / kin_vis
@@ -171,7 +180,8 @@ class ValvePhysicsEngine:
         )
 
     def calculate_area2(self) -> None:
-        if self.geo.count_parts < 2: return
+        if self.geo.count_parts < 2:
+            return
         idx = _suction_index_for_area(self.geo.count_parts, 2)
         self.p_ejector = self.thermo.p_suctions_mpa[idx]
 
@@ -208,7 +218,8 @@ class ValvePhysicsEngine:
             )
 
     def calculate_area3(self) -> None:
-        if self.geo.count_parts < 3: return
+        if self.geo.count_parts < 3:
+            return
         idx = _suction_index_for_area(self.geo.count_parts, 3)
         self.p_ejector = self.thermo.p_suctions_mpa[idx]
 
@@ -235,7 +246,8 @@ class ValvePhysicsEngine:
             )
 
     def calculate_area4(self) -> None:
-        if self.geo.count_parts < 4: return
+        if self.geo.count_parts < 4:
+            return
         idx = _suction_index_for_area(self.geo.count_parts, 4)
         self.p_ejector = self.thermo.p_suctions_mpa[idx]
 
@@ -262,7 +274,8 @@ class ValvePhysicsEngine:
             )
 
     def calculate_area5(self) -> None:
-        if self.geo.count_parts < 5: return
+        if self.geo.count_parts < 5:
+            return
         idx = _suction_index_for_area(self.geo.count_parts, 5)
         self.p_ejector = self.thermo.p_suctions_mpa[idx]
 
@@ -279,16 +292,22 @@ class ValvePhysicsEngine:
 
     # --------------------------- Отсосы --------------------------- #
     def deaerator_options(self) -> tuple[float, float, float, float]:
-        if self.geo.count_parts < 2: return 0.0, 0.0, 0.0, 0.0
+        if self.geo.count_parts < 2:
+            return 0.0, 0.0, 0.0, 0.0
         h_dea, p_dea = self.h_parts[1], self.p_deaerator
 
-        if self.geo.count_parts == 2: return 0.0, 0.0, h_dea, p_dea
+        if self.geo.count_parts == 2:
+            return 0.0, 0.0, h_dea, p_dea
 
         cv = self.thermo.count_valves
-        if self.geo.count_parts == 3: g = (self.g_parts[0] - self.g_parts[1]) * cv
-        elif self.geo.count_parts == 4: g = (self.g_parts[0] - self.g_parts[1] - self.g_parts[2]) * cv
-        elif self.geo.count_parts == 5: g = (self.g_parts[0] - self.g_parts[1] - self.g_parts[2] - self.g_parts[3]) * cv
-        else: raise PhysicsEngineError("Неверное количество участков.")
+        if self.geo.count_parts == 3:
+            g = (self.g_parts[0] - self.g_parts[1]) * cv
+        elif self.geo.count_parts == 4:
+            g = (self.g_parts[0] - self.g_parts[1] - self.g_parts[2]) * cv
+        elif self.geo.count_parts == 5:
+            g = (self.g_parts[0] - self.g_parts[1] - self.g_parts[2] - self.g_parts[3]) * cv
+        else:
+            raise PhysicsEngineError("Неверное количество участков.")
 
         t_dea = ph(p_dea, h_dea, 1)
         # Обрати внимание: мы больше не делим на 0.0980665! Ядро возвращает МПа.
@@ -298,7 +317,8 @@ class ValvePhysicsEngine:
         n = _expected_suctions(self.geo.count_parts)
         g_list, t_list, h_list, p_list = [0.0]*n, [0.0]*n, [0.0]*n, [0.0]*n
 
-        if n == 0: return g_list, t_list, h_list, p_list
+        if n == 0:
+            return g_list, t_list, h_list, p_list
 
         cv = self.thermo.count_valves
         if self.geo.count_parts == 2:

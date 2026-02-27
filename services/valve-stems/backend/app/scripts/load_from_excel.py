@@ -50,7 +50,7 @@ def init_db_from_excel():
         count_turbines = 0
         count_valves = 0
 
-        for index, row in df.iterrows():
+        for _index, row in df.iterrows():
             factory_num = clean_value(row.get('Зав№'))
             mark = clean_value(row.get('Марка турбины'))
             station = clean_value(row.get('Наименование станции'))
