@@ -4,6 +4,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
+from app.adapters.calculation_adapter import CalculationAdapter
 from app.crud import (
     create_calculation_result,
     get_calculation_result_by_id,
@@ -13,7 +14,6 @@ from app.dependencies import get_db
 from app.models import CalculationResultDB, Valve
 from app.schemas import CalculationParams, ValveInfo
 from app.schemas import CalculationResultDB as CalculationResultDBSchema
-from app.adapters.calculation_adapter import CalculationAdapter
 
 
 router = APIRouter()

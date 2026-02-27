@@ -1,12 +1,14 @@
 import logging
-from seuif97 import pt2h, ph2t
 
-from app.schemas import CalculationParams, CalculationResult, ValveInfo
+from seuif97 import ph2t, pt2h
+
 from app.core.converter import converter
 
 # Импортируем наше чистое Ядро
-from app.domain.models import ValveGeometry, ThermoConditions
-from app.domain.valve_physics_engine import ValvePhysicsEngine, PhysicsEngineError
+from app.domain.models import ThermoConditions, ValveGeometry
+from app.domain.valve_physics_engine import PhysicsEngineError, ValvePhysicsEngine
+from app.schemas import CalculationParams, CalculationResult, ValveInfo
+
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +24,7 @@ class CalculationAdapter:
     Переводит данные с языка Web (Pydantic + юзерские единицы) 
     на язык Domain (Dataclass + СИ/МПа) и обратно.
     """
-    
+
     @staticmethod
     def run_calculation(params: CalculationParams, valve_info: ValveInfo) -> CalculationResult:
         try:
@@ -31,7 +33,7 @@ class CalculationAdapter:
             # ==========================================
             raw_lengths = getattr(valve_info, "section_lengths", []) or []
             len_parts_m = [float(L) / 1000.0 for L in raw_lengths if L is not None]
-            
+
             count_parts = len(len_parts_m)
             if count_parts < 2:
                 raise AdapterError("Клапан должен иметь как минимум два участка.")
@@ -47,17 +49,17 @@ class CalculationAdapter:
             # ==========================================
             # 2. ПОДГОТОВКА ТЕРМОДИНАМИКИ (UnitConverter)
             # ==========================================
-            
+
             # Давления: юзерские единицы -> МПа
             p_values_in = list(params.p_values[:count_parts])
             p_in_mpa = [
-                converter.convert(p, from_unit=params.p_values_unit, to_unit="МПа", parameter_type="pressure") 
+                converter.convert(p, from_unit=params.p_values_unit, to_unit="МПа", parameter_type="pressure")
                 for p in p_values_in
             ]
-            
+
             p_suctions_raw = list(params.p_ejector or [])
             p_suctions_mpa = [
-                converter.convert(p, from_unit=params.p_ejector_unit, to_unit="МПа", parameter_type="pressure") 
+                converter.convert(p, from_unit=params.p_ejector_unit, to_unit="МПа", parameter_type="pressure")
                 for p in p_suctions_raw
             ]
 
@@ -98,26 +100,26 @@ class CalculationAdapter:
             # ==========================================
             # 4. ФОРМИРОВАНИЕ ОТВЕТА (Перевод МПа -> База)
             # ==========================================
-            # Возвращаем давления обратно в те единицы, которые мы считаем 
+            # Возвращаем давления обратно в те единицы, которые мы считаем
             # "дефолтными" для отдачи на фронтенд (раньше было кгс/см2).
             # Если фронтенд захочет получать ответ в тех же единицах, что и вводил,
             # мы можем использовать `to_unit=params.p_values_unit`. Пока оставляем кгс/см2.
-            
+
             pi_out = [
-                converter.convert(p, from_unit="МПа", to_unit="кгс/см²", parameter_type="pressure") 
+                converter.convert(p, from_unit="МПа", to_unit="кгс/см²", parameter_type="pressure")
                 for p in raw_result.pi_in_mpa
             ]
-            
+
             dea_p_out = converter.convert(
                 raw_result.dea_p_mpa, from_unit="МПа", to_unit="кгс/см²", parameter_type="pressure"
             ) if raw_result.dea_p_mpa else 0.0
-            
+
             ej_props_out = []
             for ej in raw_result.ej_results:
                 ej_p_out = converter.convert(
                     ej["p_mpa"], from_unit="МПа", to_unit="кгс/см²", parameter_type="pressure"
                 ) if ej["p_mpa"] else 0.0
-                
+
                 ej_props_out.append({
                     "g": ej["g"], "t": ej["t"], "h": ej["h"], "p": ej_p_out
                 })

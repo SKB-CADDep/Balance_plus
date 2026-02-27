@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+
 @dataclass(frozen=True)
 class ValveGeometry:
     """
@@ -38,13 +39,13 @@ class RawCalculationResult:
     pi_in_mpa: list[float]
     ti_c: list[float]
     hi_kj_kg: list[float]
-    
+
     # Данные отсоса в деаэратор
     dea_g: float
     dea_t: float
     dea_h: float
     dea_p_mpa: float
-    
-    # Данные отсосов в эжектор(ы). 
+
+    # Данные отсосов в эжектор(ы).
     # Ожидаемый формат каждого элемента: {"g": ..., "t": ..., "h": ..., "p_mpa": ...}
     ej_results: list[dict[str, float]]

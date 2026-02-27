@@ -1,13 +1,16 @@
 import logging
-import sys
 import os
-import pandas as pd
+import sys
 from pathlib import Path
+
+import pandas as pd
+
 
 sys.path.append(os.getcwd())
 
-from app.core.database import SessionLocal, engine, Base
+from app.core.database import Base, SessionLocal, engine
 from app.models import Turbine, Valve
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -38,7 +41,7 @@ def init_db_from_excel():
     df = pd.read_excel(EXCEL_PATH)
 
     db = SessionLocal()
-    
+
     try:
         logger.info("Пересоздание таблиц БД...")
         Base.metadata.drop_all(bind=engine)

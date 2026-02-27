@@ -8,27 +8,27 @@ class CalculationParams(BaseModel):
     turbine_name: str | None = None
     valve_drawing: str | None = None
     valve_id: int | None = None
-    
+
     # ---------------------------------------------------------
     # Взаимоисключающие параметры: Температура ИЛИ Энтальпия
     # ---------------------------------------------------------
     temperature_start: float | None = None
     temperature_start_unit: str = "°C"
-    
+
     enthalpy_start: float | None = None
     enthalpy_start_unit: str = "ккал/кг"
-    
+
     # ---------------------------------------------------------
     # Остальные физические параметры
     # ---------------------------------------------------------
     t_air: float
     t_air_unit: str = "°C"
-    
+
     count_valves: int
-    
+
     p_ejector: list[float]
     p_ejector_unit: str = "кгс/см²"
-    
+
     p_values: list[float]
     p_values_unit: str = "кгс/см²"
 
@@ -47,7 +47,7 @@ class CalculationParams(BaseModel):
                 "Нельзя указывать одновременно температуру и энтальпию свежего пара. "
                 "Оставьте одно из полей пустым (null)."
             )
-            
+
         if not t_given and not h_given:
             raise ValueError(
                 "Необходимо указать либо начальную температуру (temperature_start), "

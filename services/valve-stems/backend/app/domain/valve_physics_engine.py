@@ -7,7 +7,8 @@ from seuif97 import ph, ph2t, ph2v
 # Вспомогательные (наши)
 from WSAProperties import air_calc, ksi_calc, lambda_calc
 
-from app.domain.models import ValveGeometry, ThermoConditions, RawCalculationResult
+from app.domain.models import RawCalculationResult, ThermoConditions, ValveGeometry
+
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +62,7 @@ def _part_props_detection(
     p1_pa = p_first_mpa * 1e6
     p2_pa = p_second_mpa * 1e6
     kin_vis = v * dyn_viscosity
-    
+
     if kin_vis <= 0:
         raise PhysicsEngineError(f"Кинематическая вязкость должна быть > 0, получено: {kin_vis:.3e}")
 
@@ -104,14 +105,14 @@ class ValvePhysicsEngine:
             self.S = geo.clearance_m * pi * geo.diameter_m
             if self.S <= 0:
                 raise PhysicsEngineError("Площадь зазора S должна быть > 0.")
-            
+
             proportional_coef = geo.radius_rounding_m / (2.0 * geo.clearance_m)
             self.KSI = ksi_calc(proportional_coef)
-            
+
             # Термодинамические константы
             self.h_air = calculate_enthalpy_for_air(thermo.t_air_c)
             self.p_deaerator = thermo.p_in_mpa[1] if len(thermo.p_in_mpa) > 1 else 0.0
-            
+
             # Инициализация массивов для сохранения результатов по участкам
             n = geo.count_parts
             self.g_parts = [0.0] * n
@@ -120,7 +121,7 @@ class ValvePhysicsEngine:
             self.v_parts = [0.0] * n
             self.din_vis_parts = [0.0] * n
             self.p_ejector: float | None = None
-            
+
         except Exception as e:
             logger.exception("Ошибка инициализации физического движка")
             raise PhysicsEngineError(f"Инициализация провалена: {e}")
@@ -282,7 +283,7 @@ class ValvePhysicsEngine:
         h_dea, p_dea = self.h_parts[1], self.p_deaerator
 
         if self.geo.count_parts == 2: return 0.0, 0.0, h_dea, p_dea
-        
+
         cv = self.thermo.count_valves
         if self.geo.count_parts == 3: g = (self.g_parts[0] - self.g_parts[1]) * cv
         elif self.geo.count_parts == 4: g = (self.g_parts[0] - self.g_parts[1] - self.g_parts[2]) * cv
