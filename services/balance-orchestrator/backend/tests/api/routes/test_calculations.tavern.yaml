@@ -1,0 +1,15 @@
+test_name: "API Расчетов (Tavern Test)"
+
+stages:
+  - name: "Ошибка 400 - Ветка не найдена"
+    request:
+      url: "http://localhost:8005/api/v1/calculations/save"
+      method: POST
+      json:
+        task_iid: 99999
+        project_id: 123
+        app_type: "valves"
+        input_data: {"param1": "value1"}
+        output_data: {"result": "success"}
+    response:
+      status_code: 400

@@ -3,7 +3,6 @@ import re
 import sys
 import yaml
 import subprocess
-import time
 
 # --- ANSI Цвета для UI ---
 class Colors:
@@ -15,14 +14,13 @@ class Colors:
     BOLD = '\033[1m'
     RESET = '\033[0m'
 
-# Папки, которые мы игнорируем при поиске
 IGNORE_DIRS = {'.git', 'venv', '.venv', '__pycache__', 'node_modules', '.pytest_cache', '.github'}
 
 def clear_screen():
     os.system('cls' if os.name == 'nt' else 'clear')
 
 def extract_py_description(filepath):
-    """Вытаскивает первую строку docstring из .py файла."""
+    """Вытаскивает первую строку docstring из класса/модуля .py файла."""
     try:
         with open(filepath, 'r', encoding='utf-8') as f:
             content = f.read()
@@ -35,21 +33,20 @@ def extract_py_description(filepath):
     return "Нет описания"
 
 def extract_yaml_description(filepath):
-    """Вытаскивает поле description из .yaml файла."""
+    """Вытаскивает test_name (Tavern) или description из .yaml файла."""
     try:
         with open(filepath, 'r', encoding='utf-8') as f:
             data = yaml.safe_load(f)
-            if data and isinstance(data, dict) and 'description' in data:
-                desc = str(data['description']).strip()
+            if data and isinstance(data, dict):
+                # Поддержка Tavern (test_name) и кастомных DB YAML (description)
+                desc = str(data.get('test_name', data.get('description', 'Нет описания'))).strip()
                 return desc if len(desc) <= 60 else desc[:57] + '...'
     except Exception:
         pass
     return "Нет описания"
 
 def scan_for_test_groups(root_dir):
-    """Сканирует директории и ищет ТОЛЬКО папки с файлом __group__.yml."""
     groups = {}
-    
     for dirpath, dirnames, filenames in os.walk(root_dir):
         dirnames[:] = [d for d in dirnames if d not in IGNORE_DIRS]
         
@@ -74,100 +71,78 @@ def scan_for_test_groups(root_dir):
                 
                 if file.endswith('.py'):
                     desc = extract_py_description(filepath)
-                    file_type = 'python'
+                    file_icon = '🐍'
                 else:
                     desc = extract_yaml_description(filepath)
-                    file_type = 'yaml'
+                    # Визуально разделим Tavern API-тесты и DB-тесты
+                    file_icon = '🌐' if 'tavern' in file else '🗄️' if 'db' in file else '📄'
                     
-                test_files.append({
-                    'name': file,
-                    'path': filepath,
-                    'type': file_type,
-                    'desc': desc
-                })
+                test_files.append({'name': file, 'path': filepath, 'icon': file_icon, 'desc': desc})
         
         if test_files:
-            groups[group_name] = {
-                'path': dirpath,
-                'desc': group_desc, # Сохраняем описание группы
-                'files': sorted(test_files, key=lambda x: x['name'])
-            }
+            groups[group_name] = {'path': dirpath, 'desc': group_desc, 'files': sorted(test_files, key=lambda x: x['name'])}
             
     return groups
 
 def parse_selection(selection_str, max_val):
-    """Парсит ввод пользователя (1,3 или 1-3 или #) в список индексов."""
-    if selection_str.strip() == '#':
-        return list(range(1, max_val + 1))
-    
+    if selection_str.strip() == '#': return list(range(1, max_val + 1))
     indices = set()
-    parts = selection_str.split(',')
-    for part in parts:
+    for part in selection_str.split(','):
         part = part.strip()
-        if not part:
-            continue
+        if not part: continue
         if '-' in part:
             try:
                 start, end = map(int, part.split('-'))
-                if 1 <= start <= end <= max_val:
-                    indices.update(range(start, end + 1))
-            except ValueError:
-                pass
+                if 1 <= start <= end <= max_val: indices.update(range(start, end + 1))
+            except ValueError: pass
         else:
             try:
                 val = int(part)
-                if 1 <= val <= max_val:
-                    indices.add(val)
-            except ValueError:
-                pass
+                if 1 <= val <= max_val: indices.add(val)
+            except ValueError: pass
     return sorted(list(indices))
 
 def draw_header(title):
-    print(f"{Colors.CYAN}{'='*65}{Colors.RESET}")
+    print(f"{Colors.CYAN}{'='*80}{Colors.RESET}")
     print(f"{Colors.BOLD} {title}{Colors.RESET}")
-    print(f"{Colors.CYAN}{'='*65}{Colors.RESET}")
+    print(f"{Colors.CYAN}{'='*80}{Colors.RESET}")
 
+def find_project_root(test_path):
+    current = os.path.dirname(test_path)
+    while current != os.path.dirname(current): 
+        if os.path.exists(os.path.join(current, 'pytest.ini')) or os.path.exists(os.path.join(current, 'pyproject.toml')):
+            return current
+        current = os.path.dirname(current)
+    return os.path.dirname(test_path)
+
+# --- ГЛАВНЫЙ ИСПОЛНИТЕЛЬ (ТОЛЬКО PYTEST) ---
 def run_tests(selected_files):
     clear_screen()
-    draw_header("▶ ЗАПУСК ТЕСТОВ")
+    draw_header("▶ ЗАПУСК ТЕСТОВ (Оркестрация Pytest)")
 
-    py_files = [f['path'] for f in selected_files if f['type'] == 'python']
-    yaml_files = [f['path'] for f in selected_files if f['type'] == 'yaml']
-
-    if py_files:
-        print(f"\n{Colors.CYAN}🐍 Запуск Python-тестов (файлов: {len(py_files)})...{Colors.RESET}\n")
+    # Группируем ВСЕ выбранные файлы (и py, и yaml) по проектам
+    projects = {}
+    for f in selected_files:
+        root = find_project_root(f['path'])
+        rel_path = os.path.relpath(f['path'], root)
+        projects.setdefault(root,[]).append(rel_path)
         
-        cmd = [sys.executable, "-m", "pytest"] + py_files +["-v", "--tb=short", "--color=yes"]
+    for project_root, files in projects.items():
+        print(f"\n{Colors.CYAN}🚀 Запуск тестов (Проект: {os.path.basename(project_root)})...{Colors.RESET}")
         
-        start_time = time.time()
+        # Pytest сам разберется: py отдаст своим функциям, tavern.yaml отдаст плагину Tavern!
+        cmd =[sys.executable, "-m", "pytest"] + files + ["-v", "--tb=short", "--color=yes"]
         try:
-            result = subprocess.run(cmd)
-            
-            elapsed = time.time() - start_time
-            
-            if result.returncode == 0:
-                print(f"\n{Colors.GREEN}✅ Все Python-тесты прошли успешно! ({elapsed:.2f} сек){Colors.RESET}")
-            elif result.returncode == 5:
-                print(f"\n{Colors.YELLOW}⚠️ В выбранных файлах не найдено ни одного теста.{Colors.RESET}")
-            else:
-                print(f"\n{Colors.RED}❌ Завершено с ошибками. Проверьте логи выше. ({elapsed:.2f} сек){Colors.RESET}")
-                
+            subprocess.run(cmd, cwd=project_root)
         except Exception as e:
-            print(f"\n{Colors.RED}💥 Критическая ошибка при вызове pytest: {e}{Colors.RESET}")
+            print(f"{Colors.RED}❌ Ошибка вызова pytest: {e}{Colors.RESET}")
 
-    if yaml_files:
-        print(f"\n{Colors.CYAN}📄 Запуск Data-Driven YAML-тестов (файлов: {len(yaml_files)})...{Colors.RESET}")
-        print(f"{Colors.YELLOW}Движок YAML в разработке (переход к Этапу 3)...{Colors.RESET}\n")
-        for f in yaml_files:
-            print(f"  - {f}")
-
-    print(f"\n{Colors.GRAY}{'-'*65}{Colors.RESET}")
+    print(f"\n{Colors.GRAY}{'-'*80}{Colors.RESET}")
     print(f"{Colors.BOLD}Нажмите Enter, чтобы вернуться в меню...{Colors.RESET}")
     input()
 
 def main_menu():
     root_dir = os.path.abspath(os.path.dirname(__file__))
-    
     while True:
         clear_screen()
         groups = scan_for_test_groups(root_dir)
@@ -176,7 +151,7 @@ def main_menu():
         draw_header("🚀 УНИВЕРСАЛЬНЫЙ ТЕСТ-РАННЕР")
         
         if not group_names:
-            print(f"\n{Colors.RED}Тесты не найдены!{Colors.RESET} Убедитесь, что файлы начинаются на 'test_'")
+            print(f"\n{Colors.RED}Тесты не найдены!{Colors.RESET} Создайте папку с файлом __group__.yml")
             sys.exit(0)
             
         print(f"{Colors.GRAY}Найдены следующие группы тестов:{Colors.RESET}\n")
@@ -186,9 +161,9 @@ def main_menu():
             file_count = len(g_data['files'])
             print(f"[{Colors.GREEN}{i:2}{Colors.RESET}] {Colors.BOLD}{g_name:<25}{Colors.RESET} {Colors.GRAY}— {g_data['desc']} (файлов: {file_count}){Colors.RESET}")
             
-        print(f"\n [{Colors.GREEN}#{Colors.RESET}] Запустить ВСЕ группы")
-        print(f" [{Colors.GREEN}q{Colors.RESET}] Выход")
-        print(f"{Colors.CYAN}{'-'*65}{Colors.RESET}")
+        print(f"\n[{Colors.GREEN}#{Colors.RESET}] Запустить ВСЕ группы")
+        print(f"[{Colors.GREEN}q{Colors.RESET}] Выход")
+        print(f"{Colors.CYAN}{'-'*80}{Colors.RESET}")
         
         choice = input(f"Введите номер группы или действие: ").strip().lower()
         
@@ -197,8 +172,8 @@ def main_menu():
             print("Выход из тест-раннера. Хорошего дня! 👋")
             break
         elif choice == '#':
-            all_files =[f for g in groups.values() for f in g['files']]
-            run_tests(all_files)
+            all_files = [f for g in groups.values() for f in g['files']]
+            if all_files: run_tests(all_files)
         else:
             try:
                 idx = int(choice)
@@ -210,22 +185,19 @@ def main_menu():
 def group_menu(group_data, group_name):
     while True:
         clear_screen()
-        draw_header(f"📂 Группа: {group_name}")
+        draw_header(f"📂 Группа: {group_name} ({group_data['desc']})")
         
         files = group_data['files']
         for i, f in enumerate(files, 1):
-            icon = "🐍" if f['type'] == 'python' else "📄"
-            print(f" [{Colors.GREEN}{i:2}{Colors.RESET}] {icon} {Colors.BOLD}{f['name']:<30}{Colors.RESET} {Colors.GRAY}{f['desc']}{Colors.RESET}")
+            print(f"[{Colors.GREEN}{i:2}{Colors.RESET}] {f['icon']} {Colors.BOLD}{f['name']:<30}{Colors.RESET} {Colors.GRAY}{f['desc']}{Colors.RESET}")
             
-        print(f"\n [{Colors.GREEN}#{Colors.RESET}] Запустить ВСЕ файлы в группе")
-        print(f" [{Colors.GREEN}0{Colors.RESET}] Назад")
-        print(f"{Colors.CYAN}{'-'*65}{Colors.RESET}")
+        print(f"\n[{Colors.GREEN}#{Colors.RESET}] Запустить ВСЕ файлы в группе")
+        print(f"[{Colors.GREEN}0{Colors.RESET}] Назад")
+        print(f"{Colors.CYAN}{'-'*80}{Colors.RESET}")
         
-        choice = input(f"Выберите тесты (можно через запятую 1,3 или 1-3): ").strip()
+        choice = input(f"Выберите тесты (например 1,3 или 1-3): ").strip()
         
-        if choice == '0':
-            break
-            
+        if choice == '0': break
         selected_indices = parse_selection(choice, len(files))
         if selected_indices:
             selected_files = [files[i-1] for i in selected_indices]
