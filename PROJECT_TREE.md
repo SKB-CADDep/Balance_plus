@@ -1,7 +1,7 @@
 # 🌳 Дерево проекта: Balance_plus-1
 
-> Автоматически сгенерировано: `2026-02-26 20:25:14`  
-> Директорий: **102** | Файлов: **305**
+> Автоматически сгенерировано: `2026-02-27 10:38:37`  
+> Директорий: **104** | Файлов: **309**
 
 ```
 Balance_plus-1/
@@ -236,6 +236,8 @@ Balance_plus-1/
 │       │   │       │   └── 📊 Схема хранения данных в БД.xlsx
 │       │   │       └── 📄 Функциональная схема (Калькулятор штоков).graphml
 │       │   ├── 📁 app/
+│       │   │   ├── 📁 adapters/
+│       │   │   │   └── 🐍 calculation_adapter.py
 │       │   │   ├── 📁 alembic/
 │       │   │   │   ├── 🐍 env.py
 │       │   │   │   └── 📄 script.py.mako
@@ -250,12 +252,16 @@ Balance_plus-1/
 │       │   │   ├── 📁 core/
 │       │   │   │   ├── 🐍 __init__.py
 │       │   │   │   ├── 🐍 config.py
+│       │   │   │   ├── 🐍 converter.py
 │       │   │   │   └── 🐍 database.py
 │       │   │   ├── 📁 crud/
 │       │   │   │   ├── 🐍 __init__.py
 │       │   │   │   ├── 🐍 calculations.py
 │       │   │   │   ├── 🐍 turbines.py
 │       │   │   │   └── 🐍 valves.py
+│       │   │   ├── 📁 domain/
+│       │   │   │   ├── 🐍 models.py
+│       │   │   │   └── 🐍 valve_physics_engine.py
 │       │   │   ├── 📁 generated_diagrams/
 │       │   │   ├── 📁 models/
 │       │   │   │   ├── 🐍 __init__.py
@@ -274,7 +280,6 @@ Balance_plus-1/
 │       │   │   │   ├── 🐍 load_from_excel.py
 │       │   │   │   └── 🐍 tests_pre_start.py
 │       │   │   ├── 📁 services/
-│       │   │   │   └── 🐍 calculator.py
 │       │   │   ├── 📁 templates/
 │       │   │   │   └── 📄 template_2_parts.xml
 │       │   │   ├── 📁 tests/
@@ -411,7 +416,8 @@ Balance_plus-1/
 ├── 📋 package-lock.json
 ├── 📖 README.md
 ├── ⚙️ ruff.toml
-└── 📄 valve-stems-deploy.tar.gz
+├── 📄 valve-stems-deploy.tar.gz
+└── 📄 valve-stems-v2.tar.gz
 ```
 
 ---

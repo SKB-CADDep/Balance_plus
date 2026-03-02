@@ -10,8 +10,8 @@ class Turbine(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     # Название модели (напр. Т-110/120...) больше не уникально глобально
-    name = Column(String, nullable=False, index=True) 
-    
+    name = Column(String, nullable=False, index=True)
+
     # Новые поля для конкретизации проекта
     station_name = Column(String, nullable=True, index=True) # Название станции
     station_number = Column(String, nullable=True)           # Станционный номер

@@ -7,6 +7,7 @@ from fastapi.routing import APIRoute
 from app.api.main import api_router
 from app.core.config import settings
 
+
 # Настройка логирования
 logging.basicConfig(
     level=logging.INFO,
