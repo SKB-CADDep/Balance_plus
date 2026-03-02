@@ -5,15 +5,15 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.models import CalculationResultDB
-from app.schemas import CalculationParams, CalculationResult
+from app.schemas import MultiCalculationParams, MultiCalculationResult
 
 
 logger = logging.getLogger(__name__)
 
 def create_calculation_result(
     db: Session,
-    parameters: CalculationParams,
-    results: CalculationResult,
+    parameters: MultiCalculationParams,
+    results: MultiCalculationResult,
     valve_id: int
 ) -> CalculationResultDB:
     """
