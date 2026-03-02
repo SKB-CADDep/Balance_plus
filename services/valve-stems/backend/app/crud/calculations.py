@@ -12,25 +12,25 @@ logger = logging.getLogger(__name__)
 def create_calculation_result(
     db: Session,
     parameters: MultiCalculationParams,
-    results: MultiCalculationResult
-) -> CalculationResultDB:  # Убрали valve_id: int
+    results: MultiCalculationResult,
+    stock_name: str,       # <-- Добавили
+    turbine_name: str      # <-- Добавили
+) -> CalculationResultDB:
     try:
-        input_data_json = parameters.model_dump()
-        output_data_json = results.model_dump()
-
         db_result = CalculationResultDB(
             user_name="Engineer",
-            stock_name="tmp", # Перезапишется в роутере
-            turbine_name="tmp",
+            stock_name=stock_name,
+            turbine_name=turbine_name,
             calc_timestamp=datetime.utcnow(),
-            input_data=input_data_json,
-            output_data=output_data_json
+            input_data=parameters.model_dump(),
+            output_data=results.model_dump()
         )
-
         db.add(db_result)
-        db.flush()
+        db.commit()
+        db.refresh(db_result)
         return db_result
     except Exception as e:
+        db.rollback()
         logger.error(f"Ошибка при сохранении результата расчета в БД: {e}")
         raise
 

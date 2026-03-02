@@ -37,33 +37,19 @@ async def calculate(params: MultiCalculationParams, db: Session = Depends(get_db
         except ValueError as ve:
             raise HTTPException(status_code=400, detail=str(ve))
 
-        # 3. Формируем красивое имя для Истории с чертежами
-        stock_name_parts = []
-        for group, valve_info in groups_data:
-            # valve_info.name — это реальный номер чертежа из базы (например, "БТ-252380")
-            stock_name_parts.append(f"{valve_info.name} ({group.quantity}шт)")
-
+               # 3. Формируем красивые имена
+        stock_name_parts = [f"{v_info.name} ({g.quantity}шт)" for g, v_info in groups_data]
         pretty_stock_name = " + ".join(stock_name_parts)
-
-        # Получаем реальное имя турбины для истории
-        # В идеале нужно делать отдельный запрос в базу по params.turbine_id,
-        # но для скорости пока сделаем так:
         turbine_name = f"Проект ID: {params.turbine_id}"
 
-        # 4. Сохраняем в базу данных!
-        # Функция create_calculation_result больше не требует valve_id
-        new_result = create_calculation_result(
+        # 4. Сохраняем (Идеальный CRUD)
+        _new_result = create_calculation_result(
             db=db,
             parameters=params,
-            results=calculation_result
+            results=calculation_result,
+            stock_name=pretty_stock_name,
+            turbine_name=turbine_name
         )
-
-        # Перезаписываем красивые имена
-        new_result.stock_name = pretty_stock_name
-        new_result.turbine_name = turbine_name
-
-        db.commit()
-        db.refresh(new_result)
 
         return calculation_result
 

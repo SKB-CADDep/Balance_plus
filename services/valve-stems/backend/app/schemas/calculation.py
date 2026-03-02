@@ -104,6 +104,7 @@ class CalculationSummary(BaseModel):
     """Главный объект сводных таблиц."""
     sk: TypeSummary
     rk: TypeSummary
+    srk: TypeSummary
 
 
 class MultiCalculationResult(BaseModel):
