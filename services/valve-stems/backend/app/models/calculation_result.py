@@ -1,10 +1,9 @@
 from sqlalchemy import JSON, Column, DateTime, Integer, String, func
-from sqlalchemy.orm import relationship
 
 from app.core.database import Base
 
 
-class CalculationResultDB(BaseModel):
+class CalculationResultDB(Base):
     # Оставляем имя класса для Alembic/SQLAlchemy, если ты используешь Base.
     # Если у тебя класс называется просто CalculationResultDB (без BaseModel),
     # используй свой стандартный синтаксис.
