@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.adapters.calculation_adapter import CalculationAdapter
 from app.crud import (
-    create_calculation_result,
+    # create_calculation_result,
     get_calculation_result_by_id,
     get_results_by_valve_drawing,
 )
@@ -38,22 +38,22 @@ async def calculate(params: MultiCalculationParams, db: Session = Depends(get_db
             raise HTTPException(status_code=400, detail=str(ve))
 
         # 3. Формируем имя для истории
-        stock_name_parts = []
-        for g in params.groups:
-            stock_name_parts.append(f"{g.type}({g.quantity}шт)")
-        stock_name = ", ".join(stock_name_parts)
+        # stock_name_parts = []
+        # for g in params.groups:
+        #     stock_name_parts.append(f"{g.type}({g.quantity}шт)")
+        # stock_name = ", ".join(stock_name_parts)
 
-        # 4. Сохраняем (твоя функция)
-        new_result = create_calculation_result(
-            db=db,
-            parameters=params, # Pydantic v2 сам корректно сериализуется
-            results=calculation_result,
-            valve_id=params.groups[0].valve_id if params.groups else 0 # Просто для совместимости старого поля
-        )
+        # # 4. Сохраняем (твоя функция)
+        # new_result = create_calculation_result(
+        #     db=db,
+        #     parameters=params, # Pydantic v2 сам корректно сериализуется
+        #     results=calculation_result,
+        #     valve_id=params.groups[0].valve_id if params.groups else 0 # Просто для совместимости старого поля
+        # )
         
-        # Обновляем имя в сохраненном объекте (т.к. функция create_calc... могла записать старое)
-        new_result.stock_name = stock_name
-        db.commit()
+        # # Обновляем имя в сохраненном объекте (т.к. функция create_calc... могла записать старое)
+        # new_result.stock_name = stock_name
+        # db.commit()
 
         return calculation_result
 
