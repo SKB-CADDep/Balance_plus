@@ -12,64 +12,56 @@ from app.crud import (
 )
 from app.dependencies import get_db
 from app.models import CalculationResultDB, Valve
-from app.schemas import CalculationParams, ValveInfo
+from app.schemas import ValveInfo
 from app.schemas import CalculationResultDB as CalculationResultDBSchema
-
+from app.schemas import MultiCalculationParams, MultiCalculationResult
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-@router.post("/calculate", response_model=CalculationResultDBSchema, summary="Выполнить расчет")
-async def calculate(params: CalculationParams, db: Session = Depends(get_db)):
+
+@router.post("/calculate", response_model=MultiCalculationResult, summary="Выполнить мульти-расчет")
+async def calculate(params: MultiCalculationParams, db: Session = Depends(get_db)):
     try:
-        # 1. Достаем шток из БД
-        valve = db.query(Valve).filter(Valve.name == params.valve_drawing).first()
-        if not valve:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Клапан с именем '{params.valve_drawing}' не найден"
-            )
+        # 1. Собираем данные по всем клапанам из БД
+        groups_data = []
+        for group in params.groups:
+            valve_db = db.query(Valve).filter(Valve.id == group.valve_id).first()
+            if not valve_db:
+                raise HTTPException(status_code=404, detail=f"Клапан ID={group.valve_id} не найден")
+            groups_data.append((group, ValveInfo.model_validate(valve_db)))
 
-        valve_info = ValveInfo.model_validate(valve)
-
-        # 2. Вызываем адаптер (Вся конвертация единиц и физика теперь внутри)
-        # Обрати внимание: мы ловим ValueError, который выбрасывает адаптер при кривых данных
+        # 2. Вызываем мульти-адаптер
         try:
-            calculation_result = CalculationAdapter.run_calculation(params, valve_info)
+            calculation_result = CalculationAdapter.run_multi_calculation(params.globals, groups_data)
         except ValueError as ve:
-            # Ошибки физики или конвертации (например, отрицательное давление)
-            logger.error(f"Ошибка при выполнении расчётов: {ve}")
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
+            raise HTTPException(status_code=400, detail=str(ve))
 
-        # 3. Сохраняем в историю (твоя существующая функция)
+        # 3. Формируем имя для истории
+        stock_name_parts = []
+        for g in params.groups:
+            stock_name_parts.append(f"{g.type}({g.quantity}шт)")
+        stock_name = ", ".join(stock_name_parts)
+
+        # 4. Сохраняем (твоя функция)
         new_result = create_calculation_result(
             db=db,
-            parameters=params,
+            parameters=params, # Pydantic v2 сам корректно сериализуется
             results=calculation_result,
-            valve_id=valve.id
+            valve_id=params.groups[0].valve_id if params.groups else 0 # Просто для совместимости старого поля
         )
+        
+        # Обновляем имя в сохраненном объекте (т.к. функция create_calc... могла записать старое)
+        new_result.stock_name = stock_name
+        db.commit()
 
-        # 4. Формируем ответ
-        return CalculationResultDBSchema(
-            id=new_result.id,
-            user_name=new_result.user_name,
-            stock_name=new_result.stock_name,
-            turbine_name=new_result.turbine_name,
-            calc_timestamp=new_result.calc_timestamp,
-            # Десериализация для Pydantic ответа (если в БД строка)
-            input_data=json.loads(new_result.input_data) if isinstance(new_result.input_data, str) else new_result.input_data,
-            output_data=json.loads(new_result.output_data) if isinstance(new_result.output_data, str) else new_result.output_data
-        )
+        return calculation_result
 
-    # Ловим HTTPException (404 или 400), которые мы сами сгенерировали выше, и прокидываем дальше
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Критическая ошибка сервера: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Не удалось выполнить расчёты: {e}"
-        )
+        raise HTTPException(status_code=500, detail=f"Ошибка: {e}")
 
 
 @router.get("/valves/{valve_name:path}/results/", response_model=list[CalculationResultDBSchema], summary="Получить результаты расчётов")

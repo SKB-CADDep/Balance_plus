@@ -51,8 +51,12 @@ class ValveGroupInput(BaseModel):
     """Описание одной группы клапанов (с одинаковой геометрией)."""
     valve_id: int = Field(..., description="ID клапана, чью геометрию берем за основу")
     type: str = Field(..., description="Тип группы: 'СК' или 'РК'")
-    valve_names: list[str] = Field(..., description="Список имен клапанов, входящих в группу (напр. ['СК-1', 'СК-2'])")
+    valve_names: list[str] = Field(..., description="Список имен клапанов")
     quantity: int = Field(..., ge=1, description="Количество клапанов в группе")
+    
+    # ВОТ ЭТИ ДВЕ СТРОКИ ДОБАВЛЕНЫ ДЛЯ ЯДРА:
+    p_values: list[float] = Field(default_factory=list, description="Давления перед участками")
+    p_values_unit: str = "кгс/см²"
     
     p_leak_offs: list[float] = Field(default_factory=list, description="Промежуточные отсосы")
     p_leak_offs_unit: str = "кгс/см²"
