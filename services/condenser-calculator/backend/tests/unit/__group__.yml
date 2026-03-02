@@ -1,3 +1,0 @@
-name: "Calculator test "
-description: "Интеграционные тесты"
-order: 2 # Приоритет сортировки в главном меню CLI
