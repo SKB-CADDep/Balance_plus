@@ -7,7 +7,7 @@ from app.schemas import (
 )
 from app.core.converter import converter
 from app.domain.models import ValveGeometry, ThermoConditions
-from app.domain.valve_physics_engine import ValvePhysicsEngine, PhysicsEngineError
+from app.domain.valve_physics_engine import ValvePhysicsEngine, PhysicsEngineError, _expected_suctions
 
 logger = logging.getLogger(__name__)
 
@@ -64,8 +64,25 @@ class CalculationAdapter:
                 if not p_in_mpa:
                     p_in_mpa = [p_fresh_mpa] * count_parts # Фолбэк, если юзер не передал p_values
 
-                p_suctions_mpa = [converter.convert(p, from_unit=group_in.p_leak_offs_unit, to_unit="МПа", parameter_type="pressure") for p in group_in.p_leak_offs]
-                p_suctions_mpa.append(p_lst_mpa) # Глобальный отсос всегда последний!
+                # === ИСПРАВЛЕННАЯ ЛОГИКА СБОРКИ МАССИВА ОТСОСОВ ===
+                # Узнаем, сколько всего отсосов нужно физике (включая последний вакуумный)
+                total_suctions_needed = _expected_suctions(count_parts)
+                
+                # Конвертируем промежуточные отсосы, которые передал юзер
+                p_suctions_mpa = [
+                    converter.convert(p, from_unit=group_in.p_leak_offs_unit, to_unit="МПа", parameter_type="pressure") 
+                    for p in group_in.p_leak_offs
+                ]
+                
+                # Обрезаем лишние промежуточные отсосы. 
+                # Нам нужно оставить место для 1 глобального отсоса (последнего)
+                needed_intermediate = max(0, total_suctions_needed - 1)
+                p_suctions_mpa = p_suctions_mpa[:needed_intermediate]
+                
+                # Если отсосы вообще нужны, всегда добавляем глобальный последним
+                if total_suctions_needed > 0:
+                    p_suctions_mpa.append(p_lst_mpa)
+                # ===================================================
 
                 thermo = ThermoConditions(
                     count_valves=1, # Ядро считает для 1 штуки, умножаем потом
@@ -85,10 +102,10 @@ class CalculationAdapter:
                 group_total_g = raw.gi_t_h[0] * qty
 
                 # Агрегация (Сводные таблицы)
-                if "СК" in group_in.type:
+                if "СК" in group_in.type or "Стопорный" in group_in.type:
                     sk_g += group_total_g
                     sk_gh += group_total_g * raw.hi_kj_kg[0]
-                elif "РК" in group_in.type:
+                elif "РК" in group_in.type or "Регулирующий" in group_in.type:
                     rk_g += group_total_g
                     rk_gh += group_total_g * raw.hi_kj_kg[0]
 
