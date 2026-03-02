@@ -12,19 +12,19 @@ class CalculationGlobals(BaseModel):
     """Глобальные параметры расчета для всей турбины/группы."""
     P_fresh: float
     P_fresh_unit: str = "кгс/см²"
-    
+
     T_fresh: float | None = None
     T_fresh_unit: str = "°C"
-    
+
     H_fresh: float | None = None
     H_fresh_unit: str = "ккал/кг"
-    
+
     P_air: float = 1.033
     P_air_unit: str = "кгс/см²"
-    
+
     T_air: float = 27.0
     T_air_unit: str = "°C"
-    
+
     P_lst_leak_off: float = 0.97
     P_lst_leak_off_unit: str = "кгс/см²"
 
@@ -53,11 +53,11 @@ class ValveGroupInput(BaseModel):
     type: str = Field(..., description="Тип группы: 'СК' или 'РК'")
     valve_names: list[str] = Field(..., description="Список имен клапанов")
     quantity: int = Field(..., ge=1, description="Количество клапанов в группе")
-    
+
     # ВОТ ЭТИ ДВЕ СТРОКИ ДОБАВЛЕНЫ ДЛЯ ЯДРА:
     p_values: list[float] = Field(default_factory=list, description="Давления перед участками")
     p_values_unit: str = "кгс/см²"
-    
+
     p_leak_offs: list[float] = Field(default_factory=list, description="Промежуточные отсосы")
     p_leak_offs_unit: str = "кгс/см²"
 
@@ -85,11 +85,11 @@ class GroupCalculationDetails(BaseModel):
     Pi_in: list[float]
     Ti: list[float]
     Hi: list[float]
-    
+
     # Отсосы (для ОДНОГО клапана)
     deaerator_props: list[float]
     ejector_props: list[dict[str, float]]
-    
+
     # Итоги по группе (Gi 1-го клапана * quantity)
     group_total_g: float
 

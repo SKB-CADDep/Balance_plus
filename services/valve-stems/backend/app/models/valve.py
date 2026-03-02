@@ -3,14 +3,15 @@ from sqlalchemy.orm import relationship
 
 from app.core.database import Base
 
+
 class Valve(Base):
     __tablename__ = "stocks"
     __table_args__ = {"schema": "autocalc"}
 
     id = Column(Integer, primary_key=True)
     # Имя чертежа теперь СТРОГО УНИКАЛЬНО! Никаких дублей.
-    name = Column(String, nullable=False, unique=True, index=True) 
-    
+    name = Column(String, nullable=False, unique=True, index=True)
+
     type = Column(String, nullable=True)
     diameter = Column(Float, nullable=True)
     clearance = Column(Float, nullable=True)
@@ -24,7 +25,7 @@ class Valve(Base):
 
     # Связь обратно к турбинам
     turbines = relationship("Turbine", secondary="autocalc.turbine_valve_link", back_populates="valves")
-    
+
 
     def __repr__(self):
         return f"<Valve(name='{self.name}', type='{self.type}')>"

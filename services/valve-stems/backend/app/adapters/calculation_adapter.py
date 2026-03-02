@@ -1,13 +1,24 @@
 import logging
-from seuif97 import pt2h, ph2t
 
-from app.schemas import (
-    CalculationGlobals, ValveGroupInput, MultiCalculationResult,
-    GroupCalculationDetails, TypeSummary, CalculationSummary, ValveInfo
-)
+from seuif97 import ph2t, pt2h
+
 from app.core.converter import converter
-from app.domain.models import ValveGeometry, ThermoConditions
-from app.domain.valve_physics_engine import ValvePhysicsEngine, PhysicsEngineError, _expected_suctions
+from app.domain.models import ThermoConditions, ValveGeometry
+from app.domain.valve_physics_engine import (
+    PhysicsEngineError,
+    ValvePhysicsEngine,
+    _expected_suctions,
+)
+from app.schemas import (
+    CalculationGlobals,
+    CalculationSummary,
+    GroupCalculationDetails,
+    MultiCalculationResult,
+    TypeSummary,
+    ValveGroupInput,
+    ValveInfo,
+)
+
 
 logger = logging.getLogger(__name__)
 
@@ -16,8 +27,33 @@ class AdapterError(Exception):
 
 class CalculationAdapter:
     @staticmethod
+    def _prepare_suctions_array(
+        user_leak_offs: list[float],
+        user_unit: str,
+        global_lst_mpa: float,
+        count_parts: int
+    ) -> list[float]:
+        """Формирует правильный массив отсосов для Ядра в МПа."""
+        total_suctions_needed = _expected_suctions(count_parts)
+        if total_suctions_needed == 0:
+            return []
+
+        p_suctions_mpa = [
+            converter.convert(p, from_unit=user_unit, to_unit="МПа", parameter_type="pressure")
+            for p in user_leak_offs
+        ]
+
+        # Оставляем место для последнего (глобального) отсоса
+        needed_intermediate = max(0, total_suctions_needed - 1)
+        p_suctions_mpa = p_suctions_mpa[:needed_intermediate]
+
+        # Добавляем глобальный вакуум в конец
+        p_suctions_mpa.append(global_lst_mpa)
+        return p_suctions_mpa
+
+    @staticmethod
     def run_multi_calculation(
-        globals_data: CalculationGlobals, 
+        globals_data: CalculationGlobals,
         groups_data: list[tuple[ValveGroupInput, ValveInfo]]
     ) -> MultiCalculationResult:
         try:
@@ -36,7 +72,7 @@ class CalculationAdapter:
                 raise AdapterError("Не задана температура или энтальпия свежего пара.")
 
             details = []
-            
+
             # Переменные для агрегации (сумма G и числитель для энтальпии)
             sk_g, sk_gh = 0.0, 0.0
             rk_g, rk_gh = 0.0, 0.0
@@ -46,7 +82,7 @@ class CalculationAdapter:
                 # Геометрия
                 raw_lengths = getattr(valve_info, "section_lengths", []) or []
                 len_parts_m = [float(L) / 1000.0 for L in raw_lengths if L is not None]
-                
+
                 count_parts = len(len_parts_m)
                 if count_parts < 2:
                     raise AdapterError(f"Клапан {valve_info.name} должен иметь как минимум 2 участка.")
@@ -62,26 +98,15 @@ class CalculationAdapter:
                 # Термодинамика группы
                 p_in_mpa = [converter.convert(p, from_unit=group_in.p_values_unit, to_unit="МПа", parameter_type="pressure") for p in group_in.p_values[:count_parts]]
                 if not p_in_mpa:
-                    p_in_mpa = [p_fresh_mpa] * count_parts # Фолбэк, если юзер не передал p_values
+                    p_in_mpa = [p_fresh_mpa] * count_parts
 
-                # === ИСПРАВЛЕННАЯ ЛОГИКА СБОРКИ МАССИВА ОТСОСОВ ===
-                # Узнаем, сколько всего отсосов нужно физике (включая последний вакуумный)
-                total_suctions_needed = _expected_suctions(count_parts)
-                
-                # Конвертируем промежуточные отсосы, которые передал юзер
-                p_suctions_mpa = [
-                    converter.convert(p, from_unit=group_in.p_leak_offs_unit, to_unit="МПа", parameter_type="pressure") 
-                    for p in group_in.p_leak_offs
-                ]
-                
-                # Обрезаем лишние промежуточные отсосы. 
-                # Нам нужно оставить место для 1 глобального отсоса (последнего)
-                needed_intermediate = max(0, total_suctions_needed - 1)
-                p_suctions_mpa = p_suctions_mpa[:needed_intermediate]
-                
-                # Если отсосы вообще нужны, всегда добавляем глобальный последним
-                if total_suctions_needed > 0:
-                    p_suctions_mpa.append(p_lst_mpa)
+                # === КРАСИВЫЙ ВЫЗОВ НОВОГО МЕТОДА ===
+                p_suctions_mpa = CalculationAdapter._prepare_suctions_array(
+                    user_leak_offs=group_in.p_leak_offs,
+                    user_unit=group_in.p_leak_offs_unit,
+                    global_lst_mpa=p_lst_mpa,
+                    count_parts=count_parts
+                )
                 # ===================================================
 
                 thermo = ThermoConditions(
@@ -112,7 +137,7 @@ class CalculationAdapter:
                 # Формирование ответа по одной группе
                 pi_out = [converter.convert(p, from_unit="МПа", to_unit="кгс/см²", parameter_type="pressure") for p in raw.pi_in_mpa]
                 dea_p_out = converter.convert(raw.dea_p_mpa, from_unit="МПа", to_unit="кгс/см²", parameter_type="pressure") if raw.dea_p_mpa else 0.0
-                
+
                 ej_props_out = []
                 for ej in raw.ej_results:
                     ej_p_out = converter.convert(ej["p_mpa"], from_unit="МПа", to_unit="кгс/см²", parameter_type="pressure") if ej["p_mpa"] else 0.0

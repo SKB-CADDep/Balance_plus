@@ -12,9 +12,9 @@ from app.crud import (
 )
 from app.dependencies import get_db
 from app.models import CalculationResultDB, Valve
-from app.schemas import ValveInfo
 from app.schemas import CalculationResultDB as CalculationResultDBSchema
-from app.schemas import MultiCalculationParams, MultiCalculationResult
+from app.schemas import MultiCalculationParams, MultiCalculationResult, ValveInfo
+
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -42,9 +42,9 @@ async def calculate(params: MultiCalculationParams, db: Session = Depends(get_db
         for group, valve_info in groups_data:
             # valve_info.name — это реальный номер чертежа из базы (например, "БТ-252380")
             stock_name_parts.append(f"{valve_info.name} ({group.quantity}шт)")
-        
+
         pretty_stock_name = " + ".join(stock_name_parts)
-        
+
         # Получаем реальное имя турбины для истории
         # В идеале нужно делать отдельный запрос в базу по params.turbine_id,
         # но для скорости пока сделаем так:
@@ -57,11 +57,11 @@ async def calculate(params: MultiCalculationParams, db: Session = Depends(get_db
             parameters=params,
             results=calculation_result
         )
-        
+
         # Перезаписываем красивые имена
         new_result.stock_name = pretty_stock_name
         new_result.turbine_name = turbine_name
-        
+
         db.commit()
         db.refresh(new_result)
 

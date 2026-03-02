@@ -12,12 +12,12 @@ class CalculationResultDB(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_name = Column(String, nullable=True)
-    
+
     # Сюда будем писать: "БТ-252380 (2шт) + БТ-281220 (4шт)"
     stock_name = Column(String, nullable=False)
-    
+
     turbine_name = Column(String, nullable=False)
-    
+
     calc_timestamp = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     input_data = Column(JSON, nullable=False)
     output_data = Column(JSON, nullable=False)

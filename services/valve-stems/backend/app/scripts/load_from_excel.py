@@ -1,13 +1,16 @@
 import logging
-import sys
 import os
-import pandas as pd
+import sys
 from pathlib import Path
+
+import pandas as pd
+
 
 sys.path.append(os.getcwd())
 
-from app.core.database import SessionLocal, engine, Base
+from app.core.database import Base, SessionLocal, engine
 from app.models import Turbine, Valve
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -40,7 +43,7 @@ def init_db():
         return
 
     db = SessionLocal()
-    
+
     try:
         logger.info("Пересоздание таблиц БД (переход на Many-to-Many)...")
         Base.metadata.drop_all(bind=engine)
@@ -51,16 +54,16 @@ def init_db():
         # ---------------------------------------------------------
         logger.info("Чтение геометрий из Data_1.xlsx...")
         df_geo = pd.read_excel(GEOMETRY_FILE)
-        
+
         valve_cache = {} # Словарь { "Имя_Чертежа": Объект_Valve }
-        
+
         for _, row in df_geo.iterrows():
             name = str(row.get('Чертеж_клапана')).strip()
             if not name or name == 'nan': continue
-            
+
             # Если такой чертеж уже добавили, пропускаем дубль
             if name in valve_cache: continue
-            
+
             valve = Valve(
                 name=name,
                 type=clean_value(row.get('Тип_клапана')),
@@ -97,13 +100,13 @@ def init_db():
                 station_number=clean_value(row.get('Станц. №')),
                 factory_number=clean_value(row.get('Зав№'))
             )
-            
+
             # Собираем все имена клапанов для этой турбины
             all_valves_for_turbine = []
             all_valves_for_turbine.extend([(v, "Стопорный (СК)") for v in extract_valves(row.get('СК'))])
             all_valves_for_turbine.extend([(v, "Регулирующий (РК)") for v in extract_valves(row.get('РК'))])
             all_valves_for_turbine.extend([(v, "Стопорно-регулирующий (СРК)") for v in extract_valves(row.get('СРК'))])
-            
+
             for v_name, v_type in all_valves_for_turbine:
                 # Если клапан есть в базе — берем его. Если нет — создаем пустую геометрию на лету!
                 if v_name in valve_cache:
@@ -112,7 +115,7 @@ def init_db():
                     valve_obj = Valve(name=v_name, type=v_type)
                     db.add(valve_obj)
                     valve_cache[v_name] = valve_obj # Сохраняем в кэш
-                
+
                 # Магия SQLAlchemy: просто добавляем объект в список, связка Many-to-Many создастся сама!
                 if valve_obj not in turbine.valves:
                     turbine.valves.append(valve_obj)
