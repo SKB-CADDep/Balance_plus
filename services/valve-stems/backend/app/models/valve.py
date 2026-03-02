@@ -25,7 +25,6 @@ class Valve(Base):
     # Связь обратно к турбинам
     turbines = relationship("Turbine", secondary="autocalc.turbine_valve_link", back_populates="valves")
     
-    calculation_results = relationship("CalculationResultDB", back_populates="valve")
 
     def __repr__(self):
         return f"<Valve(name='{self.name}', type='{self.type}')>"
