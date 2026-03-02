@@ -23,14 +23,18 @@ logger = logging.getLogger(__name__)
 @router.post("/calculate", response_model=MultiCalculationResult, summary="Выполнить мульти-расчет")
 async def calculate(params: MultiCalculationParams, db: Session = Depends(get_db)):
     try:
-        # 1. Собираем данные по всем клапанам из БД
+        # 1. Собираем данные по всем клапанам из БД (Оптимизация: 1 запрос вместо N)
+        valve_ids = [g.valve_id for g in params.groups]
+        valves = db.query(Valve).filter(Valve.id.in_(valve_ids)).all()
+        valve_dict = {v.id: v for v in valves}
+
         groups_data = []
         for group in params.groups:
-            valve_db = db.query(Valve).filter(Valve.id == group.valve_id).first()
+            valve_db = valve_dict.get(group.valve_id)
             if not valve_db:
                 raise HTTPException(status_code=404, detail=f"Клапан ID={group.valve_id} не найден")
             groups_data.append((group, ValveInfo.model_validate(valve_db)))
-
+            
         # 2. Вызываем мульти-адаптер
         try:
             calculation_result = CalculationAdapter.run_multi_calculation(params.globals, groups_data)
