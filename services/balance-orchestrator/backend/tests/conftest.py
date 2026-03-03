@@ -13,9 +13,12 @@ import os
 import pytest
 import yaml
 from pathlib import Path
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 from sqlalchemy import create_engine, text
+import importlib.util
+import datetime
+from pathlib import Path
 
 
 BACKEND_ROOT = Path(__file__).resolve().parents[1]  # .../backend
@@ -92,8 +95,78 @@ class DBYamlFile(pytest.File):
         for test_spec in suite.tests:
             yield DBYamlItem.from_parent(self, name=test_spec.id, spec=test_spec)
 
-# --- 4. РЕГИСТРАЦИЯ ПЛАГИНА В PYTEST ---
+# --- ПЛАГИН ДЛЯ ТЕСТИРОВАНИЯ МАТЕМАТИКИ И СТРАТЕГИЙ (*.calc.py) ---
+class CalcItem(pytest.Item):
+    def __init__(self, name, parent, spec, target_func):
+        super().__init__(name, parent)
+        self.spec = spec
+        self.target_func = target_func
+
+    def runtest(self):
+        # Достаем входные данные и ожидаемый результат
+        input_data = self.spec.get("input", {})
+        expected = self.spec.get("expected")
+        
+        # Вызываем реальную стратегию расчета
+        result = self.target_func(**input_data)
+        
+        # Умная сверка (поддерживает как словари, так и простые числа)
+        if isinstance(expected, dict) and isinstance(result, dict):
+            for key, val in expected.items():
+                actual_val = result.get(key)
+                assert actual_val == val, f"Ключ '{key}': ожидалось {val}, получено {actual_val}"
+        else:
+            assert result == expected, f"Ожидалось {expected}, получено {result}"
+
+    def reportinfo(self):
+        return self.path, 0, f"Math Test: {self.name}"
+
+class CalcFile(pytest.File):
+    def collect(self):
+        # Динамически импортируем python-файл как модуль
+        spec = importlib.util.spec_from_file_location("calc_module", self.path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        
+        # Ищем целевую функцию и массив с тестами
+        target_func = getattr(module, "target_function", None)
+        tests = getattr(module, "tests",[])
+        
+        if not target_func:
+            raise ValueError(f"В файле {self.path.name} не указана переменная 'target_function'!")
+            
+        for i, test_spec in enumerate(tests):
+            test_name = test_spec.get("id", f"calc_test_{i}")
+            yield CalcItem.from_parent(self, name=test_name, spec=test_spec, target_func=target_func)
+
 def pytest_collect_file(file_path: Path, parent):
-    # Если pytest натыкается на файл .db.yaml, мы перехватываем его обработку
-    if file_path.suffix == ".yaml" and file_path.name.endswith(".db.yaml"):
+    # Перехват DB-файлов
+    if file_path.name.endswith(".db.yaml"):
         return DBYamlFile.from_parent(parent, path=file_path)
+    # Перехват файлов с математикой (ЗАМЕНИЛИ .calc.py НА _calc.py)
+    elif file_path.name.endswith("_calc.py"):
+        return CalcFile.from_parent(parent, path=file_path)
+    
+# --- АВТОМАТИЧЕСКОЕ СОХРАНЕНИЕ ЛОГОВ ПРИ ОШИБКАХ ---
+@pytest.hookimpl(tryfirst=True, hookwrapper=True)
+def pytest_runtest_makereport(item, call):
+    outcome = yield
+    report = outcome.get_result()
+
+    # 🔥 НОВОЕ: Проверяем, включил ли пользователь логи в Оркестраторе
+    if os.getenv("SAVE_TEST_LOGS") != "1":
+        return  # Если не включено, просто выходим и ничего не сохраняем
+
+    # Если тест упал именно во время выполнения (call)
+    if report.when == "call" and report.failed:
+        file_path = Path(item.location[0])
+        base_name = file_path.name.split('.')[0]
+        now_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        log_dir = Path.cwd() / "logs"
+        log_dir.mkdir(exist_ok=True)
+        log_filename = f"log_{base_name}_{now_str}.txt"
+        
+        with open(log_dir / log_filename, "w", encoding="utf-8") as f:
+            f.write(f"УПАВШИЙ ТЕСТ: {item.nodeid}\n")
+            f.write("="*60 + "\n")
+            f.write(report.longreprtext)

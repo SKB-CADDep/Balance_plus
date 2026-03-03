@@ -16,6 +16,8 @@ class Colors:
 
 IGNORE_DIRS = {'.git', 'venv', '.venv', '__pycache__', 'node_modules', '.pytest_cache', '.github'}
 
+SAVE_LOGS = False
+
 def clear_screen():
     os.system('cls' if os.name == 'nt' else 'clear')
 
@@ -64,12 +66,15 @@ def scan_for_test_groups(root_dir):
         except Exception:
             pass
             
-        test_files =[]
+        test_files = []
         for file in filenames:
             if file.startswith('test_') and (file.endswith('.py') or file.endswith('.yaml')):
                 filepath = os.path.join(dirpath, file)
                 
-                if file.endswith('.py'):
+                if file.endswith('_calc.py'):
+                    desc = extract_py_description(filepath)
+                    file_icon = '🧮'
+                elif file.endswith('.py'):
                     desc = extract_py_description(filepath)
                     file_icon = '🐍'
                 else:
@@ -117,8 +122,12 @@ def find_project_root(test_path):
 
 # --- ГЛАВНЫЙ ИСПОЛНИТЕЛЬ (ТОЛЬКО PYTEST) ---
 def run_tests(selected_files):
+    global SAVE_LOGS
     clear_screen()
     draw_header("▶ ЗАПУСК ТЕСТОВ (Оркестрация Pytest)")
+
+    # 🔥 Прокидываем состояние тумблера в pytest
+    os.environ["SAVE_TEST_LOGS"] = "1" if SAVE_LOGS else "0"
 
     # Группируем ВСЕ выбранные файлы (и py, и yaml) по проектам
     projects = {}
@@ -142,6 +151,7 @@ def run_tests(selected_files):
     input()
 
 def main_menu():
+    global SAVE_LOGS
     root_dir = os.path.abspath(os.path.dirname(__file__))
     while True:
         clear_screen()
@@ -162,6 +172,10 @@ def main_menu():
             print(f"[{Colors.GREEN}{i:2}{Colors.RESET}] {Colors.BOLD}{g_name:<25}{Colors.RESET} {Colors.GRAY}— {g_data['desc']} (файлов: {file_count}){Colors.RESET}")
             
         print(f"\n[{Colors.GREEN}#{Colors.RESET}] Запустить ВСЕ группы")
+
+        log_status = f"{Colors.GREEN}ВКЛ{Colors.RESET}" if SAVE_LOGS else f"{Colors.GRAY}ВЫКЛ{Colors.RESET}"
+        print(f"[{Colors.GREEN}l{Colors.RESET}] Сохранять логи при ошибках: {log_status}")
+
         print(f"[{Colors.GREEN}q{Colors.RESET}] Выход")
         print(f"{Colors.CYAN}{'-'*80}{Colors.RESET}")
         
@@ -171,6 +185,8 @@ def main_menu():
             clear_screen()
             print("Выход из тест-раннера. Хорошего дня! 👋")
             break
+        elif choice == 'l':
+            SAVE_LOGS = not SAVE_LOGS
         elif choice == '#':
             all_files = [f for g in groups.values() for f in g['files']]
             if all_files: run_tests(all_files)
@@ -183,6 +199,7 @@ def main_menu():
                 pass
 
 def group_menu(group_data, group_name):
+    global SAVE_LOGS
     while True:
         clear_screen()
         draw_header(f"📂 Группа: {group_name} ({group_data['desc']})")
@@ -192,12 +209,19 @@ def group_menu(group_data, group_name):
             print(f"[{Colors.GREEN}{i:2}{Colors.RESET}] {f['icon']} {Colors.BOLD}{f['name']:<30}{Colors.RESET} {Colors.GRAY}{f['desc']}{Colors.RESET}")
             
         print(f"\n[{Colors.GREEN}#{Colors.RESET}] Запустить ВСЕ файлы в группе")
+
+        log_status = f"{Colors.GREEN}ВКЛ{Colors.RESET}" if SAVE_LOGS else f"{Colors.GRAY}ВЫКЛ{Colors.RESET}"
+        print(f"[{Colors.GREEN}l{Colors.RESET}] Сохранять логи при ошибках: {log_status}")
+
         print(f"[{Colors.GREEN}0{Colors.RESET}] Назад")
         print(f"{Colors.CYAN}{'-'*80}{Colors.RESET}")
         
         choice = input(f"Выберите тесты (например 1,3 или 1-3): ").strip()
         
         if choice == '0': break
+        elif choice == 'l':
+            SAVE_LOGS = not SAVE_LOGS
+            continue
         selected_indices = parse_selection(choice, len(files))
         if selected_indices:
             selected_files = [files[i-1] for i in selected_indices]
