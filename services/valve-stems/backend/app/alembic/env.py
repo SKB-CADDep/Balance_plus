@@ -6,6 +6,7 @@ from sqlalchemy import engine_from_config, pool
 from app.core.config import settings
 from app.core.database import Base
 
+
 config = context.config
 
 fileConfig(config.config_file_name)

@@ -10,7 +10,7 @@ class Valve(Base):
 
     id = Column(Integer, primary_key=True)
     # УБРАЛИ unique=True, так как один чертеж может быть у разных турбин
-    name = Column(String, nullable=False, index=True) 
+    name = Column(String, nullable=False, index=True)
     type = Column(String, nullable=True) # 'СК', 'РК', 'СРК' или полное название
     diameter = Column(Float, nullable=True)
     clearance = Column(Float, nullable=True)
