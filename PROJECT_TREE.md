@@ -1,11 +1,10 @@
 # 🌳 Дерево проекта: Balance_plus-1
 
-> Автоматически сгенерировано: `2026-02-11 11:39:05`  
-> Директорий: **101** | Файлов: **296**
+> Автоматически сгенерировано: `2026-03-04 12:11:03`  
+> Директорий: **102** | Файлов: **319**
 
 ```
 Balance_plus-1/
-├── 📁 .cursor/
 ├── 📁 .github/
 │   ├── 📁 prompts/
 │   │   ├── 📝 system_prompt.md
@@ -29,6 +28,10 @@ Balance_plus-1/
 │   │   │   ├── 📝 observability.md
 │   │   │   └── 📝 postgresql-database.md
 │   │   ├── 📁 services/
+│   │   │   ├── 📁 valve-stems/
+│   │   │   │   ├── 📝 ER-диаграмма.md
+│   │   │   │   ├── 📋 Request_calculations_multi.json
+│   │   │   │   └── 📋 Response_calculations_multi.json
 │   │   │   ├── 📝 api-gateway.md
 │   │   │   ├── 📝 condenser_worker.md
 │   │   │   ├── 📝 frontend-ide.md
@@ -60,6 +63,7 @@ Balance_plus-1/
 │   ├── 📁 specifications/
 │   │   ├── 📝 condensercalculator.md
 │   │   ├── 📝 taskmanager.md
+│   │   ├── 📝 uniconv.md
 │   │   └── 📝 valvecalculator.md
 │   └── 📖 README.md
 ├── 📁 GitLAB_pipeline/
@@ -142,62 +146,61 @@ Balance_plus-1/
 │   │       ├── 📋 tsconfig.node.json
 │   │       └── 📜 vite.config.ts
 │   ├── 📁 condenser-calculator/
-│   │   ├── 📁 backend/
-│   │   │   ├── 📁 app/
-│   │   │   │   ├── 📁 utils/
-│   │   │   │   │   ├── 🐍 __init__.py
-│   │   │   │   │   ├── 🐍 base_for_selection.py
-│   │   │   │   │   ├── 🐍 berman_strategy.py
-│   │   │   │   │   ├── 🐍 calculation_engine.py
-│   │   │   │   │   ├── 🐍 Constants.py
-│   │   │   │   │   ├── 🐍 division_range.py
-│   │   │   │   │   ├── 🐍 exceptions_method.py
-│   │   │   │   │   ├── 🐍 metrovickers_strategy.py
-│   │   │   │   │   ├── 🐍 selection_methods.py
-│   │   │   │   │   ├── 🐍 table_models.py
-│   │   │   │   │   ├── 🐍 TPS_module.py
-│   │   │   │   │   ├── 🐍 uniconv.py
-│   │   │   │   │   └── 🐍 VKU_strategy.py
-│   │   │   │   └── 🐍 __init__.py
-│   │   │   ├── 📁 scripts/
-│   │   │   │   ├── 🐍 _common.py
-│   │   │   │   ├── 🐍 compare_selection_methods.py
-│   │   │   │   ├── 🐍 generate_report_on_selecting_values.py
-│   │   │   │   ├── 🐍 report_calculation_engine.py
-│   │   │   │   ├── 🐍 report_metrovickers_strategy.py
-│   │   │   │   ├── 🐍 report_module_berman.py
-│   │   │   │   ├── 🐍 report_TPS_module.py
-│   │   │   │   ├── 🐍 validate_exceptions_method.py
-│   │   │   │   ├── 🐍 validate_TPS_module.py
-│   │   │   │   └── 🐍 validate_vku.py
-│   │   │   ├── 📁 tests/
-│   │   │   │   ├── 📁 unit/
-│   │   │   │   │   ├── 🐍 __init__.py
-│   │   │   │   │   ├── 🐍 test_division_range.py
-│   │   │   │   │   ├── 🐍 test_metrovickers_strategy.py
-│   │   │   │   │   ├── 🐍 test_module_berman.py
-│   │   │   │   │   ├── 🐍 test_selecting_values.py
-│   │   │   │   │   ├── 🐍 test_table_models.py
-│   │   │   │   │   ├── 🐍 test_uniconv.py
-│   │   │   │   │   └── 🐍 test_VKU_strategy.py
-│   │   │   │   ├── 📁 validation/
-│   │   │   │   │   ├── 📁 berman/
-│   │   │   │   │   │   ├── 🐍 __init__.py
-│   │   │   │   │   │   ├── 🐍 conftest.py
-│   │   │   │   │   │   ├── 🐍 test_mode_1.py
-│   │   │   │   │   │   ├── 🐍 test_mode_2.py
-│   │   │   │   │   │   ├── 🐍 test_mode_3.py
-│   │   │   │   │   │   ├── 🐍 test_mode_4.py
-│   │   │   │   │   │   └── 🐍 test_verification.py
-│   │   │   │   │   └── 🐍 __init__.py
-│   │   │   │   ├── 🐍 __init__.py
-│   │   │   │   ├── 🐍 conftest.py
-│   │   │   │   └── 📖 README.md
-│   │   │   ├── 📄 .env
-│   │   │   ├── 🔒 poetry.lock
-│   │   │   ├── 📦 pyproject.toml
-│   │   │   └── 📖 README.md
-│   │   └── 📁 frontend/
+│   │   └── 📁 backend/
+│   │       ├── 📁 app/
+│   │       │   ├── 📁 utils/
+│   │       │   │   ├── 🐍 __init__.py
+│   │       │   │   ├── 🐍 base_for_selection.py
+│   │       │   │   ├── 🐍 berman_strategy.py
+│   │       │   │   ├── 🐍 calculation_engine.py
+│   │       │   │   ├── 🐍 Constants.py
+│   │       │   │   ├── 🐍 division_range.py
+│   │       │   │   ├── 🐍 exceptions_method.py
+│   │       │   │   ├── 🐍 metrovickers_strategy.py
+│   │       │   │   ├── 🐍 selection_methods.py
+│   │       │   │   ├── 🐍 table_models.py
+│   │       │   │   ├── 🐍 TPS_module.py
+│   │       │   │   ├── 🐍 uniconv.py
+│   │       │   │   └── 🐍 VKU_strategy.py
+│   │       │   └── 🐍 __init__.py
+│   │       ├── 📁 scripts/
+│   │       │   ├── 🐍 _common.py
+│   │       │   ├── 🐍 compare_selection_methods.py
+│   │       │   ├── 🐍 generate_report_on_selecting_values.py
+│   │       │   ├── 🐍 report_calculation_engine.py
+│   │       │   ├── 🐍 report_metrovickers_strategy.py
+│   │       │   ├── 🐍 report_module_berman.py
+│   │       │   ├── 🐍 report_TPS_module.py
+│   │       │   ├── 🐍 validate_exceptions_method.py
+│   │       │   ├── 🐍 validate_TPS_module.py
+│   │       │   └── 🐍 validate_vku.py
+│   │       ├── 📁 tests/
+│   │       │   ├── 📁 unit/
+│   │       │   │   ├── 🐍 __init__.py
+│   │       │   │   ├── 🐍 test_division_range.py
+│   │       │   │   ├── 🐍 test_metrovickers_strategy.py
+│   │       │   │   ├── 🐍 test_module_berman.py
+│   │       │   │   ├── 🐍 test_selecting_values.py
+│   │       │   │   ├── 🐍 test_table_models.py
+│   │       │   │   ├── 🐍 test_uniconv.py
+│   │       │   │   └── 🐍 test_VKU_strategy.py
+│   │       │   ├── 📁 validation/
+│   │       │   │   ├── 📁 berman/
+│   │       │   │   │   ├── 🐍 __init__.py
+│   │       │   │   │   ├── 🐍 conftest.py
+│   │       │   │   │   ├── 🐍 test_mode_1.py
+│   │       │   │   │   ├── 🐍 test_mode_2.py
+│   │       │   │   │   ├── 🐍 test_mode_3.py
+│   │       │   │   │   ├── 🐍 test_mode_4.py
+│   │       │   │   │   └── 🐍 test_verification.py
+│   │       │   │   └── 🐍 __init__.py
+│   │       │   ├── 🐍 __init__.py
+│   │       │   ├── 🐍 conftest.py
+│   │       │   └── 📖 README.md
+│   │       ├── 📄 .env
+│   │       ├── 🔒 poetry.lock
+│   │       ├── 📦 pyproject.toml
+│   │       └── 📖 README.md
 │   └── 📁 valve-stems/
 │       ├── 📁 backend/
 │       │   ├── 📁 _archive/
@@ -231,26 +234,32 @@ Balance_plus-1/
 │       │   │       │   └── 📊 Схема хранения данных в БД.xlsx
 │       │   │       └── 📄 Функциональная схема (Калькулятор штоков).graphml
 │       │   ├── 📁 app/
+│       │   │   ├── 📁 adapters/
+│       │   │   │   └── 🐍 calculation_adapter.py
 │       │   │   ├── 📁 alembic/
 │       │   │   │   ├── 🐍 env.py
 │       │   │   │   └── 📄 script.py.mako
 │       │   │   ├── 📁 api/
 │       │   │   │   ├── 📁 routes/
-│       │   │   │   │   ├── 📁 generated_diagrams/
 │       │   │   │   │   ├── 🐍 calculations.py
 │       │   │   │   │   ├── 🐍 drawio.py
 │       │   │   │   │   ├── 🐍 turbines.py
+│       │   │   │   │   ├── 🐍 utils.py
 │       │   │   │   │   └── 🐍 valves.py
 │       │   │   │   └── 🐍 main.py
 │       │   │   ├── 📁 core/
 │       │   │   │   ├── 🐍 __init__.py
 │       │   │   │   ├── 🐍 config.py
+│       │   │   │   ├── 🐍 converter.py
 │       │   │   │   └── 🐍 database.py
 │       │   │   ├── 📁 crud/
 │       │   │   │   ├── 🐍 __init__.py
 │       │   │   │   ├── 🐍 calculations.py
 │       │   │   │   ├── 🐍 turbines.py
 │       │   │   │   └── 🐍 valves.py
+│       │   │   ├── 📁 domain/
+│       │   │   │   ├── 🐍 models.py
+│       │   │   │   └── 🐍 valve_physics_engine.py
 │       │   │   ├── 📁 generated_diagrams/
 │       │   │   ├── 📁 models/
 │       │   │   │   ├── 🐍 __init__.py
@@ -266,9 +275,9 @@ Balance_plus-1/
 │       │   │   │   ├── 🐍 backend_pre_start.py
 │       │   │   │   ├── 🐍 check_drawio.py
 │       │   │   │   ├── 🐍 initial_data.py
+│       │   │   │   ├── 🐍 load_from_excel.py
 │       │   │   │   └── 🐍 tests_pre_start.py
 │       │   │   ├── 📁 services/
-│       │   │   │   └── 🐍 calculator.py
 │       │   │   ├── 📁 templates/
 │       │   │   │   └── 📄 template_2_parts.xml
 │       │   │   ├── 📁 tests/
@@ -296,6 +305,7 @@ Balance_plus-1/
 │       │   ├── 📦 pyproject.toml
 │       │   └── 📖 README.md
 │       ├── 📁 db/
+│       │   ├── 📊 Data.xlsx
 │       │   ├── 📄 init.dump
 │       │   └── ⚡ restore.sh
 │       ├── 📁 frontend/
@@ -327,6 +337,7 @@ Balance_plus-1/
 │       │   │   │   │   ├── 📄 StockSelection.tsx
 │       │   │   │   │   └── 📄 TurbineSearch.tsx
 │       │   │   │   ├── 📁 Common/
+│       │   │   │   │   ├── 📄 InputWithUnit.tsx
 │       │   │   │   │   ├── 📄 MainLayout.tsx
 │       │   │   │   │   ├── 📄 NotFound.tsx
 │       │   │   │   │   ├── 📄 Sidebar.tsx
@@ -363,6 +374,7 @@ Balance_plus-1/
 │       │   └── 📜 vite.config.ts
 │       ├── 📄 .env
 │       ├── ⚙️ docker-compose.yml
+│       ├── 📋 package-lock.json
 │       └── 📖 README.md
 ├── 📁 tests/
 │   └── 📁 e2e/
@@ -395,13 +407,25 @@ Balance_plus-1/
 │   │   ├── 🐍 excel_to_json_metro_vikkers.py
 │   │   ├── 🐍 read_dbf_for_zone_json.py
 │   │   └── 🐍 treu_to_json.py
+│   ├── 📁 valve-stems/
+│   │   ├── 📋 1_st_stock_data.json
+│   │   ├── 📋 1_st_stock_result.json
+│   │   ├── 📋 2_nd_stock_data.json
+│   │   ├── 📋 2_nd_stock_result.json
+│   │   ├── 📋 3_rd_stock_data.json
+│   │   ├── 📋 3_rd_stock_result.json
+│   │   ├── 📋 group_of_stocks_data.json
+│   │   └── 📋 group_of_stocks_results.json
 │   └── 📖 README.md
 ├── 🙈 .gitignore
 ├── 📝 CONTRIBUTING.md
 ├── ⚙️ docker-compose.yml
 ├── 🐍 generate_tree.py
+├── 📋 package-lock.json
 ├── 📖 README.md
-└── ⚙️ ruff.toml
+├── ⚙️ ruff.toml
+├── 📄 valve-stems-deploy.tar.gz
+└── 📄 valve-stems-v2.tar.gz
 ```
 
 ---
