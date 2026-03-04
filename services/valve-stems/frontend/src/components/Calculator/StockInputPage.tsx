@@ -90,14 +90,22 @@ const parseLocaleNumberStrict = (val: unknown): number => {
     return Number.isFinite(n) ? n : NaN;
 };
 
-// Запрос за единицами измерения
+// Запрос за единицами измерения (Только строгий относительный путь через Nginx!)
 const fetchUnits = async () => {
     try {
-        const baseUrl = import.meta.env.VITE_API_URL || '';
-        const cleanBaseUrl = baseUrl.replace(/\/$/, '');
-        const res = await fetch(`${cleanBaseUrl}/api/v1/utils/units`);
+        const res = await fetch('/api/v1/utils/units', {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+        if (!res.ok) {
+            throw new Error(`Ошибка сервера ${res.status}`);
+        }
         return await res.json();
     } catch (e) {
+        console.error("Не удалось загрузить справочник единиц:", e);
+        // Фоллбэк, если бэкенд недоступен
         return {
             pressure: { available: ["кгс/см²", "МПа", "бар"] },
             temperature: { available: ["°C", "K"] },
