@@ -1,31 +1,26 @@
 import logging
 
 from fastapi import APIRouter
-from pydantic import BaseModel
+from app.core.converter import converter
 
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
 
-class UnitsDictionaryResponse(BaseModel):
-    parameters: dict[str, list[str]]
-
-
-@router.get("/units", response_model=UnitsDictionaryResponse, summary="Получить справочник единиц измерения")
-async def get_available_units():
+@router.get("/units", summary="Получить справочник единиц измерения")
+def get_units_dictionary() -> dict:
     """
-    Возвращает доступные физические параметры и их единицы измерения.
-    Фронтенд использует этот эндпоинт для рендера выпадающих списков (Select).
+    Возвращает список всех доступных физических параметров 
+    и их единиц измерения из конвертера.
     """
-    # TODO: Заменить хардкод на реальный вызов экземпляра converter.
-    # Например: units_data = converter.get_all_units_dict()
-
-    units_data = {
-        "pressure": ["кгс/см²", "МПа", "Па", "кПа", "бар", "атм (тех)", "атм (физ)"],
-        "temperature": ["°C", "K", "°F"],
-        "enthalpy": ["ккал/кг", "кДж/кг"],
-        "mass_flow": ["т/ч", "кг/с"],
-    }
-
-    return UnitsDictionaryResponse(parameters=units_data)
+    result = {}
+    
+    for param_type, param_data in converter.parameters.items():
+        result[param_type] = {
+            "name": param_data["name"],          
+            "base": param_data["base"],          
+            "available": list(param_data["units"].keys())  
+        }
+        
+    return result
