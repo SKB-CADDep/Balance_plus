@@ -212,9 +212,11 @@ const StockInputPage: React.FC<Props> = ({ stock, turbine, onSubmit, onGoBack })
         )
     }
 
-    const pressureUnits = unitsDict?.pressure?.available || ["кгс/см²"];
-    const tempUnits = unitsDict?.temperature?.available || ["°C"];
-    const enthalpyUnits = unitsDict?.enthalpy?.available || ["ккал/кг"];
+    // Данные с бэкенда приходят обернутыми в объект "parameters", 
+    // а внутри лежат сразу массивы строк (без слова "available").
+    const pressureUnits = unitsDict?.parameters?.pressure || ["кгс/см²"];
+    const tempUnits = unitsDict?.parameters?.temperature || ["°C"];
+    const enthalpyUnits = unitsDict?.parameters?.enthalpy || ["ккал/кг"];
 
     return (
         <VStack as="form" onSubmit={handleSubmit(processSubmit)} spacing={6} p={5} w="100%" maxW="container.lg" mx="auto" align="stretch" noValidate>
