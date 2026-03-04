@@ -1,11 +1,10 @@
 # 🌳 Дерево проекта: Balance_plus-1
 
-> Автоматически сгенерировано: `2026-02-27 10:38:37`  
-> Директорий: **104** | Файлов: **309**
+> Автоматически сгенерировано: `2026-03-04 12:11:03`  
+> Директорий: **102** | Файлов: **319**
 
 ```
 Balance_plus-1/
-├── 📁 .cursor/
 ├── 📁 .github/
 │   ├── 📁 prompts/
 │   │   ├── 📝 system_prompt.md
@@ -147,62 +146,61 @@ Balance_plus-1/
 │   │       ├── 📋 tsconfig.node.json
 │   │       └── 📜 vite.config.ts
 │   ├── 📁 condenser-calculator/
-│   │   ├── 📁 backend/
-│   │   │   ├── 📁 app/
-│   │   │   │   ├── 📁 utils/
-│   │   │   │   │   ├── 🐍 __init__.py
-│   │   │   │   │   ├── 🐍 base_for_selection.py
-│   │   │   │   │   ├── 🐍 berman_strategy.py
-│   │   │   │   │   ├── 🐍 calculation_engine.py
-│   │   │   │   │   ├── 🐍 Constants.py
-│   │   │   │   │   ├── 🐍 division_range.py
-│   │   │   │   │   ├── 🐍 exceptions_method.py
-│   │   │   │   │   ├── 🐍 metrovickers_strategy.py
-│   │   │   │   │   ├── 🐍 selection_methods.py
-│   │   │   │   │   ├── 🐍 table_models.py
-│   │   │   │   │   ├── 🐍 TPS_module.py
-│   │   │   │   │   ├── 🐍 uniconv.py
-│   │   │   │   │   └── 🐍 VKU_strategy.py
-│   │   │   │   └── 🐍 __init__.py
-│   │   │   ├── 📁 scripts/
-│   │   │   │   ├── 🐍 _common.py
-│   │   │   │   ├── 🐍 compare_selection_methods.py
-│   │   │   │   ├── 🐍 generate_report_on_selecting_values.py
-│   │   │   │   ├── 🐍 report_calculation_engine.py
-│   │   │   │   ├── 🐍 report_metrovickers_strategy.py
-│   │   │   │   ├── 🐍 report_module_berman.py
-│   │   │   │   ├── 🐍 report_TPS_module.py
-│   │   │   │   ├── 🐍 validate_exceptions_method.py
-│   │   │   │   ├── 🐍 validate_TPS_module.py
-│   │   │   │   └── 🐍 validate_vku.py
-│   │   │   ├── 📁 tests/
-│   │   │   │   ├── 📁 unit/
-│   │   │   │   │   ├── 🐍 __init__.py
-│   │   │   │   │   ├── 🐍 test_division_range.py
-│   │   │   │   │   ├── 🐍 test_metrovickers_strategy.py
-│   │   │   │   │   ├── 🐍 test_module_berman.py
-│   │   │   │   │   ├── 🐍 test_selecting_values.py
-│   │   │   │   │   ├── 🐍 test_table_models.py
-│   │   │   │   │   ├── 🐍 test_uniconv.py
-│   │   │   │   │   └── 🐍 test_VKU_strategy.py
-│   │   │   │   ├── 📁 validation/
-│   │   │   │   │   ├── 📁 berman/
-│   │   │   │   │   │   ├── 🐍 __init__.py
-│   │   │   │   │   │   ├── 🐍 conftest.py
-│   │   │   │   │   │   ├── 🐍 test_mode_1.py
-│   │   │   │   │   │   ├── 🐍 test_mode_2.py
-│   │   │   │   │   │   ├── 🐍 test_mode_3.py
-│   │   │   │   │   │   ├── 🐍 test_mode_4.py
-│   │   │   │   │   │   └── 🐍 test_verification.py
-│   │   │   │   │   └── 🐍 __init__.py
-│   │   │   │   ├── 🐍 __init__.py
-│   │   │   │   ├── 🐍 conftest.py
-│   │   │   │   └── 📖 README.md
-│   │   │   ├── 📄 .env
-│   │   │   ├── 🔒 poetry.lock
-│   │   │   ├── 📦 pyproject.toml
-│   │   │   └── 📖 README.md
-│   │   └── 📁 frontend/
+│   │   └── 📁 backend/
+│   │       ├── 📁 app/
+│   │       │   ├── 📁 utils/
+│   │       │   │   ├── 🐍 __init__.py
+│   │       │   │   ├── 🐍 base_for_selection.py
+│   │       │   │   ├── 🐍 berman_strategy.py
+│   │       │   │   ├── 🐍 calculation_engine.py
+│   │       │   │   ├── 🐍 Constants.py
+│   │       │   │   ├── 🐍 division_range.py
+│   │       │   │   ├── 🐍 exceptions_method.py
+│   │       │   │   ├── 🐍 metrovickers_strategy.py
+│   │       │   │   ├── 🐍 selection_methods.py
+│   │       │   │   ├── 🐍 table_models.py
+│   │       │   │   ├── 🐍 TPS_module.py
+│   │       │   │   ├── 🐍 uniconv.py
+│   │       │   │   └── 🐍 VKU_strategy.py
+│   │       │   └── 🐍 __init__.py
+│   │       ├── 📁 scripts/
+│   │       │   ├── 🐍 _common.py
+│   │       │   ├── 🐍 compare_selection_methods.py
+│   │       │   ├── 🐍 generate_report_on_selecting_values.py
+│   │       │   ├── 🐍 report_calculation_engine.py
+│   │       │   ├── 🐍 report_metrovickers_strategy.py
+│   │       │   ├── 🐍 report_module_berman.py
+│   │       │   ├── 🐍 report_TPS_module.py
+│   │       │   ├── 🐍 validate_exceptions_method.py
+│   │       │   ├── 🐍 validate_TPS_module.py
+│   │       │   └── 🐍 validate_vku.py
+│   │       ├── 📁 tests/
+│   │       │   ├── 📁 unit/
+│   │       │   │   ├── 🐍 __init__.py
+│   │       │   │   ├── 🐍 test_division_range.py
+│   │       │   │   ├── 🐍 test_metrovickers_strategy.py
+│   │       │   │   ├── 🐍 test_module_berman.py
+│   │       │   │   ├── 🐍 test_selecting_values.py
+│   │       │   │   ├── 🐍 test_table_models.py
+│   │       │   │   ├── 🐍 test_uniconv.py
+│   │       │   │   └── 🐍 test_VKU_strategy.py
+│   │       │   ├── 📁 validation/
+│   │       │   │   ├── 📁 berman/
+│   │       │   │   │   ├── 🐍 __init__.py
+│   │       │   │   │   ├── 🐍 conftest.py
+│   │       │   │   │   ├── 🐍 test_mode_1.py
+│   │       │   │   │   ├── 🐍 test_mode_2.py
+│   │       │   │   │   ├── 🐍 test_mode_3.py
+│   │       │   │   │   ├── 🐍 test_mode_4.py
+│   │       │   │   │   └── 🐍 test_verification.py
+│   │       │   │   └── 🐍 __init__.py
+│   │       │   ├── 🐍 __init__.py
+│   │       │   ├── 🐍 conftest.py
+│   │       │   └── 📖 README.md
+│   │       ├── 📄 .env
+│   │       ├── 🔒 poetry.lock
+│   │       ├── 📦 pyproject.toml
+│   │       └── 📖 README.md
 │   └── 📁 valve-stems/
 │       ├── 📁 backend/
 │       │   ├── 📁 _archive/
@@ -243,10 +241,10 @@ Balance_plus-1/
 │       │   │   │   └── 📄 script.py.mako
 │       │   │   ├── 📁 api/
 │       │   │   │   ├── 📁 routes/
-│       │   │   │   │   ├── 📁 generated_diagrams/
 │       │   │   │   │   ├── 🐍 calculations.py
 │       │   │   │   │   ├── 🐍 drawio.py
 │       │   │   │   │   ├── 🐍 turbines.py
+│       │   │   │   │   ├── 🐍 utils.py
 │       │   │   │   │   └── 🐍 valves.py
 │       │   │   │   └── 🐍 main.py
 │       │   │   ├── 📁 core/
@@ -339,6 +337,7 @@ Balance_plus-1/
 │       │   │   │   │   ├── 📄 StockSelection.tsx
 │       │   │   │   │   └── 📄 TurbineSearch.tsx
 │       │   │   │   ├── 📁 Common/
+│       │   │   │   │   ├── 📄 InputWithUnit.tsx
 │       │   │   │   │   ├── 📄 MainLayout.tsx
 │       │   │   │   │   ├── 📄 NotFound.tsx
 │       │   │   │   │   ├── 📄 Sidebar.tsx
@@ -408,6 +407,15 @@ Balance_plus-1/
 │   │   ├── 🐍 excel_to_json_metro_vikkers.py
 │   │   ├── 🐍 read_dbf_for_zone_json.py
 │   │   └── 🐍 treu_to_json.py
+│   ├── 📁 valve-stems/
+│   │   ├── 📋 1_st_stock_data.json
+│   │   ├── 📋 1_st_stock_result.json
+│   │   ├── 📋 2_nd_stock_data.json
+│   │   ├── 📋 2_nd_stock_result.json
+│   │   ├── 📋 3_rd_stock_data.json
+│   │   ├── 📋 3_rd_stock_result.json
+│   │   ├── 📋 group_of_stocks_data.json
+│   │   └── 📋 group_of_stocks_results.json
 │   └── 📖 README.md
 ├── 🙈 .gitignore
 ├── 📝 CONTRIBUTING.md
