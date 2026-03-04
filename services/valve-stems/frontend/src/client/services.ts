@@ -2,11 +2,18 @@ import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
 
-import type { TurbineInfo,TurbineValves,TurbineWithValvesInfo,ValveCreate,ValveInfo_Input,ValveInfo_Output,CalculationParams,CalculationResultDB } from './models';
+import type { TurbineInfo,TurbineValves,TurbineWithValvesInfo,ValveCreate,ValveInfo_Input,ValveInfo_Output,CalculationResultDB,MultiCalculationParams,MultiCalculationResult,UnitsDictionaryResponse } from './models';
 
 export type TurbinesData = {
-        TurbinesGetValvesByTurbineEndpoint: {
-                    turbineName: string
+        TurbinesSearchTurbines: {
+                    factory?: string | null
+q?: string | null
+station?: string | null
+valve?: string | null
+                    
+                };
+TurbinesGetValvesByTurbine: {
+                    turbineId: number
                     
                 };
 TurbinesCreateTurbine: {
@@ -49,34 +56,88 @@ ValvesGetTurbineByValveName: {
 
 export type CalculationsData = {
         CalculationsCalculate: {
-                    requestBody: CalculationParams
+                    requestBody: MultiCalculationParams
+                    
+                };
+CalculationsGetCalculationResults: {
+                    valveName: string
+                    
+                };
+CalculationsReadCalculationResult: {
+                    resultId: number
+                    
+                };
+CalculationsDeleteCalculationResult: {
+                    resultId: number
                     
                 };
     }
 
-export type ResultsData = {
-        ResultsGetCalculationResults: {
-                    valveName: string
-                    
-                };
-ResultsReadCalculationResult: {
-                    resultId: number
-                    
-                };
-ResultsDeleteCalculationResult: {
-                    resultId: number
+export type UtilsData = {
+        
+    }
+
+export type DrawioData = {
+        DrawioGenerateScheme: {
+                    requestBody: ValveInfo_Input
                     
                 };
     }
 
 export type DiagramsData = {
-        DiagramsGenerateScheme: {
+        DrawioGenerateScheme: {
                     requestBody: ValveInfo_Input
                     
                 };
     }
 
 export class TurbinesService {
+
+	/**
+	 * Search Turbines
+	 * Поиск проектов по множеству критериев.
+	 * @returns TurbineWithValvesInfo Successful Response
+	 * @throws ApiError
+	 */
+	public static turbinesSearchTurbines(data: TurbinesData['TurbinesSearchTurbines'] = {}): CancelablePromise<Array<TurbineWithValvesInfo>> {
+		const {
+q,
+station,
+factory,
+valve,
+} = data;
+		return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/v1/turbines/search',
+			query: {
+				q, station, factory, valve
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Get Valves By Turbine
+	 * @returns TurbineValves Successful Response
+	 * @throws ApiError
+	 */
+	public static turbinesGetValvesByTurbine(data: TurbinesData['TurbinesGetValvesByTurbine']): CancelablePromise<TurbineValves> {
+		const {
+turbineId,
+} = data;
+		return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/v1/turbines/{turbine_id}/valves/',
+			path: {
+				turbine_id: turbineId
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
 
 	/**
 	 * Получить все турбины с клапанами
@@ -92,30 +153,7 @@ export class TurbinesService {
 	}
 
 	/**
-	 * Получить клапаны по имени турбины
-	 * Получить список клапанов для заданной турбины.
-	 * @returns TurbineValves Successful Response
-	 * @throws ApiError
-	 */
-	public static turbinesGetValvesByTurbineEndpoint(data: TurbinesData['TurbinesGetValvesByTurbineEndpoint']): CancelablePromise<TurbineValves> {
-		const {
-turbineName,
-} = data;
-		return __request(OpenAPI, {
-			method: 'GET',
-			url: '/api/v1/turbines/{turbine_name}/valves/',
-			path: {
-				turbine_name: turbineName
-			},
-			errors: {
-				422: `Validation Error`,
-			},
-		});
-	}
-
-	/**
 	 * Создать турбину
-	 * Создать новую турбину.
 	 * @returns TurbineInfo Successful Response
 	 * @throws ApiError
 	 */
@@ -136,7 +174,6 @@ requestBody,
 
 	/**
 	 * Получить турбину по ID
-	 * Получить информацию о конкретной турбине по её ID.
 	 * @returns TurbineInfo Successful Response
 	 * @throws ApiError
 	 */
@@ -158,7 +195,6 @@ turbineId,
 
 	/**
 	 * Удалить турбину
-	 * Удалить турбину по ID.
 	 * @returns void Successful Response
 	 * @throws ApiError
 	 */
@@ -184,7 +220,6 @@ export class ValvesService {
 
 	/**
 	 * Получить все клапаны
-	 * Получить список всех клапанов.
 	 * @returns ValveInfo_Output Successful Response
 	 * @throws ApiError
 	 */
@@ -197,7 +232,6 @@ export class ValvesService {
 
 	/**
 	 * Создать клапан
-	 * Создать новый клапан.
 	 * @returns ValveInfo_Output Successful Response
 	 * @throws ApiError
 	 */
@@ -218,7 +252,6 @@ requestBody,
 
 	/**
 	 * Обновить клапан
-	 * Обновить данные о клапане.
 	 * @returns ValveInfo_Output Successful Response
 	 * @throws ApiError
 	 */
@@ -243,7 +276,6 @@ requestBody,
 
 	/**
 	 * Получить клапан по ID
-	 * Получить информацию о конкретном клапане (штоке) по его ID.
 	 * @returns ValveInfo_Output Successful Response
 	 * @throws ApiError
 	 */
@@ -265,7 +297,6 @@ valveId,
 
 	/**
 	 * Удалить клапан
-	 * Удалить клапан по ID.
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
@@ -287,7 +318,6 @@ valveId,
 
 	/**
 	 * Получить турбину по имени клапана
-	 * Получить турбину по имени клапана.
 	 * @returns TurbineInfo Successful Response
 	 * @throws ApiError
 	 */
@@ -312,12 +342,11 @@ valveName,
 export class CalculationsService {
 
 	/**
-	 * Выполнить расчет
-	 * Выполнить расчет на основе параметров.
-	 * @returns CalculationResultDB Successful Response
+	 * Выполнить мульти-расчет
+	 * @returns MultiCalculationResult Successful Response
 	 * @throws ApiError
 	 */
-	public static calculationsCalculate(data: CalculationsData['CalculationsCalculate']): CancelablePromise<CalculationResultDB> {
+	public static calculationsCalculate(data: CalculationsData['CalculationsCalculate']): CancelablePromise<MultiCalculationResult> {
 		const {
 requestBody,
 } = data;
@@ -332,17 +361,12 @@ requestBody,
 		});
 	}
 
-}
-
-export class ResultsService {
-
 	/**
 	 * Получить результаты расчётов
-	 * Получить список результатов расчётов для заданного клапана.
 	 * @returns CalculationResultDB Successful Response
 	 * @throws ApiError
 	 */
-	public static resultsGetCalculationResults(data: ResultsData['ResultsGetCalculationResults']): CancelablePromise<Array<CalculationResultDB>> {
+	public static calculationsGetCalculationResults(data: CalculationsData['CalculationsGetCalculationResults']): CancelablePromise<Array<CalculationResultDB>> {
 		const {
 valveName,
 } = data;
@@ -360,17 +384,16 @@ valveName,
 
 	/**
 	 * Получить результат расчета по ID
-	 * Получить конкретный результат расчёта по его ID.
 	 * @returns CalculationResultDB Successful Response
 	 * @throws ApiError
 	 */
-	public static resultsReadCalculationResult(data: ResultsData['ResultsReadCalculationResult']): CancelablePromise<CalculationResultDB> {
+	public static calculationsReadCalculationResult(data: CalculationsData['CalculationsReadCalculationResult']): CancelablePromise<CalculationResultDB> {
 		const {
 resultId,
 } = data;
 		return __request(OpenAPI, {
 			method: 'GET',
-			url: '/api/v1/results/{result_id}',
+			url: '/api/v1/{result_id}',
 			path: {
 				result_id: resultId
 			},
@@ -382,20 +405,71 @@ resultId,
 
 	/**
 	 * Удалить результат расчёта
-	 * Удалить результат расчёта по ID.
 	 * @returns void Successful Response
 	 * @throws ApiError
 	 */
-	public static resultsDeleteCalculationResult(data: ResultsData['ResultsDeleteCalculationResult']): CancelablePromise<void> {
+	public static calculationsDeleteCalculationResult(data: CalculationsData['CalculationsDeleteCalculationResult']): CancelablePromise<void> {
 		const {
 resultId,
 } = data;
 		return __request(OpenAPI, {
 			method: 'DELETE',
-			url: '/api/v1/results/{result_id}',
+			url: '/api/v1/{result_id}',
 			path: {
 				result_id: resultId
 			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+}
+
+export class UtilsService {
+
+	/**
+	 * Получить справочник единиц измерения
+	 * Возвращает доступные физические параметры и их единицы измерения.
+ * Фронтенд использует этот эндпоинт для рендера выпадающих списков (Select).
+	 * @returns UnitsDictionaryResponse Successful Response
+	 * @throws ApiError
+	 */
+	public static utilsGetAvailableUnits(): CancelablePromise<UnitsDictionaryResponse> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/v1/utils/units',
+		});
+	}
+
+}
+
+export class DrawioService {
+
+	/**
+	 * Сгенерировать схему Draw.io
+	 * Эндпоинт для генерации XML-схемы с обновлёнными параметрами.
+ * 
+ * Args:
+ * valve_info (ValveInfo): Объект с параметрами клапана.
+ * 
+ * Returns:
+ * FileResponse: Сгенерированный XML-файл для скачивания.
+ * 
+ * Raises:
+ * HTTPException: Если произошла ошибка при генерации файла.
+	 * @returns any Successful Response
+	 * @throws ApiError
+	 */
+	public static drawioGenerateScheme(data: DrawioData['DrawioGenerateScheme']): CancelablePromise<any> {
+		const {
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/v1/generate_scheme',
+			body: requestBody,
+			mediaType: 'application/json',
 			errors: {
 				422: `Validation Error`,
 			},
@@ -421,7 +495,7 @@ export class DiagramsService {
 	 * @returns any Successful Response
 	 * @throws ApiError
 	 */
-	public static diagramsGenerateScheme(data: DiagramsData['DiagramsGenerateScheme']): CancelablePromise<any> {
+	public static drawioGenerateScheme(data: DiagramsData['DrawioGenerateScheme']): CancelablePromise<any> {
 		const {
 requestBody,
 } = data;
