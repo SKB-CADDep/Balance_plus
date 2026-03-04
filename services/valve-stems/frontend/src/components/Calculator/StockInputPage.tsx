@@ -16,6 +16,7 @@ import {
     Radio,
     Stack,
     useColorModeValue,
+    FormErrorMessage,
 } from '@chakra-ui/react';
 import { FiChevronLeft } from "react-icons/fi";
 import { useQuery } from '@tanstack/react-query';
@@ -59,9 +60,6 @@ interface FormInputValues {
     
     p_lst_leak_off: string;
     p_lst_leak_off_unit: string;
-
-    // Давления перед участками (p_values)
-    p_values: { value: string; unit: string }[];
 
     // Динамические промежуточные отсосы (p_leak_offs)
     p_intermediates: { value: string; unit: string }[];
@@ -150,13 +148,11 @@ const StockInputPage: React.FC<Props> = ({ stock, turbine, onSubmit, onGoBack })
             p_lst_leak_off: '0.97',
             p_lst_leak_off_unit: 'кгс/см²',
 
-            p_values: Array.from({ length: countParts }, () => ({ value: '', unit: 'кгс/см²' })),
             p_intermediates: Array.from({ length: intermediateCount }, () => ({ value: '', unit: 'кгс/см²' })),
         },
         mode: 'onBlur',
     });
 
-    const { fields: pValuesFields } = useFieldArray({ control, name: 'p_values' });
     const { fields: intermediateFields } = useFieldArray({ control, name: 'p_intermediates' });
 
     const thMode = watch('th_mode');
@@ -177,7 +173,6 @@ const StockInputPage: React.FC<Props> = ({ stock, turbine, onSubmit, onGoBack })
             P_lst_leak_off_unit: data.p_lst_leak_off_unit,
         };
 
-        const parsedPValues = data.p_values.map(p => parseLocaleNumberStrict(p.value));
         const parsedPLeakOffs = data.p_intermediates.map(p => parseLocaleNumberStrict(p.value));
 
         const group = {
@@ -185,8 +180,8 @@ const StockInputPage: React.FC<Props> = ({ stock, turbine, onSubmit, onGoBack })
             type: data.valve_type,
             valve_names: [data.valve_name],
             quantity: data.count_valves,
-            p_values: parsedPValues,
-            p_values_unit: data.p_values[0]?.unit || "кгс/см²", 
+            p_values: [], // <-- Бэкенд сам всё рассчитает!
+            p_values_unit: "кгс/см²", 
             p_leak_offs: parsedPLeakOffs,
             p_leak_offs_unit: data.p_intermediates[0]?.unit || "кгс/см²",
         };
@@ -237,11 +232,12 @@ const StockInputPage: React.FC<Props> = ({ stock, turbine, onSubmit, onGoBack })
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
                     <FormControl isRequired isInvalid={!!errors.p_fresh}>
                         <FormLabel>Давление свежего пара</FormLabel>
-                        <Controller name="p_fresh" control={control} rules={{ required: "Обязательно", validate: (v: any) => isValidDecimal(v) }}
+                        <Controller name="p_fresh" control={control} rules={{ required: "Обязательно", validate: (v: any) => isValidDecimal(v) || "Неверный формат" }}
                             render={({ field }) => (
                                 <InputWithUnit value={field.value} unit={watch("p_fresh_unit")} availableUnits={pressureUnits} onValueChange={field.onChange} onUnitChange={(u) => setValue("p_fresh_unit", u)} />
                             )}
                         />
+                        <FormErrorMessage>{errors.p_fresh?.message as any}</FormErrorMessage>
                     </FormControl>
 
                     {/* ПЕРЕКЛЮЧАТЕЛЬ ТЕМПЕРАТУРА ИЛИ ЭНТАЛЬПИЯ */}
@@ -255,84 +251,78 @@ const StockInputPage: React.FC<Props> = ({ stock, turbine, onSubmit, onGoBack })
 
                         {thMode === 'temperature' ? (
                             <FormControl isRequired isInvalid={!!errors.t_fresh}>
-                                <Controller name="t_fresh" control={control} rules={{ required: "Обязательно", validate: (v: any) => isValidDecimal(v) }}
+                                <Controller name="t_fresh" control={control} rules={{ required: "Обязательно", validate: (v: any) => isValidDecimal(v) || "Неверный формат" }}
                                     render={({ field }) => (
                                         <InputWithUnit value={field.value} unit={watch("t_fresh_unit")} availableUnits={tempUnits} onValueChange={field.onChange} onUnitChange={(u) => setValue("t_fresh_unit", u)} />
                                     )}
                                 />
+                                <FormErrorMessage>{errors.t_fresh?.message as any}</FormErrorMessage>
                             </FormControl>
                         ) : (
                             <FormControl isRequired isInvalid={!!errors.h_fresh}>
-                                <Controller name="h_fresh" control={control} rules={{ required: "Обязательно", validate: (v: any) => isValidDecimal(v) }}
+                                <Controller name="h_fresh" control={control} rules={{ required: "Обязательно", validate: (v: any) => isValidDecimal(v) || "Неверный формат" }}
                                     render={({ field }) => (
                                         <InputWithUnit value={field.value} unit={watch("h_fresh_unit")} availableUnits={enthalpyUnits} onValueChange={field.onChange} onUnitChange={(u) => setValue("h_fresh_unit", u)} />
                                     )}
                                 />
+                                <FormErrorMessage>{errors.h_fresh?.message as any}</FormErrorMessage>
                             </FormControl>
                         )}
                     </Box>
 
                     <FormControl isRequired isInvalid={!!errors.p_air}>
                         <FormLabel>Давление воздуха</FormLabel>
-                        <Controller name="p_air" control={control} rules={{ required: "Обязательно", validate: (v: any) => isValidDecimal(v) }}
+                        <Controller name="p_air" control={control} rules={{ required: "Обязательно", validate: (v: any) => isValidDecimal(v) || "Неверный формат" }}
                             render={({ field }) => (
                                 <InputWithUnit value={field.value} unit={watch("p_air_unit")} availableUnits={pressureUnits} onValueChange={field.onChange} onUnitChange={(u) => setValue("p_air_unit", u)} />
                             )}
                         />
+                        <FormErrorMessage>{errors.p_air?.message as any}</FormErrorMessage>
                     </FormControl>
 
                     <FormControl isRequired isInvalid={!!errors.t_air}>
                         <FormLabel>Температура воздуха</FormLabel>
-                        <Controller name="t_air" control={control} rules={{ required: "Обязательно", validate: (v: any) => isValidDecimal(v) }}
+                        <Controller name="t_air" control={control} rules={{ required: "Обязательно", validate: (v: any) => isValidDecimal(v) || "Неверный формат" }}
                             render={({ field }) => (
                                 <InputWithUnit value={field.value} unit={watch("t_air_unit")} availableUnits={tempUnits} onValueChange={field.onChange} onUnitChange={(u) => setValue("t_air_unit", u)} />
                             )}
                         />
+                        <FormErrorMessage>{errors.t_air?.message as any}</FormErrorMessage>
                     </FormControl>
                     
                     <FormControl isRequired isInvalid={!!errors.p_lst_leak_off} gridColumn={{ md: "span 2" }}>
                         <FormLabel>Давление последнего отсоса (Вакуум)</FormLabel>
-                        <Controller name="p_lst_leak_off" control={control} rules={{ required: "Обязательно", validate: (v: any) => isValidDecimal(v) }}
+                        <Controller name="p_lst_leak_off" control={control} rules={{ required: "Обязательно", validate: (v: any) => isValidDecimal(v) || "Неверный формат" }}
                             render={({ field }) => (
                                 <InputWithUnit value={field.value} unit={watch("p_lst_leak_off_unit")} availableUnits={pressureUnits} onValueChange={field.onChange} onUnitChange={(u) => setValue("p_lst_leak_off_unit", u)} />
                             )}
                         />
+                        <FormErrorMessage>{errors.p_lst_leak_off?.message as any}</FormErrorMessage>
                     </FormControl>
                 </SimpleGrid>
             </Box>
 
             {/* ЛОКАЛЬНЫЕ ПАРАМЕТРЫ КЛАПАНА */}
             <Box borderWidth="1px" borderRadius="lg" p={5} bg={boxBgSecondary} shadow="sm">
-                <Heading as="h3" size="md" mb={4}>Давления по участкам клапана ({countParts} шт)</Heading>
-                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                    {pValuesFields.map((field, index) => (
-                        <FormControl key={field.id} isRequired isInvalid={!!errors.p_values?.[index]?.value}>
-                            <FormLabel fontSize="sm">P{index} (Перед участком {index + 1})</FormLabel>
-                            <Controller name={`p_values.${index}.value` as const} control={control} rules={{ required: "Обязательно", validate: (v: any) => isValidDecimal(v) }}
-                                render={({ field: inputField }) => (
-                                    <InputWithUnit value={inputField.value} unit={watch(`p_values.${index}.unit`)} availableUnits={pressureUnits} onValueChange={inputField.onChange} onUnitChange={(u) => setValue(`p_values.${index}.unit`, u)} />
-                                )}
-                            />
-                        </FormControl>
-                    ))}
-                </SimpleGrid>
-
-                {intermediateCount > 0 && (
-                    <Box mt={6}>
+                {intermediateCount > 0 ? (
+                    <Box>
                         <Heading as="h4" size="sm" mb={3}>Промежуточные отсосы ({intermediateCount} шт)</Heading>
                         <VStack spacing={4} align="stretch">
                             {intermediateFields.map((field, index) => (
                                 <FormControl key={field.id} isRequired isInvalid={!!errors.p_intermediates?.[index]?.value}>
                                     <FormLabel fontSize="sm">Давление в камере {index + 1}:</FormLabel>
-                                    <Controller name={`p_intermediates.${index}.value` as const} control={control} rules={{ required: "Обязательно", validate: (v: any) => isValidDecimal(v) }}
+                                    <Controller name={`p_intermediates.${index}.value` as const} control={control} rules={{ required: "Обязательно", validate: (v: any) => isValidDecimal(v) || "Неверный формат" }}
                                         render={({ field: inputField }) => (
                                             <InputWithUnit value={inputField.value} unit={watch(`p_intermediates.${index}.unit`)} availableUnits={pressureUnits} onValueChange={inputField.onChange} onUnitChange={(u) => setValue(`p_intermediates.${index}.unit`, u)} />
                                         )}
                                     />
+                                    <FormErrorMessage>{errors.p_intermediates?.[index]?.value?.message as any}</FormErrorMessage>
                                 </FormControl>
                             ))}
                         </VStack>
                     </Box>
+                ) : (
+                    <Text color="gray.500">Для данного клапана промежуточные отсосы не требуются.</Text>
                 )}
             </Box>
 
