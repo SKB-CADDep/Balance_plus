@@ -36,9 +36,8 @@ const fetchValvesForTurbineAPI = async (turbineId: number) => {
     if (!turbineId) {
         return { count: 0, valves: [] };
     }
-    // ВНИМАНИЕ: Если вы перегенерируете OpenAPI клиент, ключ здесь изменится с turbineName на turbineId
-    // Пока оставляем как в старом клиенте, но передаем строковое значение ID
-    return TurbinesService.turbinesGetValvesByTurbineEndpoint({ turbineName: turbineId.toString() as any });
+    // Используем новое, правильное имя метода из клиента
+    return TurbinesService.turbinesGetValvesByTurbine({ turbineId });
 };
 
 const StockSelection: React.FC<Props> = ({ turbine, onSelectValve, onGoBack }) => {

@@ -1,36 +1,32 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useForm, useFieldArray, Controller, type SubmitHandler } from 'react-hook-form';
 import {
     Box,
     Button,
     FormControl,
     FormLabel,
-    FormErrorMessage,
     VStack,
     HStack,
     Heading,
     Text,
     Icon,
     SimpleGrid,
-    Alert,
-    AlertIcon,
     Spinner,
     RadioGroup,
     Radio,
+    Stack,
     useColorModeValue,
 } from '@chakra-ui/react';
-import { FiChevronLeft, FiInfo } from "react-icons/fi";
+import { FiChevronLeft } from "react-icons/fi";
 import { useQuery } from '@tanstack/react-query';
 
 import {
     type ValveInfo_Output as ValveInfo,
     type TurbineInfo,
-    type MultiCalculationParams // <-- ИСПОЛЬЗУЕМ НОВЫЙ ТИП
+    type MultiCalculationParams 
 } from '../../client';
 
 import { InputWithUnit } from '../Common/InputWithUnit';
-import { request as __request } from '../../client/core/request';
-import { OpenAPI } from '../../client/core/OpenAPI';
 
 // ---------------------------------------------------------------------
 // Типы формы
@@ -75,7 +71,7 @@ type Props = {
     stock: ValveInfo;
     turbine: TurbineInfo;
     onSubmit: (data: MultiCalculationParams) => void;
-    initialData?: any; // Пока оставим any для совместимости с рутовым компонентом
+    initialData?: any; 
     onGoBack?: () => void;
 };
 
@@ -99,7 +95,7 @@ const parseLocaleNumberStrict = (val: unknown): number => {
 // Запрос за единицами измерения
 const fetchUnits = async () => {
     try {
-        const baseUrl = OpenAPI.BASE || import.meta.env.VITE_API_URL || '';
+        const baseUrl = import.meta.env.VITE_API_URL || '';
         const cleanBaseUrl = baseUrl.replace(/\/$/, '');
         const res = await fetch(`${cleanBaseUrl}/api/v1/utils/units`);
         return await res.json();
@@ -125,7 +121,6 @@ const StockInputPage: React.FC<Props> = ({ stock, turbine, onSubmit, onGoBack })
     });
 
     const {
-        register,
         handleSubmit,
         control,
         watch,
@@ -133,11 +128,11 @@ const StockInputPage: React.FC<Props> = ({ stock, turbine, onSubmit, onGoBack })
         formState: { errors, isSubmitting },
     } = useForm<FormInputValues>({
         defaultValues: {
-            turbine_id: turbine.id,
-            valve_id: stock.id,
+            turbine_id: turbine?.id ?? 0,
+            valve_id: stock?.id ?? 0,
             valve_name: stock.name,
             valve_type: stock.type || "СК",
-            count_valves: 1, // По умолчанию считаем 1 клапан, если это одиночный расчет
+            count_valves: 1, 
             
             p_fresh: '130',
             p_fresh_unit: 'кгс/см²', 
@@ -167,31 +162,21 @@ const StockInputPage: React.FC<Props> = ({ stock, turbine, onSubmit, onGoBack })
     const thMode = watch('th_mode');
 
     const processSubmit: SubmitHandler<FormInputValues> = (data) => {
-        // Собираем правильный JSON по новому контракту MultiCalculationParams
-        
-        // 1. Глобальные параметры
         const globals = {
             P_fresh: parseLocaleNumberStrict(data.p_fresh),
             P_fresh_unit: data.p_fresh_unit,
-            
             T_fresh: data.th_mode === 'temperature' ? parseLocaleNumberStrict(data.t_fresh) : null,
             T_fresh_unit: data.t_fresh_unit,
-            
             H_fresh: data.th_mode === 'enthalpy' ? parseLocaleNumberStrict(data.h_fresh) : null,
             H_fresh_unit: data.h_fresh_unit,
-            
             P_air: parseLocaleNumberStrict(data.p_air),
             P_air_unit: data.p_air_unit,
-            
             T_air: parseLocaleNumberStrict(data.t_air),
             T_air_unit: data.t_air_unit,
-            
             P_lst_leak_off: parseLocaleNumberStrict(data.p_lst_leak_off),
             P_lst_leak_off_unit: data.p_lst_leak_off_unit,
         };
 
-        // 2. Локальные параметры группы клапанов
-        // В одиночном расчете мы отправляем массив groups с 1 элементом
         const parsedPValues = data.p_values.map(p => parseLocaleNumberStrict(p.value));
         const parsedPLeakOffs = data.p_intermediates.map(p => parseLocaleNumberStrict(p.value));
 
@@ -199,9 +184,9 @@ const StockInputPage: React.FC<Props> = ({ stock, turbine, onSubmit, onGoBack })
             valve_id: data.valve_id,
             type: data.valve_type,
             valve_names: [data.valve_name],
-            quantity: data.count_valves, // В будущем здесь будет счетчик со страницы Корзины
+            quantity: data.count_valves,
             p_values: parsedPValues,
-            p_values_unit: data.p_values[0]?.unit || "кгс/см²", // Берем единицу из первого поля
+            p_values_unit: data.p_values[0]?.unit || "кгс/см²", 
             p_leak_offs: parsedPLeakOffs,
             p_leak_offs_unit: data.p_intermediates[0]?.unit || "кгс/см²",
         };
@@ -252,7 +237,7 @@ const StockInputPage: React.FC<Props> = ({ stock, turbine, onSubmit, onGoBack })
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
                     <FormControl isRequired isInvalid={!!errors.p_fresh}>
                         <FormLabel>Давление свежего пара</FormLabel>
-                        <Controller name="p_fresh" control={control} rules={{ required: "Обязательно", validate: isValidDecimal }}
+                        <Controller name="p_fresh" control={control} rules={{ required: "Обязательно", validate: (v: any) => isValidDecimal(v) }}
                             render={({ field }) => (
                                 <InputWithUnit value={field.value} unit={watch("p_fresh_unit")} availableUnits={pressureUnits} onValueChange={field.onChange} onUnitChange={(u) => setValue("p_fresh_unit", u)} />
                             )}
@@ -270,7 +255,7 @@ const StockInputPage: React.FC<Props> = ({ stock, turbine, onSubmit, onGoBack })
 
                         {thMode === 'temperature' ? (
                             <FormControl isRequired isInvalid={!!errors.t_fresh}>
-                                <Controller name="t_fresh" control={control} rules={{ required: "Обязательно", validate: isValidDecimal }}
+                                <Controller name="t_fresh" control={control} rules={{ required: "Обязательно", validate: (v: any) => isValidDecimal(v) }}
                                     render={({ field }) => (
                                         <InputWithUnit value={field.value} unit={watch("t_fresh_unit")} availableUnits={tempUnits} onValueChange={field.onChange} onUnitChange={(u) => setValue("t_fresh_unit", u)} />
                                     )}
@@ -278,7 +263,7 @@ const StockInputPage: React.FC<Props> = ({ stock, turbine, onSubmit, onGoBack })
                             </FormControl>
                         ) : (
                             <FormControl isRequired isInvalid={!!errors.h_fresh}>
-                                <Controller name="h_fresh" control={control} rules={{ required: "Обязательно", validate: isValidDecimal }}
+                                <Controller name="h_fresh" control={control} rules={{ required: "Обязательно", validate: (v: any) => isValidDecimal(v) }}
                                     render={({ field }) => (
                                         <InputWithUnit value={field.value} unit={watch("h_fresh_unit")} availableUnits={enthalpyUnits} onValueChange={field.onChange} onUnitChange={(u) => setValue("h_fresh_unit", u)} />
                                     )}
@@ -289,7 +274,7 @@ const StockInputPage: React.FC<Props> = ({ stock, turbine, onSubmit, onGoBack })
 
                     <FormControl isRequired isInvalid={!!errors.p_air}>
                         <FormLabel>Давление воздуха</FormLabel>
-                        <Controller name="p_air" control={control} rules={{ required: "Обязательно" }}
+                        <Controller name="p_air" control={control} rules={{ required: "Обязательно", validate: (v: any) => isValidDecimal(v) }}
                             render={({ field }) => (
                                 <InputWithUnit value={field.value} unit={watch("p_air_unit")} availableUnits={pressureUnits} onValueChange={field.onChange} onUnitChange={(u) => setValue("p_air_unit", u)} />
                             )}
@@ -298,7 +283,7 @@ const StockInputPage: React.FC<Props> = ({ stock, turbine, onSubmit, onGoBack })
 
                     <FormControl isRequired isInvalid={!!errors.t_air}>
                         <FormLabel>Температура воздуха</FormLabel>
-                        <Controller name="t_air" control={control} rules={{ required: "Обязательно" }}
+                        <Controller name="t_air" control={control} rules={{ required: "Обязательно", validate: (v: any) => isValidDecimal(v) }}
                             render={({ field }) => (
                                 <InputWithUnit value={field.value} unit={watch("t_air_unit")} availableUnits={tempUnits} onValueChange={field.onChange} onUnitChange={(u) => setValue("t_air_unit", u)} />
                             )}
@@ -307,7 +292,7 @@ const StockInputPage: React.FC<Props> = ({ stock, turbine, onSubmit, onGoBack })
                     
                     <FormControl isRequired isInvalid={!!errors.p_lst_leak_off} gridColumn={{ md: "span 2" }}>
                         <FormLabel>Давление последнего отсоса (Вакуум)</FormLabel>
-                        <Controller name="p_lst_leak_off" control={control} rules={{ required: "Обязательно" }}
+                        <Controller name="p_lst_leak_off" control={control} rules={{ required: "Обязательно", validate: (v: any) => isValidDecimal(v) }}
                             render={({ field }) => (
                                 <InputWithUnit value={field.value} unit={watch("p_lst_leak_off_unit")} availableUnits={pressureUnits} onValueChange={field.onChange} onUnitChange={(u) => setValue("p_lst_leak_off_unit", u)} />
                             )}
@@ -323,7 +308,7 @@ const StockInputPage: React.FC<Props> = ({ stock, turbine, onSubmit, onGoBack })
                     {pValuesFields.map((field, index) => (
                         <FormControl key={field.id} isRequired isInvalid={!!errors.p_values?.[index]?.value}>
                             <FormLabel fontSize="sm">P{index} (Перед участком {index + 1})</FormLabel>
-                            <Controller name={`p_values.${index}.value` as const} control={control} rules={{ required: "Обязательно" }}
+                            <Controller name={`p_values.${index}.value` as const} control={control} rules={{ required: "Обязательно", validate: (v: any) => isValidDecimal(v) }}
                                 render={({ field: inputField }) => (
                                     <InputWithUnit value={inputField.value} unit={watch(`p_values.${index}.unit`)} availableUnits={pressureUnits} onValueChange={inputField.onChange} onUnitChange={(u) => setValue(`p_values.${index}.unit`, u)} />
                                 )}
@@ -339,7 +324,7 @@ const StockInputPage: React.FC<Props> = ({ stock, turbine, onSubmit, onGoBack })
                             {intermediateFields.map((field, index) => (
                                 <FormControl key={field.id} isRequired isInvalid={!!errors.p_intermediates?.[index]?.value}>
                                     <FormLabel fontSize="sm">Давление в камере {index + 1}:</FormLabel>
-                                    <Controller name={`p_intermediates.${index}.value` as const} control={control} rules={{ required: "Обязательно" }}
+                                    <Controller name={`p_intermediates.${index}.value` as const} control={control} rules={{ required: "Обязательно", validate: (v: any) => isValidDecimal(v) }}
                                         render={({ field: inputField }) => (
                                             <InputWithUnit value={inputField.value} unit={watch(`p_intermediates.${index}.unit`)} availableUnits={pressureUnits} onValueChange={inputField.onChange} onUnitChange={(u) => setValue(`p_intermediates.${index}.unit`, u)} />
                                         )}

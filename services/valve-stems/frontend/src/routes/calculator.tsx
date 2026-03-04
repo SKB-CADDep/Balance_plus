@@ -11,7 +11,6 @@ import ResultsPage from '../components/Calculator/ResultsPage';
 import { type HistoryEntry, LOCAL_STORAGE_HISTORY_KEY } from '../components/Common/Sidebar';
 
 import {
-    ResultsService,
     CalculationsService,
     TurbinesService,
     ValvesService,
@@ -19,8 +18,8 @@ import {
     type TurbineInfo,
     type ValveInfo_Output as ValveInfo,
     type CalculationResultDB as ClientCalculationResult,
-    type MultiCalculationParams, // НОВЫЙ ТИП
-    type MultiCalculationResult, // НОВЫЙ ТИП
+    type MultiCalculationParams,
+    type MultiCalculationResult,
 } from '../client';
 
 type CalculatorStep =
@@ -67,14 +66,12 @@ function CalculatorPage() {
         data: loadedResultDataFromHistory,
         isLoading: isLoadingResultFromHistory,
         isError: isErrorResultFromHistory,
-        error: errorResultFromHistory,
     } = useQuery({
         queryKey: ['calculationResultById', searchParams.resultId],
         queryFn: async () => {
             if (!searchParams.resultId) throw new Error("ID результата не предоставлен");
             const id = parseInt(searchParams.resultId, 10);
-            if (isNaN(id)) throw new Error("Неверный ID результата");
-            const result = await ResultsService.resultsReadCalculationResult({ resultId: id });
+            const result = await CalculationsService.calculationsReadCalculationResult({ resultId: id });
             return {
                 ...result,
                 input_data: typeof result.input_data === 'string' ? JSON.parse(result.input_data) : result.input_data,
@@ -88,7 +85,6 @@ function CalculatorPage() {
     const {
         data: loadedTurbineFromHistory,
         isLoading: isLoadingTurbineFromHistory,
-        isError: isErrorTurbineFromHistory,
     } = useQuery({
         queryKey: ['turbineByIdForHistory', searchParams.turbineIdToLoad],
         queryFn: async () => {
@@ -103,7 +99,6 @@ function CalculatorPage() {
     const {
         data: loadedStockFromHistory,
         isLoading: isLoadingStockFromHistory,
-        isError: isErrorStockFromHistory,
     } = useQuery({
         queryKey: ['stockByIdForHistory', searchParams.stockIdToLoad],
         queryFn: async () => {
@@ -119,14 +114,13 @@ function CalculatorPage() {
         data: latestPreviousResultData,
         isLoading: isLoadingLatestPrevious,
         isError: isErrorLatestPrevious,
-        error: errorLatestPrevious,
     } = useQuery({
         queryKey: ['valveResults', selectedStock?.name],
         queryFn: async () => {
             if (!selectedStock?.name) return [];
             const encodedStockName = encodeURIComponent(selectedStock.name);
-            const results = await ResultsService.resultsGetCalculationResults({ valveName: encodedStockName });
-            return results.map(r => ({
+            const results = await CalculationsService.calculationsGetCalculationResults({ valveName: encodedStockName });
+            return results.map((r: any) => ({
                 ...r,
                 input_data: typeof r.input_data === 'string' ? JSON.parse(r.input_data) : r.input_data,
                 output_data: typeof r.output_data === 'string' ? JSON.parse(r.output_data) : r.output_data,
@@ -153,8 +147,8 @@ function CalculatorPage() {
             setCurrentStep('turbineSearch');
         } else {
             setCalculationData(loadedResultDataFromHistory);
-            setSelectedTurbine(loadedTurbineFromHistory || null);
-            setSelectedStock(loadedStockFromHistory || null);
+            setSelectedTurbine((loadedTurbineFromHistory as any) || null);
+            setSelectedStock((loadedStockFromHistory as any) || null);
             setCurrentStep('results');
         }
 
@@ -188,15 +182,13 @@ function CalculatorPage() {
         setCurrentStep('loadingPreviousCalculation');
     }, [navigate, queryClient]);
 
-    // ИСПОЛЬЗУЕМ НОВЫЕ ТИПЫ ДЛЯ МУТАЦИИ
     const calculationMutation = useMutation<MultiCalculationResult, ApiError, MultiCalculationParams>({
         mutationFn: (params: MultiCalculationParams) => CalculationsService.calculationsCalculate({requestBody: params}),
         onSuccess: (data, variables) => {
-            // Для совместимости с ResultsPage "упаковываем" ответ в формат истории
             const mockDbResult: ClientCalculationResult = {
-                id: Date.now(), // Fake ID
+                id: Date.now(), 
                 user_name: "Current User",
-                stock_name: variables.groups.map(g => `${g.type}(${g.quantity}шт)`).join(" + "),
+                stock_name: variables.groups.map((g: any) => `${g.type}(${g.quantity}шт)`).join(" + "),
                 turbine_name: selectedTurbine?.name || "Unknown",
                 calc_timestamp: new Date().toISOString(),
                 input_data: variables as any,
@@ -211,9 +203,9 @@ function CalculatorPage() {
                 const newHistoryEntry: HistoryEntry = {
                     id: String(mockDbResult.id),
                     stockName: mockDbResult.stock_name,
-                    stockId: selectedStock.id,
+                    stockId: selectedStock.id ?? 0,
                     turbineName: selectedTurbine.name,
-                    turbineId: selectedTurbine.id,
+                    turbineId: selectedTurbine.id ?? 0,
                     timestamp: Date.now(),
                 };
                 const storedHistory = localStorage.getItem(LOCAL_STORAGE_HISTORY_KEY);
@@ -273,8 +265,8 @@ function CalculatorPage() {
         }
 
         switch (currentStep) {
-            case 'turbineSearch': return <TurbineSearch onSelectTurbine={handleTurbineSelect}/>;
-            case 'stockSelection': return <StockSelection turbine={selectedTurbine} onSelectValve={handleStockSelect} onGoBack={handleGoBackToTurbineSearch} />;
+            case 'turbineSearch': return <TurbineSearch onSelectTurbine={handleTurbineSelect as any}/>;
+            case 'stockSelection': return <StockSelection turbine={selectedTurbine as any} onSelectValve={handleStockSelect as any} onGoBack={handleGoBackToTurbineSearch} />;
             case 'earlyCalculation': return <EarlyCalculationPage stockId={selectedStock?.name || 'N/A'} lastCalculation={calculationData!} onRecalculate={handleRecalculateDecision} onGoBack={handleGoBackToStockSelection} />;
             case 'stockInput': return <StockInputPage stock={selectedStock!} turbine={selectedTurbine!} onSubmit={handleStockInputSubmit} initialData={calculationData?.input_data} onGoBack={handleGoBackToStockSelection} />;
             case 'results': return <ResultsPage stockId={calculationData!.stock_name} stockInfo={selectedStock} calculationId={calculationData!.id} inputData={calculationData!.input_data as any} outputData={calculationData!.output_data as any} onGoBack={handleGoBackToStockSelection} />;
