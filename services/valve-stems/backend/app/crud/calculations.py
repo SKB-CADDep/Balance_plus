@@ -1,39 +1,29 @@
 import logging
-from datetime import datetime, timezone
+from datetime import datetime
 
-from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.models import CalculationResultDB
-from app.schemas import CalculationParams, CalculationResult
+from app.schemas import MultiCalculationParams, MultiCalculationResult
 
 
 logger = logging.getLogger(__name__)
 
 def create_calculation_result(
     db: Session,
-    parameters: CalculationParams,
-    results: CalculationResult,
-    valve_id: int
+    parameters: MultiCalculationParams,
+    results: MultiCalculationResult,
+    stock_name: str,       # <-- Добавили
+    turbine_name: str      # <-- Добавили
 ) -> CalculationResultDB:
-    """
-    Создает запись о результате расчета в базе данных.
-    """
     try:
         db_result = CalculationResultDB(
-            user_name="default_user",
-            stock_name=parameters.valve_drawing,
-            turbine_name=parameters.turbine_name,
-            calc_timestamp=datetime.now(timezone.utc),
-            # В Pydantic v2 model_dump() возвращает dict, который SQLAlchemy JSON тип принимает напрямую
-            # Но если у вас в базе тип JSON (Native), то dumps не нужен.
-            # Если в базе строка - то нужен. Судя по старому коду, вы делали json.dumps.
-            # Оставим json.dumps для совместимости, если колонка текстовая или драйвер требует.
-            # Если колонка реально JSONB, то лучше передавать dict.
-            # В старом коде было: input_data=json.dumps(...)
-            input_data=parameters.model_dump(mode='json'),
-            output_data=results.model_dump(mode='json'),
-            valve_id=valve_id
+            user_name="Engineer",
+            stock_name=stock_name,
+            turbine_name=turbine_name,
+            calc_timestamp=datetime.utcnow(),
+            input_data=parameters.model_dump(),
+            output_data=results.model_dump()
         )
         db.add(db_result)
         db.commit()
@@ -41,26 +31,22 @@ def create_calculation_result(
         return db_result
     except Exception as e:
         db.rollback()
-        logger.error(f"Ошибка базы данных при сохранении результата расчета: {e!s}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                            detail=f"Не удалось сохранить результат расчета: {e}")
+        logger.error(f"Ошибка при сохранении результата расчета в БД: {e}")
+        raise
 
-def get_results_by_valve_drawing(db: Session, valve_drawing: str) -> list[CalculationResultDB]:
+def get_results_by_valve_drawing(db: Session, valve_drawing: str):
     """
-    Получает результаты расчетов по названию клапана.
+    Получает историю расчетов, в которых участвовал данный клапан.
+    Используем ilike, так как stock_name теперь содержит список клапанов.
     """
     try:
-        results = (
-            db.query(CalculationResultDB)
-            .filter(CalculationResultDB.stock_name == valve_drawing)
-            .order_by(CalculationResultDB.calc_timestamp.desc())
+        return db.query(CalculationResultDB)\
+            .filter(CalculationResultDB.stock_name.ilike(f"%{valve_drawing}%"))\
+            .order_by(CalculationResultDB.calc_timestamp.desc())\
             .all()
-        )
-        return results
     except Exception as e:
-        logger.error(f"Ошибка базы данных при получении результатов по клапану: {e!s}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                            detail=f"Не удалось получить результаты: {e}")
+        logger.error(f"Ошибка БД при получении результатов для {valve_drawing}: {e}")
+        return []
 
 def get_calculation_result_by_id(db: Session, result_id: int) -> CalculationResultDB | None:
     """
