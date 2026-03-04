@@ -12,19 +12,19 @@ class CalculationGlobals(BaseModel):
     """Глобальные параметры расчета для всей турбины/группы."""
     P_fresh: float
     P_fresh_unit: str = "кгс/см²"
-    
+
     T_fresh: float | None = None
     T_fresh_unit: str = "°C"
-    
+
     H_fresh: float | None = None
     H_fresh_unit: str = "ккал/кг"
-    
+
     P_air: float = 1.033
     P_air_unit: str = "кгс/см²"
-    
+
     T_air: float = 27.0
     T_air_unit: str = "°C"
-    
+
     P_lst_leak_off: float = 0.97
     P_lst_leak_off_unit: str = "кгс/см²"
 
@@ -51,12 +51,13 @@ class ValveGroupInput(BaseModel):
     """Описание одной группы клапанов (с одинаковой геометрией)."""
     valve_id: int = Field(..., description="ID клапана, чью геометрию берем за основу")
     type: str = Field(..., description="Тип группы: 'СК' или 'РК'")
-    valve_names: list[str] = Field(..., description="Список имен клапанов, входящих в группу")
+    valve_names: list[str] = Field(..., description="Список имен клапанов")
     quantity: int = Field(..., ge=1, description="Количество клапанов в группе")
-    
+
+    # ВОТ ЭТИ ДВЕ СТРОКИ ДОБАВЛЕНЫ ДЛЯ ЯДРА:
     p_values: list[float] = Field(default_factory=list, description="Давления перед участками")
     p_values_unit: str = "кгс/см²"
-    
+
     p_leak_offs: list[float] = Field(default_factory=list, description="Промежуточные отсосы")
     p_leak_offs_unit: str = "кгс/см²"
 
@@ -84,19 +85,19 @@ class GroupCalculationDetails(BaseModel):
     Pi_in: list[float]
     Ti: list[float]
     Hi: list[float]
-    
+
     # Отсосы (для ОДНОГО клапана)
     deaerator_props: list[float]
     ejector_props: list[dict[str, float]]
-    
+
     # Итоги по группе (Gi 1-го клапана * quantity)
     group_total_g: float
 
 
 class TypeSummary(BaseModel):
-    """Сводные агрегированные данные для конкретного типа."""
-    total_g: float  # Суммарный расход
-    mixed_h: float  # Средневзвешенная энтальпия смеси
+    """Сводные агрегированные данные для конкретного типа (Σ СК или Σ РК)."""
+    total_g: float  # Суммарный расход всех клапанов этого типа
+    mixed_h: float  # Средневзвешенная энтальпия смеси отсосов
 
 
 class CalculationSummary(BaseModel):
@@ -119,7 +120,7 @@ class MultiCalculationResult(BaseModel):
 class CalculationResultDB(BaseModel):
     id: int
     user_name: str | None = None
-    stock_name: str
+    stock_name: str  # Будет хранить что-то вроде "Группа СК(2), РК(4)"
     turbine_name: str
     calc_timestamp: datetime
     input_data: dict[str, Any]
