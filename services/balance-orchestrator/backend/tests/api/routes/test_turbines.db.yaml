@@ -1,0 +1,23 @@
+description: "Проверка CRUD-операций с таблицей турбин"
+
+tests:
+  - id: "insert_turbine"
+    description: "Успешное добавление турбины K-200"
+    query: >
+      INSERT INTO turbines (name, power, type) 
+      VALUES (:name, :power, :type) 
+      RETURNING name, power;
+    params:
+      name: "K-200-130"
+      power: 200
+      type: "steam"
+    expected_rows:
+      - name: "K-200-130"
+        power: 200
+
+  - id: "select_missing_turbine"
+    description: "Поиск несуществующей турбины возвращает 0 строк"
+    query: "SELECT * FROM turbines WHERE id = :id"
+    params:
+      id: 999999
+    expected_rows:
