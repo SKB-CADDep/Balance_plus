@@ -170,10 +170,26 @@ const StockInputPage: React.FC<Props> = ({ stock, turbine, onSubmit, onGoBack })
         )
     }
 
-    // Идеальный парсинг. Ищем либо в корне (если fallback), либо в object.parameters (если пришло с бэкенда)
-    const pressureUnits = unitsDict?.parameters?.pressure || unitsDict?.pressure || ["кгс/см²", "МПа", "бар"];
-    const tempUnits = unitsDict?.parameters?.temperature || unitsDict?.temperature || ["°C", "K"];
-    const enthalpyUnits = unitsDict?.parameters?.enthalpy || unitsDict?.enthalpy || ["ккал/кг", "кДж/кг"];
+    // Безопасный парсинг массивов
+    const getSafeArray = (key: string, defaultArray: string[]) => {
+        if (!unitsDict) return defaultArray;
+        
+        // Ищем в parameters.key
+        if (unitsDict.parameters && Array.isArray(unitsDict.parameters[key])) {
+            return unitsDict.parameters[key];
+        }
+        
+        // Ищем в корне (если это мок/заглушка)
+        if (Array.isArray(unitsDict[key])) {
+            return unitsDict[key];
+        }
+        
+        return defaultArray;
+    };
+
+    const pressureUnits = getSafeArray('pressure', ["кгс/см²", "МПа", "бар"]);
+    const tempUnits = getSafeArray('temperature', ["°C", "K"]);
+    const enthalpyUnits = getSafeArray('enthalpy', ["ккал/кг", "кДж/кг"]);
 
     return (
         <VStack as="form" onSubmit={handleSubmit(processSubmit)} spacing={6} p={5} w="100%" maxW="container.lg" mx="auto" align="stretch" noValidate>
