@@ -7,7 +7,12 @@ import {
 import { FiChevronLeft } from "react-icons/fi";
 import { useQuery } from '@tanstack/react-query';
 
-import { type ValveInfo_Output as ValveInfo, type TurbineInfo, type MultiCalculationParams } from '../../client';
+import {
+    type ValveInfo_Output as ValveInfo,
+    type TurbineInfo,
+    type MultiCalculationParams,
+} from '../../client';
+import { OpenAPI } from '../../client/core/OpenAPI'; // ИМПОРТ ДОБАВЛЕН
 import { InputWithUnit } from '../Common/InputWithUnit';
 
 interface FormInputValues {
@@ -54,45 +59,31 @@ const parseLocaleNumberStrict = (val: unknown): number => {
     return Number.isFinite(n) ? n : NaN;
 };
 
-// Надежный fetch, который сам найдет правильный базовый URL и не упадет на парсинге
+// Надежный fetch, который сам найдет правильный базовый URL
 const fetchUnits = async () => {
     try {
-        // Достаем базовый URL из сгенерированного клиента
         const baseUrl = OpenAPI.BASE || '';
-        
-        // Делаем простой и понятный fetch
         const res = await fetch(`${baseUrl}/api/v1/utils/units`, {
             method: 'GET',
-            headers: {
-                'Accept': 'application/json'
-            }
+            headers: { 'Accept': 'application/json' }
         });
         
         if (!res.ok) {
-            console.error("Сервер вернул ошибку:", res.status);
             throw new Error('Network response was not ok');
         }
         
-        const data = await res.json();
-        
-        // ВАЖНО: твой сервер оборачивает ответ в "parameters"
-        return data; 
-        
+        return await res.json();
     } catch (e) {
         console.error("Поймали ошибку в fetchUnits:", e);
-        // Заглушка, если бэкенд совсем умер
         return {
-            parameters: {
-                pressure: ["кгс/см²", "МПа", "бар", "Па (fallback)"],
-                temperature: ["°C", "K"],
-                enthalpy: ["ккал/кг", "кДж/кг"]
-            }
+            pressure: ["кгс/см²", "МПа", "бар", "Па (fallback)"],
+            temperature: ["°C", "K"],
+            enthalpy: ["ккал/кг", "кДж/кг"]
         };
     }
 };
 
 const StockInputPage: React.FC<Props> = ({ stock, turbine, onSubmit, onGoBack }) => {
-    // ВАЖНО: Физика (N - 2). Для 3 участков = 1 поле ввода!
     const countParts = stock.count_parts || 3;
     const intermediateCount = Math.max(0, countParts - 2);
     
@@ -114,9 +105,9 @@ const StockInputPage: React.FC<Props> = ({ stock, turbine, onSubmit, onGoBack })
             p_fresh: '130',
             p_fresh_unit: 'кгс/см²', 
             th_mode: 'temperature',
-            t_fresh: '555',
+            t_fresh: '540',
             t_fresh_unit: '°C',
-            h_fresh: '3660.5',
+            h_fresh: '',
             h_fresh_unit: 'ккал/кг',
             p_air: '1.033',
             p_air_unit: 'кгс/см²',
@@ -155,10 +146,9 @@ const StockInputPage: React.FC<Props> = ({ stock, turbine, onSubmit, onGoBack })
             type: data.valve_type,
             valve_names: [data.valve_name],
             quantity: data.count_valves,
-            p_values: [], // Бэкенд сам всё рассчитает
+            p_values: [], 
             p_values_unit: "кгс/см²", 
             p_leak_offs: parsedPLeakOffs,
-            // Защита от пустого массива отсосов
             p_leak_offs_unit: data.p_intermediates.length > 0 ? data.p_intermediates[0].unit : "кгс/см²",
         };
 
@@ -180,30 +170,11 @@ const StockInputPage: React.FC<Props> = ({ stock, turbine, onSubmit, onGoBack })
         )
     }
 
-    // ИСПРАВЛЕННЫЙ ПАРСИНГ UNITS
-    // Хелпер парсинга ответа бэкенда (Универсальный)
-    const getUnitList = (paramType: string): string[] => {
-        if (!unitsDict?.parameters) return [];
-        
-        const paramData = unitsDict.parameters[paramType];
-        
-        // Если пришел массив строк ["MPa", "bar"]
-        if (Array.isArray(paramData)) {
-            return paramData;
-        }
-        
-        // Если пришел объект с units [{symbol: "MPa"}]
-        if (paramData?.units && Array.isArray(paramData.units)) {
-             return paramData.units.map((u: any) => u.symbol);
-        }
-        
-        return [];
-    };
+    // Идеальный парсинг. Ищем либо в корне (если fallback), либо в object.parameters (если пришло с бэкенда)
+    const pressureUnits = unitsDict?.parameters?.pressure || unitsDict?.pressure || ["кгс/см²", "МПа", "бар"];
+    const tempUnits = unitsDict?.parameters?.temperature || unitsDict?.temperature || ["°C", "K"];
+    const enthalpyUnits = unitsDict?.parameters?.enthalpy || unitsDict?.enthalpy || ["ккал/кг", "кДж/кг"];
 
-    const pressureUnits = unitsDict?.parameters?.pressure || ["кгс/см²", "МПа", "бар"];
-    const tempUnits = unitsDict?.parameters?.temperature || ["°C", "K"];
-    const enthalpyUnits = unitsDict?.parameters?.enthalpy || ["ккал/кг", "кДж/кг"];
-    
     return (
         <VStack as="form" onSubmit={handleSubmit(processSubmit)} spacing={6} p={5} w="100%" maxW="container.lg" mx="auto" align="stretch" noValidate>
             <Heading as="h2" size="lg" textAlign="center">
