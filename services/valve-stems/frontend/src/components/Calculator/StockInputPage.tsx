@@ -54,19 +54,36 @@ const parseLocaleNumberStrict = (val: unknown): number => {
     return Number.isFinite(n) ? n : NaN;
 };
 
-// Исправленный fetchUnits: строгий путь + парсинг parameters
+// Надежный fetch, который сам найдет правильный базовый URL и не упадет на парсинге
 const fetchUnits = async () => {
     try {
-        const res = await fetch('/api/v1/utils/units', {
+        // Достаем базовый URL из сгенерированного клиента
+        const baseUrl = OpenAPI.BASE || '';
+        
+        // Делаем простой и понятный fetch
+        const res = await fetch(`${baseUrl}/api/v1/utils/units`, {
             method: 'GET',
-            headers: { 'Accept': 'application/json' }
+            headers: {
+                'Accept': 'application/json'
+            }
         });
-        if (!res.ok) throw new Error(`Ошибка сервера ${res.status}`);
-        return await res.json();
+        
+        if (!res.ok) {
+            console.error("Сервер вернул ошибку:", res.status);
+            throw new Error('Network response was not ok');
+        }
+        
+        const data = await res.json();
+        
+        // ВАЖНО: твой сервер оборачивает ответ в "parameters"
+        return data; 
+        
     } catch (e) {
+        console.error("Поймали ошибку в fetchUnits:", e);
+        // Заглушка, если бэкенд совсем умер
         return {
             parameters: {
-                pressure: ["кгс/см²", "МПа", "бар"], // Прямой массив
+                pressure: ["кгс/см²", "МПа", "бар", "Па (fallback)"],
                 temperature: ["°C", "K"],
                 enthalpy: ["ккал/кг", "кДж/кг"]
             }
@@ -183,10 +200,10 @@ const StockInputPage: React.FC<Props> = ({ stock, turbine, onSubmit, onGoBack })
         return [];
     };
 
-    const pressureUnits = getUnitList('pressure').length > 0 ? getUnitList('pressure') : ["кгс/см²", "МПа", "бар"];
-    const tempUnits = getUnitList('temperature').length > 0 ? getUnitList('temperature') : ["°C", "K"];
-    const enthalpyUnits = getUnitList('enthalpy').length > 0 ? getUnitList('enthalpy') : ["ккал/кг", "кДж/кг"];
-
+    const pressureUnits = unitsDict?.parameters?.pressure || ["кгс/см²", "МПа", "бар"];
+    const tempUnits = unitsDict?.parameters?.temperature || ["°C", "K"];
+    const enthalpyUnits = unitsDict?.parameters?.enthalpy || ["ккал/кг", "кДж/кг"];
+    
     return (
         <VStack as="form" onSubmit={handleSubmit(processSubmit)} spacing={6} p={5} w="100%" maxW="container.lg" mx="auto" align="stretch" noValidate>
             <Heading as="h2" size="lg" textAlign="center">
