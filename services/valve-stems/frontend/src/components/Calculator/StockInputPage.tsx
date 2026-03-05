@@ -64,10 +64,9 @@ const fetchUnits = async () => {
         if (!res.ok) throw new Error(`Ошибка сервера ${res.status}`);
         return await res.json();
     } catch (e) {
-        console.error("Не удалось загрузить справочник единиц:", e);
         return {
             parameters: {
-                pressure: ["кгс/см²", "МПа", "бар"],
+                pressure: ["кгс/см²", "МПа", "бар"], // Прямой массив
                 temperature: ["°C", "K"],
                 enthalpy: ["ккал/кг", "кДж/кг"]
             }
@@ -98,9 +97,9 @@ const StockInputPage: React.FC<Props> = ({ stock, turbine, onSubmit, onGoBack })
             p_fresh: '130',
             p_fresh_unit: 'кгс/см²', 
             th_mode: 'temperature',
-            t_fresh: '540',
+            t_fresh: '555',
             t_fresh_unit: '°C',
-            h_fresh: '',
+            h_fresh: '3660.5',
             h_fresh_unit: 'ккал/кг',
             p_air: '1.033',
             p_air_unit: 'кгс/см²',
@@ -165,9 +164,28 @@ const StockInputPage: React.FC<Props> = ({ stock, turbine, onSubmit, onGoBack })
     }
 
     // ИСПРАВЛЕННЫЙ ПАРСИНГ UNITS
-    const pressureUnits = unitsDict?.parameters?.pressure || ["кгс/см²"];
-    const tempUnits = unitsDict?.parameters?.temperature || ["°C"];
-    const enthalpyUnits = unitsDict?.parameters?.enthalpy || ["ккал/кг"];
+    // Хелпер парсинга ответа бэкенда (Универсальный)
+    const getUnitList = (paramType: string): string[] => {
+        if (!unitsDict?.parameters) return [];
+        
+        const paramData = unitsDict.parameters[paramType];
+        
+        // Если пришел массив строк ["MPa", "bar"]
+        if (Array.isArray(paramData)) {
+            return paramData;
+        }
+        
+        // Если пришел объект с units [{symbol: "MPa"}]
+        if (paramData?.units && Array.isArray(paramData.units)) {
+             return paramData.units.map((u: any) => u.symbol);
+        }
+        
+        return [];
+    };
+
+    const pressureUnits = getUnitList('pressure').length > 0 ? getUnitList('pressure') : ["кгс/см²", "МПа", "бар"];
+    const tempUnits = getUnitList('temperature').length > 0 ? getUnitList('temperature') : ["°C", "K"];
+    const enthalpyUnits = getUnitList('enthalpy').length > 0 ? getUnitList('enthalpy') : ["ккал/кг", "кДж/кг"];
 
     return (
         <VStack as="form" onSubmit={handleSubmit(processSubmit)} spacing={6} p={5} w="100%" maxW="container.lg" mx="auto" align="stretch" noValidate>
