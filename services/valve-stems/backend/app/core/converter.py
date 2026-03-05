@@ -14,6 +14,7 @@ except Exception:
     
     converter.add_parameter(
         parameter_type="enthalpy",
+        parameter_name="Энтальпия",           # <-- ВОТ ЭТОЙ СТРОКИ НЕ ХВАТАЛО
         base_unit_symbol="кДж/кг",
         base_unit_name="Килоджоуль на килограмм"
     )
