@@ -1,67 +1,34 @@
 import React from 'react';
 import { useForm, useFieldArray, Controller, type SubmitHandler } from 'react-hook-form';
 import {
-    Box,
-    Button,
-    FormControl,
-    FormLabel,
-    VStack,
-    HStack,
-    Heading,
-    Text,
-    Icon,
-    SimpleGrid,
-    Spinner,
-    RadioGroup,
-    Radio,
-    Stack,
-    useColorModeValue,
-    FormErrorMessage,
+    Box, Button, FormControl, FormLabel, VStack, HStack, Heading, Text, Icon,
+    SimpleGrid, Spinner, RadioGroup, Radio, Stack, useColorModeValue, FormErrorMessage,
 } from '@chakra-ui/react';
 import { FiChevronLeft } from "react-icons/fi";
 import { useQuery } from '@tanstack/react-query';
 
-import {
-    type ValveInfo_Output as ValveInfo,
-    type TurbineInfo,
-    type MultiCalculationParams 
-} from '../../client';
-
+import { type ValveInfo_Output as ValveInfo, type TurbineInfo, type MultiCalculationParams } from '../../client';
 import { InputWithUnit } from '../Common/InputWithUnit';
 
-// ---------------------------------------------------------------------
-// Типы формы
-// ---------------------------------------------------------------------
 interface FormInputValues {
     turbine_id: number;
     valve_id: number;
     valve_name: string;
     valve_type: string;
     count_valves: number;
-
-    // Глобальные параметры
     p_fresh: string;
     p_fresh_unit: string;
-    
-    // ПЕРЕКЛЮЧАТЕЛЬ T / H
     th_mode: 'temperature' | 'enthalpy';
-    
     t_fresh: string;
     t_fresh_unit: string;
-    
     h_fresh: string;
     h_fresh_unit: string;
-    
     p_air: string;
     p_air_unit: string;
-    
     t_air: string;
     t_air_unit: string;
-    
     p_lst_leak_off: string;
     p_lst_leak_off_unit: string;
-
-    // Динамические промежуточные отсосы (p_leak_offs)
     p_intermediates: { value: string; unit: string }[];
 }
 
@@ -73,9 +40,6 @@ type Props = {
     onGoBack?: () => void;
 };
 
-// ---------------------------------------------------------------------
-// Утилиты
-// ---------------------------------------------------------------------
 const MAX_SCALE = 4;
 const isValidDecimal = (val: unknown) => {
     const s = String(val ?? '').trim().replace(/\s/g, '');
@@ -90,31 +54,29 @@ const parseLocaleNumberStrict = (val: unknown): number => {
     return Number.isFinite(n) ? n : NaN;
 };
 
-// Запрос за единицами измерения (Только строгий относительный путь через Nginx!)
+// Исправленный fetchUnits: строгий путь + парсинг parameters
 const fetchUnits = async () => {
     try {
         const res = await fetch('/api/v1/utils/units', {
             method: 'GET',
-            headers: {
-                'Accept': 'application/json'
-            }
+            headers: { 'Accept': 'application/json' }
         });
-        if (!res.ok) {
-            throw new Error(`Ошибка сервера ${res.status}`);
-        }
+        if (!res.ok) throw new Error(`Ошибка сервера ${res.status}`);
         return await res.json();
     } catch (e) {
         console.error("Не удалось загрузить справочник единиц:", e);
-        // Фоллбэк, если бэкенд недоступен
         return {
-            pressure: { available: ["кгс/см²", "МПа", "бар"] },
-            temperature: { available: ["°C", "K"] },
-            enthalpy: { available: ["ккал/кг", "кДж/кг"] }
+            parameters: {
+                pressure: ["кгс/см²", "МПа", "бар"],
+                temperature: ["°C", "K"],
+                enthalpy: ["ккал/кг", "кДж/кг"]
+            }
         };
     }
 };
 
 const StockInputPage: React.FC<Props> = ({ stock, turbine, onSubmit, onGoBack }) => {
+    // ВАЖНО: Физика (N - 2). Для 3 участков = 1 поле ввода!
     const countParts = stock.count_parts || 3;
     const intermediateCount = Math.max(0, countParts - 2);
     
@@ -126,43 +88,32 @@ const StockInputPage: React.FC<Props> = ({ stock, turbine, onSubmit, onGoBack })
         queryFn: fetchUnits,
     });
 
-    const {
-        handleSubmit,
-        control,
-        watch,
-        setValue,
-        formState: { errors, isSubmitting },
-    } = useForm<FormInputValues>({
+    const { handleSubmit, control, watch, setValue, formState: { errors, isSubmitting } } = useForm<FormInputValues>({
         defaultValues: {
             turbine_id: turbine?.id ?? 0,
             valve_id: stock?.id ?? 0,
             valve_name: stock.name,
             valve_type: stock.type || "СК",
             count_valves: 1, 
-            
             p_fresh: '130',
             p_fresh_unit: 'кгс/см²', 
-            
             th_mode: 'temperature',
             t_fresh: '540',
             t_fresh_unit: '°C',
             h_fresh: '',
             h_fresh_unit: 'ккал/кг',
-            
             p_air: '1.033',
             p_air_unit: 'кгс/см²',
             t_air: '27',
             t_air_unit: '°C',
             p_lst_leak_off: '0.97',
             p_lst_leak_off_unit: 'кгс/см²',
-
             p_intermediates: Array.from({ length: intermediateCount }, () => ({ value: '', unit: 'кгс/см²' })),
         },
         mode: 'onBlur',
     });
 
     const { fields: intermediateFields } = useFieldArray({ control, name: 'p_intermediates' });
-
     const thMode = watch('th_mode');
 
     const processSubmit: SubmitHandler<FormInputValues> = (data) => {
@@ -188,10 +139,11 @@ const StockInputPage: React.FC<Props> = ({ stock, turbine, onSubmit, onGoBack })
             type: data.valve_type,
             valve_names: [data.valve_name],
             quantity: data.count_valves,
-            p_values: [], // <-- Бэкенд сам всё рассчитает!
+            p_values: [], // Бэкенд сам всё рассчитает
             p_values_unit: "кгс/см²", 
             p_leak_offs: parsedPLeakOffs,
-            p_leak_offs_unit: data.p_intermediates[0]?.unit || "кгс/см²",
+            // Защита от пустого массива отсосов
+            p_leak_offs_unit: data.p_intermediates.length > 0 ? data.p_intermediates[0].unit : "кгс/см²",
         };
 
         const payload: MultiCalculationParams = {
@@ -212,15 +164,13 @@ const StockInputPage: React.FC<Props> = ({ stock, turbine, onSubmit, onGoBack })
         )
     }
 
-    // Данные с бэкенда приходят обернутыми в объект "parameters", 
-    // а внутри лежат сразу массивы строк (без слова "available").
+    // ИСПРАВЛЕННЫЙ ПАРСИНГ UNITS
     const pressureUnits = unitsDict?.parameters?.pressure || ["кгс/см²"];
     const tempUnits = unitsDict?.parameters?.temperature || ["°C"];
     const enthalpyUnits = unitsDict?.parameters?.enthalpy || ["ккал/кг"];
 
     return (
         <VStack as="form" onSubmit={handleSubmit(processSubmit)} spacing={6} p={5} w="100%" maxW="container.lg" mx="auto" align="stretch" noValidate>
-            
             <Heading as="h2" size="lg" textAlign="center">
                 Параметры расчёта <Text as="span" color="teal.500">{stock.name}</Text>
             </Heading>
@@ -233,7 +183,6 @@ const StockInputPage: React.FC<Props> = ({ stock, turbine, onSubmit, onGoBack })
                 </Box>
             )}
 
-            {/* ГЛОБАЛЬНЫЕ ПАРАМЕТРЫ */}
             <Box borderWidth="1px" borderRadius="lg" p={5} bg={boxBg} shadow="sm">
                 <HStack mb={4} align="center">
                     <Heading as="h3" size="md">Глобальные параметры (Свежий пар и Воздух)</Heading>
@@ -250,7 +199,6 @@ const StockInputPage: React.FC<Props> = ({ stock, turbine, onSubmit, onGoBack })
                         <FormErrorMessage>{errors.p_fresh?.message as any}</FormErrorMessage>
                     </FormControl>
 
-                    {/* ПЕРЕКЛЮЧАТЕЛЬ ТЕМПЕРАТУРА ИЛИ ЭНТАЛЬПИЯ */}
                     <Box borderWidth="1px" p={3} borderRadius="md" borderColor="teal.200">
                         <RadioGroup onChange={(val: 'temperature' | 'enthalpy') => setValue('th_mode', val)} value={thMode} mb={3}>
                             <Stack direction="row" spacing={5}>
@@ -312,7 +260,6 @@ const StockInputPage: React.FC<Props> = ({ stock, turbine, onSubmit, onGoBack })
                 </SimpleGrid>
             </Box>
 
-            {/* ЛОКАЛЬНЫЕ ПАРАМЕТРЫ КЛАПАНА */}
             <Box borderWidth="1px" borderRadius="lg" p={5} bg={boxBgSecondary} shadow="sm">
                 {intermediateCount > 0 ? (
                     <Box>
