@@ -1,46 +1,28 @@
 import { useState, useCallback, useEffect } from 'react';
 import { createFileRoute, useSearch, useNavigate } from '@tanstack/react-router';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { Box, Spinner, Text, VStack, useToast } from '@chakra-ui/react';
 
 import TurbineSearch from '../components/Calculator/TurbineSearch';
-import StockSelection from '../components/Calculator/StockSelection';
-import EarlyCalculationPage from '../components/Calculator/EarlyCalculationPage';
+import StockSelection, { type SelectedStock } from '../components/Calculator/StockSelection';
 import StockInputPage from '../components/Calculator/StockInputPage';
 import ResultsPage from '../components/Calculator/ResultsPage';
 import { type HistoryEntry, LOCAL_STORAGE_HISTORY_KEY } from '../components/Common/Sidebar';
 
 import {
     ResultsService,
-    CalculationsService,
     TurbinesService,
-    ValvesService,
     ApiError,
     type TurbineInfo,
-    type ValveInfo_Output as ValveInfo,
-    type CalculationResultDB as ClientCalculationResult,
-    type CalculationParams,
 } from '../client';
 
-interface ExpectedOutputData {
-    Gi?: number[];
-    Pi_in?: number[];
-    Ti?: number[];
-    Hi?: number[];
-    deaerator_props?: any[];
-    ejector_props?: Array<{
-        g: number;
-        t: number;
-        h: number;
-        p: number;
-    }>;
-}
+// Используем прямой запрос, так как OpenAPI клиент еще не обновлен под новые схемы
+import { request as __request } from '../client/core/request';
+import { OpenAPI } from '../client/core/OpenAPI';
 
 type CalculatorStep =
     | 'turbineSearch'
     | 'stockSelection'
-    | 'loadingPreviousCalculation'
-    | 'earlyCalculation'
     | 'stockInput'
     | 'loadingHistoryResult'
     | 'results';
@@ -49,7 +31,6 @@ export const Route = createFileRoute('/calculator')({
     component: CalculatorPage,
     validateSearch: (search: Record<string, unknown>) => ({
         resultId: search.resultId ? String(search.resultId) : undefined,
-        stockIdToLoad: search.stockIdToLoad ? String(search.stockIdToLoad) : undefined,
         turbineIdToLoad: search.turbineIdToLoad ? String(search.turbineIdToLoad) : undefined,
     }),
 });
@@ -65,17 +46,17 @@ export function getApiErrorDetail(error: any): string | undefined {
 
 function CalculatorPage() {
     const navigate = useNavigate();
-    const queryClient = useQueryClient();
     const toast = useToast();
-    const searchParams = useSearch({from: Route.fullPath});
+    const searchParams = useSearch({ from: Route.fullPath });
 
     const [currentStep, setCurrentStep] = useState<CalculatorStep>('turbineSearch');
     const [selectedTurbine, setSelectedTurbine] = useState<TurbineInfo | null>(null);
-    const [selectedStock, setSelectedStock] = useState<ValveInfo | null>(null);
-    const [calculationData, setCalculationData] = useState<ClientCalculationResult | null>(null);
+    const [selectedStocks, setSelectedStocks] = useState<SelectedStock[]>([]);
+    const [calculationData, setCalculationData] = useState<any>(null);
 
-    const isLoadingFromHistory = !!searchParams.resultId;
-
+    // ==========================================
+    // ЛОГИКА ЗАГРУЗКИ ИЗ ИСТОРИИ (SIDEBAR)
+    // ==========================================
     const {
         data: loadedResultDataFromHistory,
         isLoading: isLoadingResultFromHistory,
@@ -101,79 +82,26 @@ function CalculatorPage() {
     const {
         data: loadedTurbineFromHistory,
         isLoading: isLoadingTurbineFromHistory,
-        isError: isErrorTurbineFromHistory,
-        error: errorTurbineFromHistory,
     } = useQuery({
         queryKey: ['turbineByIdForHistory', searchParams.turbineIdToLoad],
         queryFn: async () => {
             if (!searchParams.turbineIdToLoad) throw new Error("ID турбины не предоставлен");
             const id = parseInt(searchParams.turbineIdToLoad, 10);
-            if (isNaN(id)) throw new Error("Неверный ID турбины");
             return TurbinesService.turbinesReadTurbineById({ turbineId: id });
         },
         enabled: !!searchParams.turbineIdToLoad && !!searchParams.resultId,
         retry: 1,
     });
 
-    const {
-        data: loadedStockFromHistory,
-        isLoading: isLoadingStockFromHistory,
-        isError: isErrorStockFromHistory,
-        error: errorStockFromHistory,
-    } = useQuery({
-        queryKey: ['stockByIdForHistory', searchParams.stockIdToLoad],
-        queryFn: async () => {
-            if (!searchParams.stockIdToLoad) throw new Error("ID штока не предоставлен");
-            const id = parseInt(searchParams.stockIdToLoad, 10);
-            if (isNaN(id)) throw new Error("Неверный ID штока");
-            return ValvesService.valvesReadValveById({ valveId: id });
-        },
-        enabled: !!searchParams.stockIdToLoad && !!searchParams.resultId,
-        retry: 1,
-    });
-
-    const {
-        data: latestPreviousResultData,
-        isLoading: isLoadingLatestPrevious,
-        isError: isErrorLatestPrevious,
-        error: errorLatestPrevious,
-    } = useQuery({
-        queryKey: ['valveResults', selectedStock?.name],
-        queryFn: async () => {
-            if (!selectedStock?.name) return [];
-            const encodedStockName = encodeURIComponent(selectedStock.name);
-            const results = await ResultsService.resultsGetCalculationResults({ valveName: encodedStockName });
-            return results.map(r => ({
-                ...r,
-                input_data: typeof r.input_data === 'string' ? JSON.parse(r.input_data) : r.input_data,
-                output_data: typeof r.output_data === 'string' ? JSON.parse(r.output_data) : r.output_data,
-            }));
-        },
-        enabled: !!selectedStock?.name && !isLoadingFromHistory,
-        select: (data) => (data && data.length > 0 ? data[0] : null),
-        retry: (failureCount, error) => (error as ApiError)?.status !== 404 && failureCount < 1,
-    });
-
     useEffect(() => {
         if (!searchParams.resultId) {
-            if (currentStep === 'loadingHistoryResult') {
-                setCurrentStep('turbineSearch');
-            }
+            if (currentStep === 'loadingHistoryResult') setCurrentStep('turbineSearch');
             return;
         }
 
-        if (isLoadingResultFromHistory
-            || (searchParams.turbineIdToLoad && isLoadingTurbineFromHistory)
-            || (searchParams.stockIdToLoad && isLoadingStockFromHistory)) {
-            if (currentStep !== 'loadingHistoryResult') {
-                setCurrentStep('loadingHistoryResult');
-            }
+        if (isLoadingResultFromHistory || (searchParams.turbineIdToLoad && isLoadingTurbineFromHistory)) {
+            if (currentStep !== 'loadingHistoryResult') setCurrentStep('loadingHistoryResult');
             return;
-        }
-
-        let shouldClearUrlParams = false;
-        if (currentStep === 'loadingHistoryResult' || searchParams.resultId) {
-            shouldClearUrlParams = true;
         }
 
         if (isErrorResultFromHistory || !loadedResultDataFromHistory) {
@@ -186,306 +114,142 @@ function CalculatorPage() {
         } else {
             setCalculationData(loadedResultDataFromHistory);
             setSelectedTurbine(loadedTurbineFromHistory || null);
-            setSelectedStock(loadedStockFromHistory || null);
             setCurrentStep('results');
-            toast({title: `Расчет "${loadedResultDataFromHistory.stock_name}" загружен из истории`, status: "success"});
-
-            if (searchParams.turbineIdToLoad && (isErrorTurbineFromHistory || !loadedTurbineFromHistory)) {
-                toast({
-                    title: "Предупреждение: не удалось загрузить данные турбины из истории.",
-                    description: getApiErrorDetail(errorTurbineFromHistory) || (errorTurbineFromHistory as Error)?.message,
-                    status: "warning"
-                });
-            }
-            if (searchParams.stockIdToLoad && (isErrorStockFromHistory || !loadedStockFromHistory)) {
-                toast({
-                    title: "Предупреждение: не удалось загрузить данные штока из истории.",
-                    description: getApiErrorDetail(errorStockFromHistory) || (errorStockFromHistory as Error)?.message,
-                    status: "warning"
-                });
-            }
+            toast({ title: `Расчет "${loadedResultDataFromHistory.stock_name}" загружен`, status: "success" });
         }
 
-        if (shouldClearUrlParams) {
-            navigate({
-                search: (prev: any) => ({
-                    ...prev,
-                    resultId: undefined,
-                    stockIdToLoad: undefined,
-                    turbineIdToLoad: undefined
-                }),
-                replace: true
-            });
-        }
-
-    }, [
-        searchParams.resultId, searchParams.turbineIdToLoad, searchParams.stockIdToLoad,
-        loadedResultDataFromHistory, isLoadingResultFromHistory, isErrorResultFromHistory, errorResultFromHistory,
-        loadedTurbineFromHistory, isLoadingTurbineFromHistory, isErrorTurbineFromHistory, errorTurbineFromHistory,
-        loadedStockFromHistory, isLoadingStockFromHistory, isErrorStockFromHistory, errorStockFromHistory,
-        navigate, toast, currentStep
-    ]);
-
-    useEffect(() => {
-        if (!selectedStock || searchParams.resultId || calculationData || currentStep === 'loadingHistoryResult') {
-            return;
-        }
-
-        if (isLoadingLatestPrevious) {
-            if (currentStep !== 'loadingPreviousCalculation') setCurrentStep('loadingPreviousCalculation');
-            return;
-        }
-
-        if (currentStep === 'loadingPreviousCalculation' && selectedStock) {
-            if (isErrorLatestPrevious) {
-                // Проверяем, если это 404, то просто нет предыдущих расчетов
-                if (errorLatestPrevious instanceof ApiError && errorLatestPrevious.status === 404) {
-                    console.log('No previous calculations found for stock:', selectedStock.name);
-                    setCalculationData(null);
-                    setCurrentStep('stockInput');
-                } else {
-                    let errorMessage = "Не удалось получить данные.";
-                    if (errorLatestPrevious) {
-                        const detail = getApiErrorDetail(errorLatestPrevious);
-                        errorMessage = detail || (errorLatestPrevious as Error)?.message || errorMessage;
-                    }
-                    toast({
-                        title: "Ошибка загрузки предыдущих расчетов",
-                        description: errorMessage,
-                        status: "error"
-                    });
-                    setCalculationData(null);
-                    setCurrentStep('stockInput');
-                }
-            } else if (latestPreviousResultData) {
-                console.log('Found previous calculation:', latestPreviousResultData);
-                setCalculationData(latestPreviousResultData);
-                setCurrentStep('earlyCalculation');
-            } else {
-                console.log('No previous calculations found');
-                setCalculationData(null);
-                setCurrentStep('stockInput');
-            }
-        }
-    }, [
-        latestPreviousResultData, isLoadingLatestPrevious, isErrorLatestPrevious, errorLatestPrevious,
-        selectedStock, toast, searchParams.resultId, calculationData, currentStep
-    ]);
-
-    const handleStockSelect = useCallback((stock: ValveInfo) => {
-        console.log('Stock selected:', stock);
-
+        // Очищаем URL
         navigate({
-            search: (p: any) => ({
-                ...p,
-                resultId: undefined,
-                stockIdToLoad: undefined,
-                turbineIdToLoad: undefined
-            }), replace: true
+            search: (prev: any) => ({ ...prev, resultId: undefined, turbineIdToLoad: undefined }),
+            replace: true
         });
+    }, [
+        searchParams.resultId, searchParams.turbineIdToLoad,
+        loadedResultDataFromHistory, isLoadingResultFromHistory, isErrorResultFromHistory,
+        loadedTurbineFromHistory, isLoadingTurbineFromHistory,
+        navigate, toast, currentStep, errorResultFromHistory
+    ]);
 
-        setSelectedStock(stock);
-        setCalculationData(null);
-
-        // Инвалидируем кеш для нового штока
-        queryClient.invalidateQueries({queryKey: ['valveResults', stock.id]});
-
-        setCurrentStep('loadingPreviousCalculation');
-    }, [navigate, queryClient]);
-
-    const calculationMutation = useMutation<ClientCalculationResult, ApiError, CalculationParams>({
-        mutationFn: (params: CalculationParams) => CalculationsService.calculationsCalculate({requestBody: params}),
-        onSuccess: (data) => {
+    // ==========================================
+    // ЛОГИКА НОВОГО МУЛЬТИ-РАСЧЕТА
+    // ==========================================
+    const calculationMutation = useMutation<any, any, any>({
+        mutationFn: async (payload: any) => {
+            return await __request(OpenAPI, {
+                method: 'POST',
+                url: '/api/v1/calculate',
+                body: payload,
+            });
+        },
+        onSuccess: (data, variables) => {
+            // Бэкенд теперь сам возвращает схему CalculationResultDB, 
+            // но на всякий случай парсим JSON, если он пришел строкой
+            const stockName = data.stock_name || "Групповой расчёт штоков";
             const parsedData = {
-                ...data,
-                input_data: typeof data.input_data === 'string' ? JSON.parse(data.input_data) : data.input_data,
-                output_data: typeof data.output_data === 'string' ? JSON.parse(data.output_data) : data.output_data,
+                id: data.id, // Бэкенд должен вернуть ID сохраненного расчета
+                stock_name: stockName,
+                turbine_name: selectedTurbine?.name || "",
+                input_data: variables,
+                output_data: data.output_data || data, // Зависит от того, как бэк отдает ответ
             };
+            
             setCalculationData(parsedData);
             setCurrentStep('results');
-            toast({title: "Расчет выполнен успешно!", status: "success"});
+            toast({ title: "Расчет выполнен успешно!", status: "success" });
 
-            // Сохранение в историю
-            if (selectedStock?.id !== undefined && selectedTurbine?.id !== undefined && parsedData.id !== undefined) {
+            // Сохранение в историю Sidebar
+            if (selectedTurbine?.id !== undefined && data.id !== undefined) {
                 const newHistoryEntry: HistoryEntry = {
-                    id: String(parsedData.id),
-                    stockName: selectedStock.name,
-                    stockId: selectedStock.id,
+                    id: String(data.id),
+                    stockName: stockName,
+                    stockId: selectedStocks[0]?.valve?.id || 0, // Берем ID первого клапана для совместимости
                     turbineName: selectedTurbine.name,
                     turbineId: selectedTurbine.id,
                     timestamp: Date.now(),
                 };
+                
                 const storedHistory = localStorage.getItem(LOCAL_STORAGE_HISTORY_KEY);
                 let currentHistory: HistoryEntry[] = [];
                 if (storedHistory) {
-                    try {
-                        currentHistory = JSON.parse(storedHistory);
-                    } catch (e) {
-                        console.error(e);
-                    }
+                    try { currentHistory = JSON.parse(storedHistory); } catch (e) { console.error(e); }
                 }
                 const updatedHistory = [newHistoryEntry, ...currentHistory].slice(0, 20);
                 localStorage.setItem(LOCAL_STORAGE_HISTORY_KEY, JSON.stringify(updatedHistory));
-                window.dispatchEvent(new Event('wsaHistoryUpdated'));
-            }
-
-            // Инвалидируем кеш для этого штока
-            if (selectedStock?.id) {
-                void queryClient.invalidateQueries({queryKey: ['valveResults', selectedStock.id]});
+                window.dispatchEvent(new Event('wsaHistoryUpdated')); // Триггер для Sidebar
             }
         },
-        onError: (error: ApiError) => {
-            const detail = getApiErrorDetail(error);
+        onError: (error: any) => {
             toast({
                 title: "Ошибка при выполнении расчета",
-                description: detail || error.message,
+                description: error?.body?.detail || error.message || "Неизвестная ошибка",
                 status: "error"
             });
         },
     });
 
+    // ==========================================
+    // ОБРАБОТЧИКИ НАВИГАЦИИ МЕЖДУ ШАГАМИ
+    // ==========================================
     const handleTurbineSelect = useCallback((turbine: TurbineInfo) => {
-        navigate({
-            search: (p: any) => ({
-                ...p,
-                resultId: undefined,
-                stockIdToLoad: undefined,
-                turbineIdToLoad: undefined
-            }), replace: true
-        });
         setSelectedTurbine(turbine);
-        setSelectedStock(null);
+        setSelectedStocks([]);
         setCalculationData(null);
         setCurrentStep('stockSelection');
-    }, [navigate]);
+    }, []);
 
-    const handleRecalculateDecision = useCallback((recalculate: boolean) => {
-        if (!recalculate && calculationData) {
-            setCurrentStep('results');
-        } else {
-            setCurrentStep('stockInput');
-        }
-    }, [calculationData]);
+    const handleValvesSelect = useCallback((selections: SelectedStock[]) => {
+        setSelectedStocks(selections);
+        setCalculationData(null);
+        setCurrentStep('stockInput');
+    }, []);
 
-    const handleStockInputSubmit = useCallback((inputData: CalculationParams) => {
-        if (!selectedTurbine?.id || !selectedStock?.id) {
-            toast({title: "Ошибка", description: "Турбина или шток не выбраны для расчета.", status: "error"});
+    const handleStockInputSubmit = useCallback((payload: any) => {
+        if (!selectedTurbine?.id || selectedStocks.length === 0) {
+            toast({ title: "Ошибка", description: "Турбина или клапаны не выбраны.", status: "error" });
             setCurrentStep('turbineSearch');
             return;
         }
-        const paramsForApi: CalculationParams = {
-            ...inputData,
-            turbine_name: selectedTurbine.name,
-            valve_drawing: selectedStock.name,
-            valve_id: selectedStock.id,
-        };
-        calculationMutation.mutate(paramsForApi);
-    }, [calculationMutation, selectedTurbine, selectedStock, toast]);
-
-    const handleGoBackToTurbineSearch = useCallback(() => {
-        navigate({
-            search: (p: any) => ({
-                ...p,
-                resultId: undefined,
-                stockIdToLoad: undefined,
-                turbineIdToLoad: undefined
-            }), replace: true
-        });
-        setSelectedTurbine(null);
-        setSelectedStock(null);
-        setCalculationData(null);
-        setCurrentStep('turbineSearch');
-    }, [navigate]);
-
-    const handleGoBackToStockSelection = useCallback(() => {
-        navigate({
-            search: (p: any) => ({
-                ...p,
-                resultId: undefined,
-                stockIdToLoad: undefined,
-                turbineIdToLoad: undefined
-            }), replace: true
-        });
-        setSelectedStock(null);
-        setCalculationData(null);
-        setCurrentStep('stockSelection');
-    }, [navigate, selectedTurbine]);
+        calculationMutation.mutate(payload);
+    }, [calculationMutation, selectedTurbine, selectedStocks, toast]);
 
     const renderContent = () => {
-        if (currentStep === 'loadingHistoryResult' || calculationMutation.isPending
-            || (isLoadingResultFromHistory && searchParams.resultId)
-            || (isLoadingTurbineFromHistory && searchParams.turbineIdToLoad)
-            || (isLoadingStockFromHistory && searchParams.stockIdToLoad)) {
-            let loadingText = "Загрузка данных...";
-            if (currentStep === 'loadingHistoryResult') loadingText = "Загрузка из истории...";
-            if (calculationMutation.isPending) loadingText = "Выполняется расчет...";
+        if (currentStep === 'loadingHistoryResult' || calculationMutation.isPending || (isLoadingResultFromHistory && searchParams.resultId)) {
+            const loadingText = calculationMutation.isPending ? "Выполняется расчет..." : "Загрузка из истории...";
             return (
                 <VStack spacing={4} align="center" justify="center" minH="calc(100vh - 200px)">
-                    <Spinner size="xl" color="teal.500"/>
+                    <Spinner size="xl" color="teal.500" />
                     <Text>{loadingText}</Text>
-                </VStack>
-            );
-        }
-
-        if (currentStep === 'loadingPreviousCalculation') {
-            return (
-                <VStack spacing={4} align="center" justify="center" minH="calc(100vh - 200px)">
-                    <Spinner size="xl" color="teal.500"/>
-                    <Text>Поиск предыдущих расчетов...</Text>
                 </VStack>
             );
         }
 
         switch (currentStep) {
             case 'turbineSearch':
-                return <TurbineSearch onSelectTurbine={handleTurbineSelect}/>;
+                return <TurbineSearch onSelectTurbine={handleTurbineSelect} />;
             case 'stockSelection':
                 return <StockSelection
                     turbine={selectedTurbine}
-                    onSelectValve={handleStockSelect}
-                    onGoBack={handleGoBackToTurbineSearch}
+                    onSelectValves={handleValvesSelect}
+                    onGoBack={() => setCurrentStep('turbineSearch')}
                 />;
-            case 'earlyCalculation':
-                if (calculationData) {
-                    return <EarlyCalculationPage
-                        stockId={selectedStock?.name || calculationData.stock_name || 'N/A'}
-                        lastCalculation={calculationData}
-                        onRecalculate={handleRecalculateDecision}
-                        onGoBack={handleGoBackToStockSelection}
-                    />;
-                }
-                console.warn("EarlyCalculation: calculationData is null, going to stockInput");
-                setCurrentStep('stockInput');
-                return null;
             case 'stockInput':
-                if (selectedStock && selectedTurbine) {
-                    return <StockInputPage
-                        stock={selectedStock}
-                        turbine={selectedTurbine}
-                        onSubmit={handleStockInputSubmit}
-                        initialData={calculationData?.input_data as Partial<CalculationParams> | undefined}
-                        onGoBack={handleGoBackToStockSelection}
-                    />;
-                }
-                setCurrentStep('turbineSearch');
-                return null;
+                return <StockInputPage
+                    selectedStocks={selectedStocks}
+                    turbine={selectedTurbine!}
+                    onSubmit={handleStockInputSubmit}
+                    onGoBack={() => setCurrentStep('stockSelection')}
+                />;
             case 'results':
                 if (calculationData) {
                     return <ResultsPage
                         stockId={calculationData.stock_name}
-                        stockInfo={selectedStock}
-                        calculationId={calculationData.id}
-                        inputData={calculationData.input_data as CalculationParams}
-                        outputData={calculationData.output_data as ExpectedOutputData}
+                        inputData={calculationData.input_data}
+                        outputData={calculationData.output_data}
                         onGoBack={() => {
                             setCalculationData(null);
-                            if (selectedStock && selectedTurbine) {
-                                setCurrentStep('stockInput');
-                            } else if (selectedTurbine) {
-                                setCurrentStep('stockSelection');
-                            } else {
-                                setCurrentStep('turbineSearch');
-                            }
+                            if (selectedStocks.length > 0) setCurrentStep('stockInput');
+                            else if (selectedTurbine) setCurrentStep('stockSelection');
+                            else setCurrentStep('turbineSearch');
                         }}
                     />;
                 }

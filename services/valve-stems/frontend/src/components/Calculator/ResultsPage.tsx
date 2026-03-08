@@ -4,54 +4,31 @@ import {
     Box, Button, Heading, Text, VStack, Table, Thead, Tbody, Tr, Th, Td,
     TableContainer, SimpleGrid, Divider, HStack, useToast, Icon, useColorModeValue, Badge,
 } from '@chakra-ui/react';
-import { FiChevronLeft, FiDownload, FiSave, FiFileText } from 'react-icons/fi';
-import { OpenAPI, type CalculationParams, type ValveInfo_Output as ValveInfo } from '../../client';
-
-export interface ExpectedOutputData {
-    Gi?: number[];
-    Pi_in?: number[];
-    Ti?: number[];
-    Hi?: number[];
-    deaerator_props?: number[]; // [g, t, h, p]
-    ejector_props?: Array<{ g: number; t: number; h: number; p: number }>;
-}
+import { FiChevronLeft, FiSave, FiFileText } from 'react-icons/fi';
 
 type Props = {
     stockId: string;
-    stockInfo?: ValveInfo | null;
-    calculationId?: number;
-    inputData?: Partial<CalculationParams>;
-    outputData?: Partial<ExpectedOutputData>;
+    inputData?: any;
+    outputData?: any;
     onGoBack?: () => void;
-    isEmbedded?: boolean; 
-    taskId?: string;
 };
 
 const roundNumber = (num: any, decimals: number = 4): string | number => {
-    const parsedNum = parseFloat(num);
-    if (isNaN(parsedNum)) {
-        return '-';
-    }
-    // Если число очень маленькое, но не ноль, показываем в экспоненциальной форме или больше знаков
-    if (parsedNum !== 0 && Math.abs(parsedNum) < 0.0001) {
-        return parsedNum.toExponential(2);
-    }
-    return Number(parsedNum.toFixed(decimals));
+    const parsed = parseFloat(num);
+    if (isNaN(parsed)) return '-';
+    if (parsed !== 0 && Math.abs(parsed) < 0.0001) return parsed.toExponential(2);
+    return Number(parsed.toFixed(decimals));
 };
 
-const ResultsPage: React.FC<Props> = ({
-    stockId,
-    stockInfo,
-    inputData = {},
-    outputData = {},
-    onGoBack
-}) => {
-    const [isDownloadingDrawio, setIsDownloadingDrawio] = useState(false);
+const ResultsPage: React.FC<Props> = ({ stockId, inputData = {}, outputData = {}, onGoBack }) => {
     const toast = useToast();
-    const buttonHoverBg = useColorModeValue("gray.100", "gray.700");
     const tableHeaderBg = useColorModeValue("gray.50", "gray.700");
+    const buttonHoverBg = useColorModeValue("gray.100", "gray.700");
 
-    // --- INTEGRATION LOGIC START ---
+    const details = outputData?.details || [];
+    const summary = outputData?.summary;
+
+    // --- ИНТЕГРАЦИЯ С BALANCE+ (IDE) ---
     const [isEmbedded, setIsEmbedded] = useState(false);
 
     useEffect(() => {
@@ -77,124 +54,79 @@ const ResultsPage: React.FC<Props> = ({
             duration: 3000
         });
     };
-    // --- INTEGRATION LOGIC END ---
 
-    const currentInputData: Partial<CalculationParams> = inputData || {};
-    const currentOutputData: Partial<ExpectedOutputData> = outputData || {};
-
-    const inputDataEntries = [
-        { label: 'Название турбины', value: currentInputData.turbine_name },
-        { label: 'Чертёж клапана', value: currentInputData.valve_drawing },
-        { label: 'ID клапана', value: currentInputData.valve_id },
-        { label: 'Начальная температура (°C)', value: currentInputData.temperature_start },
-        { label: 'Температура воздуха (°C)', value: currentInputData.t_air },
-        { label: 'Количество клапанов', value: currentInputData.count_valves },
-        {
-            label: 'Входные давления (P1...P_air, кгс/см²)',
-            value: Array.isArray(currentInputData.p_values) ? currentInputData.p_values.map(p => roundNumber(p, 3)).join(' → ') : 'N/A'
-        },
-    ];
-
-    // Основные данные по участкам
-    const gi = Array.isArray(currentOutputData.Gi) ? currentOutputData.Gi : [];
-    const pi_in = Array.isArray(currentOutputData.Pi_in) ? currentOutputData.Pi_in : [];
-    const ti = Array.isArray(currentOutputData.Ti) ? currentOutputData.Ti : [];
-    const hi = Array.isArray(currentOutputData.Hi) ? currentOutputData.Hi : [];
-
-    // Данные по отсосам
-    // Deaerator backend order: [g, t, h, p]
-    const deaeratorProps = Array.isArray(currentOutputData.deaerator_props) ? currentOutputData.deaerator_props : [];
-    const ejectorProps = Array.isArray(currentOutputData.ejector_props) ? currentOutputData.ejector_props : [];
-
-    const handleDownloadDrawio = async () => {
-        if (!stockInfo) {
-            toast({ title: "Ошибка", description: "Нет данных для генерации схемы.", status: "error" });
-            return;
-        }
-        setIsDownloadingDrawio(true);
-        try {
-            const url = `${OpenAPI.BASE}/api/v1/generate_scheme`;
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(stockInfo),
-            });
-            if (!response.ok) throw new Error("Ошибка сервера");
-            
-            const blob = await response.blob();
-            const downloadUrl = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = downloadUrl;
-            link.setAttribute('download', `схема_${stockInfo.name || stockId}.drawio`);
-            document.body.appendChild(link);
-            link.click();
-            link.parentNode?.removeChild(link);
-        } catch (error: any) {
-            toast({ title: "Ошибка", description: error.message, status: "error" });
-        } finally {
-            setIsDownloadingDrawio(false);
-        }
-    };
-
+    // --- ЭКСПОРТ В EXCEL (Адаптировано под мульти-расчет) ---
     const handleDownloadExcel = () => {
         try {
             const wb = XLSX.utils.book_new();
 
-            // Лист 1: Входные
-            const inputSheetData = [{
-                'Турбина': currentInputData.turbine_name,
-                'Клапан': currentInputData.valve_drawing,
-                'P свежего пара': currentInputData.p_values?.[0],
-                'T свежего пара': currentInputData.temperature_start,
-                'P воздуха': currentInputData.p_values?.[(currentInputData.p_values?.length || 1) - 1],
-                'T воздуха': currentInputData.t_air,
-                'Кол-во клапанов': currentInputData.count_valves,
+            // Лист 1: Глобальные параметры
+            const globalsData = [{
+                'Турбина': inputData?.turbine_name,
+                'P свежего пара': inputData?.globals?.P_fresh,
+                'T свежего пара': inputData?.globals?.T_fresh,
+                'P воздуха': inputData?.globals?.P_air,
+                'T воздуха': inputData?.globals?.T_air,
+                'Вакуум': inputData?.globals?.P_lst_leak_off,
             }];
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(inputSheetData), 'Входные данные');
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(globalsData), 'Глобальные параметры');
 
             // Лист 2: По участкам
-            if (gi.length > 0) {
-                const mainOutputData = gi.map((_g, index) => ({
-                    'Участок': index + 1,
-                    'Расход (G), т/ч': roundNumber(gi[index]),
-                    'Давление вх. (P), кгс/см²': roundNumber(pi_in[index]),
-                    'Температура (T), °C': roundNumber(ti[index]),
-                    'Энтальпия (H), кДж/кг': roundNumber(hi[index]),
-                }));
-                XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(mainOutputData), 'По участкам');
+            const sectionsData: any[] = [];
+            details.forEach((group: any) => {
+                group.Gi.forEach((g: number, i: number) => {
+                    sectionsData.push({
+                        'Группа клапанов': `${group.valve_names.join(', ')} (${group.quantity} шт)`,
+                        'Участок': i + 1,
+                        'Расход 1 шт (G), т/ч': roundNumber(g),
+                        'Давление вх. (P), кгс/см²': roundNumber(group.Pi_in[i]),
+                        'Температура (T), °C': roundNumber(group.Ti[i]),
+                        'Энтальпия (H), кДж/кг': roundNumber(group.Hi[i]),
+                    });
+                });
+            });
+            if (sectionsData.length > 0) {
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(sectionsData), 'По участкам');
             }
 
             // Лист 3: Отсосы
-            const suctionData = [];
-            
-            // Деаэратор: [g, t, h, p]
-            if (deaeratorProps.length === 4 && deaeratorProps[0] > 0) {
-                suctionData.push({
-                    'Потребитель': 'Деаэратор (Камера 2)',
-                    'Расход (G), т/ч': roundNumber(deaeratorProps[0]),
-                    'Давление (P), кгс/см²': roundNumber(deaeratorProps[3]),
-                    'Температура (T), °C': roundNumber(deaeratorProps[1]),
-                    'Энтальпия (H), кДж/кг': roundNumber(deaeratorProps[2]),
-                });
-            }
-
-            // Эжекторы: {g, t, h, p}
-            ejectorProps.forEach((ej, idx) => {
-                suctionData.push({
-                    'Потребитель': `Эжектор / Отсос ${idx + 1}`,
-                    'Расход (G), т/ч': roundNumber(ej.g),
-                    'Давление (P), кгс/см²': roundNumber(ej.p),
-                    'Температура (T), °C': roundNumber(ej.t),
-                    'Энтальпия (H), кДж/кг': roundNumber(ej.h),
+            const suctionData: any[] = [];
+            details.forEach((group: any) => {
+                if (group.deaerator_props && group.deaerator_props[0] > 0.000001) {
+                    suctionData.push({
+                        'Группа клапанов': `${group.valve_names.join(', ')} (${group.quantity} шт)`,
+                        'Потребитель': 'Деаэратор (Камера 2)',
+                        'Расход ΣG, т/ч': roundNumber(group.deaerator_props[0]),
+                        'Давление (P), кгс/см²': roundNumber(group.deaerator_props[3]),
+                        'Температура (T), °C': roundNumber(group.deaerator_props[1]),
+                    });
+                }
+                group.ejector_props.forEach((ej: any, idx: number) => {
+                    suctionData.push({
+                        'Группа клапанов': `${group.valve_names.join(', ')} (${group.quantity} шт)`,
+                        'Потребитель': `Эжектор / Отсос ${idx + 1}`,
+                        'Расход ΣG, т/ч': roundNumber(ej.g),
+                        'Давление (P), кгс/см²': roundNumber(ej.p),
+                        'Температура (T), °C': roundNumber(ej.t),
+                    });
                 });
             });
-
             if (suctionData.length > 0) {
                 XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(suctionData), 'Отсосы');
             }
 
-            XLSX.writeFile(wb, `Расчет_${stockId}.xlsx`);
-            toast({ title: "Excel файл создан", status: "success" });
+            // Лист 4: Итоги (Суммы)
+            if (summary) {
+                const summaryData = [
+                    { 'Тип клапанов': 'Стопорные (СК)', 'Суммарный расход ΣG, т/ч': roundNumber(summary.sk.total_g) },
+                    { 'Тип клапанов': 'Регулирующие (РК)', 'Суммарный расход ΣG, т/ч': roundNumber(summary.rk.total_g) },
+                    { 'Тип клапанов': 'Стопорно-регулирующие (СРК)', 'Суммарный расход ΣG, т/ч': roundNumber(summary.srk.total_g) },
+                ];
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summaryData), 'Итоги');
+            }
+
+            XLSX.writeFile(wb, `Расчет_${inputData?.turbine_name || 'WSA'}.xlsx`);
+            toast({ title: "Excel файл успешно создан", status: "success" });
         } catch (e: any) {
             console.error(e);
             toast({ title: "Ошибка экспорта", status: "error" });
@@ -203,128 +135,118 @@ const ResultsPage: React.FC<Props> = ({
 
     return (
         <VStack spacing={8} p={5} align="stretch" w="100%" maxW="container.xl" mx="auto">
-            {/* Заголовок и навигация */}
             <VStack spacing={2} w="full">
                 <Heading as="h2" size="xl" textAlign="center">
-                    Результаты: <Text as="span" color="teal.500">{stockId}</Text>
+                    Результаты: <Text as="span" color="teal.500">{inputData?.turbine_name}</Text>
                 </Heading>
-                <Text color="gray.500" fontSize="sm">ID расчета: {inputData?.valve_id} | Турбина: {inputData?.turbine_name}</Text>
-
+                
                 {isEmbedded ? (
                     <Button onClick={() => window.parent.postMessage({ type: 'WSA_CLOSE' }, '*')} variant="ghost" size="sm" leftIcon={<Icon as={FiChevronLeft} />}>
                         Вернуться в Balance+
                     </Button>
                 ) : onGoBack && (
                     <Button onClick={onGoBack} variant="outline" colorScheme="teal" size="sm" leftIcon={<Icon as={FiChevronLeft} />} mt={2} _hover={{ bg: buttonHoverBg }}>
-                        Вернуться к вводу данных
+                        Изменить параметры расчета
                     </Button>
                 )}
             </VStack>
 
-            {/* Блок входных данных */}
-            <Box borderWidth="1px" borderRadius="lg" p={5} boxShadow="sm" bg={useColorModeValue("white", "gray.800")}>
-                <Heading as="h3" size="md" mb={4} color="teal.600">Входные параметры</Heading>
-                <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
-                    {inputDataEntries.map((entry, i) => (
-                        <Box key={i}>
-                            <Text fontSize="xs" color="gray.500" textTransform="uppercase" fontWeight="bold">
-                                {entry.label}
-                            </Text>
-                            <Text fontSize="md" fontWeight="medium">{entry.value}</Text>
-                        </Box>
-                    ))}
-                </SimpleGrid>
-            </Box>
+            {/* ДЕТАЛИЗАЦИЯ ПО КАЖДОЙ ГРУППЕ КЛАПАНОВ */}
+            {details.map((group: any, idx: number) => (
+                <Box key={idx} borderWidth="1px" borderRadius="lg" p={5} bg={useColorModeValue("white", "gray.800")} shadow="sm">
+                    <HStack mb={4} justify="space-between" wrap="wrap">
+                        <Heading as="h3" size="md" color="teal.600">
+                            {group.valve_names.join(', ')} ({group.quantity} шт.)
+                        </Heading>
+                        <Badge colorScheme="purple" fontSize="sm">Тип: {group.type}</Badge>
+                    </HStack>
 
-            <Divider />
-
-            {/* Таблица 1: По участкам */}
-            <Box>
-                <Heading as="h3" size="lg" mb={4} textAlign="center">Распределение по участкам уплотнения</Heading>
-                {gi.length > 0 ? (
-                    <TableContainer borderWidth="1px" borderRadius="lg" bg={useColorModeValue("white", "gray.800")}>
-                        <Table variant="simple" size="md">
+                    <TableContainer mb={6}>
+                        <Table variant="simple" size="sm">
                             <Thead bg={tableHeaderBg}>
                                 <Tr>
-                                    <Th>№ Участка</Th>
-                                    <Th isNumeric>Расход G (т/ч)</Th>
-                                    <Th isNumeric>Давление P<sub>вх</sub> (кгс/см²)</Th>
-                                    <Th isNumeric>Температура T (°C)</Th>
-                                    <Th isNumeric>Энтальпия H (кДж/кг)</Th>
-                                </Tr>
-                            </Thead>
-                            <Tbody>
-                                {gi.map((_, index) => (
-                                    <Tr key={index} _hover={{ bg: buttonHoverBg }}>
-                                        <Td fontWeight="bold">Участок {index + 1}</Td>
-                                        <Td isNumeric fontWeight="semibold">{roundNumber(gi[index])}</Td>
-                                        <Td isNumeric>{roundNumber(pi_in[index])}</Td>
-                                        <Td isNumeric>{roundNumber(ti[index])}</Td>
-                                        <Td isNumeric color="gray.500">{roundNumber(hi[index])}</Td>
-                                    </Tr>
-                                ))}
-                            </Tbody>
-                        </Table>
-                    </TableContainer>
-                ) : (
-                    <Text textAlign="center">Нет данных по участкам.</Text>
-                )}
-            </Box>
-
-            {/* Таблица 2: Отсосы (Сводная) */}
-            {(deaeratorProps.length > 0 || ejectorProps.length > 0) && (
-                <Box>
-                    <Heading as="h3" size="lg" mb={4} textAlign="center">Параметры отсосов и потребителей</Heading>
-                    <TableContainer borderWidth="1px" borderRadius="lg" bg={useColorModeValue("white", "gray.800")}>
-                        <Table variant="simple" size="md">
-                            <Thead bg={tableHeaderBg}>
-                                <Tr>
-                                    <Th>Наименование потока</Th>
-                                    <Th isNumeric>Расход G (т/ч)</Th>
+                                    <Th>Участок</Th>
+                                    <Th isNumeric>Расход 1 шт. G (т/ч)</Th>
                                     <Th isNumeric>Давление P (кгс/см²)</Th>
                                     <Th isNumeric>Температура T (°C)</Th>
                                     <Th isNumeric>Энтальпия H (кДж/кг)</Th>
                                 </Tr>
                             </Thead>
                             <Tbody>
-                                {/* Строка Деаэратора (если есть расход) */}
-                                {deaeratorProps.length === 4 && deaeratorProps[0] > 0.000001 && (
+                                {group.Gi.map((_: any, i: number) => (
+                                    <Tr key={i} _hover={{ bg: buttonHoverBg }}>
+                                        <Td fontWeight="bold">Участок {i + 1}</Td>
+                                        <Td isNumeric>{roundNumber(group.Gi[i])}</Td>
+                                        <Td isNumeric>{roundNumber(group.Pi_in[i])}</Td>
+                                        <Td isNumeric>{roundNumber(group.Ti[i])}</Td>
+                                        <Td isNumeric color="gray.500">{roundNumber(group.Hi[i])}</Td>
+                                    </Tr>
+                                ))}
+                            </Tbody>
+                        </Table>
+                    </TableContainer>
+
+                    {/* Отсосы этой группы */}
+                    <Text fontWeight="bold" mb={2} fontSize="sm" color="gray.500">
+                        Потребители (суммарно для {group.quantity} шт.):
+                    </Text>
+                    <TableContainer>
+                        <Table variant="simple" size="sm">
+                            <Thead bg={tableHeaderBg}>
+                                <Tr>
+                                    <Th>Потребитель</Th>
+                                    <Th isNumeric>Расход ΣG (т/ч)</Th>
+                                    <Th isNumeric>Давление P (кгс/см²)</Th>
+                                    <Th isNumeric>Температура T (°C)</Th>
+                                </Tr>
+                            </Thead>
+                            <Tbody>
+                                {group.deaerator_props && group.deaerator_props[0] > 0.000001 && (
                                     <Tr _hover={{ bg: buttonHoverBg }}>
-                                        <Td>
-                                            <HStack>
-                                                <Badge colorScheme="purple">Деаэратор</Badge>
-                                                <Text fontSize="sm">(из камеры 2)</Text>
-                                            </HStack>
-                                        </Td>
-                                        <Td isNumeric fontWeight="bold" fontSize="lg">{roundNumber(deaeratorProps[0])}</Td>
-                                        <Td isNumeric>{roundNumber(deaeratorProps[3])}</Td>
-                                        <Td isNumeric>{roundNumber(deaeratorProps[1])}</Td>
-                                        <Td isNumeric color="gray.500">{roundNumber(deaeratorProps[2])}</Td>
+                                        <Td><Badge colorScheme="blue">Деаэратор</Badge></Td>
+                                        <Td isNumeric fontWeight="bold">{roundNumber(group.deaerator_props[0])}</Td>
+                                        <Td isNumeric>{roundNumber(group.deaerator_props[3])}</Td>
+                                        <Td isNumeric>{roundNumber(group.deaerator_props[1])}</Td>
                                     </Tr>
                                 )}
-
-                                {/* Строки Эжекторов */}
-                                {ejectorProps.map((ej, idx) => (
-                                    <Tr key={`ej-${idx}`} _hover={{ bg: buttonHoverBg }}>
-                                        <Td>
-                                            <HStack>
-                                                <Badge colorScheme="blue">Потребитель {idx + 1}</Badge>
-                                                <Text fontSize="sm">(Эжектор / Вакуум)</Text>
-                                            </HStack>
-                                        </Td>
-                                        <Td isNumeric fontWeight="bold" fontSize="lg">{roundNumber(ej.g)}</Td>
+                                {group.ejector_props.map((ej: any, e_idx: number) => (
+                                    <Tr key={`ej-${e_idx}`} _hover={{ bg: buttonHoverBg }}>
+                                        <Td><Badge colorScheme="gray">Эжектор {e_idx + 1}</Badge></Td>
+                                        <Td isNumeric fontWeight="bold">{roundNumber(ej.g)}</Td>
                                         <Td isNumeric>{roundNumber(ej.p)}</Td>
                                         <Td isNumeric>{roundNumber(ej.t)}</Td>
-                                        <Td isNumeric color="gray.500">{roundNumber(ej.h)}</Td>
                                     </Tr>
                                 ))}
                             </Tbody>
                         </Table>
                     </TableContainer>
                 </Box>
+            ))}
+
+            <Divider />
+
+            {/* СВОДНЫЕ ТАБЛИЦЫ ПО ТУРБИНЕ */}
+            {summary && (
+                <Box borderWidth="1px" borderRadius="lg" p={5} bg={useColorModeValue("teal.50", "gray.700")} shadow="sm">
+                    <Heading as="h3" size="md" mb={6} textAlign="center">Итоговые сводные расходы по проекту</Heading>
+                    <SimpleGrid columns={{ base: 1, md: 3 }} spacing={6} textAlign="center">
+                        <Box p={4} bg={useColorModeValue("white", "gray.800")} borderRadius="md" shadow="sm">
+                            <Text fontSize="sm" fontWeight="bold" color="gray.500">Сумма стопорных (СК)</Text>
+                            <Text fontSize="2xl" fontWeight="black" color="teal.600">{roundNumber(summary.sk.total_g)} т/ч</Text>
+                        </Box>
+                        <Box p={4} bg={useColorModeValue("white", "gray.800")} borderRadius="md" shadow="sm">
+                            <Text fontSize="sm" fontWeight="bold" color="gray.500">Сумма регулирующих (РК)</Text>
+                            <Text fontSize="2xl" fontWeight="black" color="teal.600">{roundNumber(summary.rk.total_g)} т/ч</Text>
+                        </Box>
+                        <Box p={4} bg={useColorModeValue("white", "gray.800")} borderRadius="md" shadow="sm">
+                            <Text fontSize="sm" fontWeight="bold" color="gray.500">Сумма стоп-рег (СРК)</Text>
+                            <Text fontSize="2xl" fontWeight="black" color="teal.600">{roundNumber(summary.srk.total_g)} т/ч</Text>
+                        </Box>
+                    </SimpleGrid>
+                </Box>
             )}
 
-            {/* Кнопки действий */}
+            {/* КНОПКИ ДЕЙСТВИЙ */}
             <HStack spacing={6} justifyContent="center" pt={4} pb={10}>
                 {isEmbedded && (
                     <Button onClick={handleSaveToIde} colorScheme="purple" size="lg" leftIcon={<Icon as={FiSave} />}>
@@ -333,9 +255,6 @@ const ResultsPage: React.FC<Props> = ({
                 )}
                 <Button onClick={handleDownloadExcel} colorScheme="green" size="lg" leftIcon={<Icon as={FiFileText} />}>
                     Скачать Excel
-                </Button>
-                <Button onClick={handleDownloadDrawio} colorScheme="blue" size="lg" isLoading={isDownloadingDrawio} leftIcon={<Icon as={FiDownload} />}>
-                    Скачать схему
                 </Button>
             </HStack>
         </VStack>
