@@ -103,30 +103,20 @@ class CalcItem(pytest.Item):
         self.target_func = target_func
 
     def runtest(self):
+        # Достаем входные данные и ожидаемый результат
         input_data = self.spec.get("input", {})
         expected = self.spec.get("expected")
         
+        # Вызываем реальную стратегию расчета
         result = self.target_func(**input_data)
         
-        # РЕКУРСИВНАЯ ФУНКЦИЯ ДЛЯ ГЛУБОКОГО СРАВНЕНИЯ С УЧЕТОМ ПОГРЕШНОСТИ
-        def assert_dicts_approx(exp, act, path=""):
-            if isinstance(exp, dict) and isinstance(act, dict):
-                for k, v in exp.items():
-                    assert k in act, f"Ключ '{path}{k}' отсутствует в результате"
-                    assert_dicts_approx(v, act[k], path + f"{k}.")
-            elif isinstance(exp, list) and isinstance(act, list):
-                assert len(exp) == len(act), f"Массив '{path}': ожидалась длина {len(exp)}, получено {len(act)}"
-                for i, (e_val, a_val) in enumerate(zip(exp, act)):
-                    assert_dicts_approx(e_val, a_val, path + f"[{i}].")
-            elif isinstance(exp, (float, int)) and isinstance(act, (float, int)):
-                # Сравниваем числа с погрешностью 1e-5 (0.00001)
-                assert act == pytest.approx(exp, rel=1e-5), \
-                    f"Значение '{path}': ожидалось {exp}, получено {act}"
-            else:
-                assert act == exp, f"Значение '{path}': ожидалось {exp}, получено {act}"
-
-        # Запускаем проверку
-        assert_dicts_approx(expected, result)
+        # Умная сверка (поддерживает как словари, так и простые числа)
+        if isinstance(expected, dict) and isinstance(result, dict):
+            for key, val in expected.items():
+                actual_val = result.get(key)
+                assert actual_val == val, f"Ключ '{key}': ожидалось {val}, получено {actual_val}"
+        else:
+            assert result == expected, f"Ожидалось {expected}, получено {result}"
 
     def reportinfo(self):
         return self.path, 0, f"Math Test: {self.name}"
