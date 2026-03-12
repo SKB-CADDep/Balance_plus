@@ -4,6 +4,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
+from app.adapters.calculation_adapter import CalculationAdapter
 from app.crud import (
     create_calculation_result,
     get_calculation_result_by_id,
@@ -13,7 +14,6 @@ from app.dependencies import get_db
 from app.models import CalculationResultDB, Valve
 from app.schemas import CalculationParams, ValveInfo
 from app.schemas import CalculationResultDB as CalculationResultDBSchema
-from app.services.calculator import CalculationError, ValveCalculator
 
 
 router = APIRouter()
@@ -22,16 +22,26 @@ logger = logging.getLogger(__name__)
 @router.post("/calculate", response_model=CalculationResultDBSchema, summary="Выполнить расчет")
 async def calculate(params: CalculationParams, db: Session = Depends(get_db)):
     try:
+        # 1. Достаем шток из БД
         valve = db.query(Valve).filter(Valve.name == params.valve_drawing).first()
         if not valve:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                                detail=f"Клапан с именем '{params.valve_drawing}' не найден")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Клапан с именем '{params.valve_drawing}' не найден"
+            )
 
         valve_info = ValveInfo.model_validate(valve)
 
-        calculator = ValveCalculator(params, valve_info)
-        calculation_result = calculator.perform_calculations()
+        # 2. Вызываем адаптер (Вся конвертация единиц и физика теперь внутри)
+        # Обрати внимание: мы ловим ValueError, который выбрасывает адаптер при кривых данных
+        try:
+            calculation_result = CalculationAdapter.run_calculation(params, valve_info)
+        except ValueError as ve:
+            # Ошибки физики или конвертации (например, отрицательное давление)
+            logger.error(f"Ошибка при выполнении расчётов: {ve}")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
 
+        # 3. Сохраняем в историю (твоя существующая функция)
         new_result = create_calculation_result(
             db=db,
             parameters=params,
@@ -39,6 +49,7 @@ async def calculate(params: CalculationParams, db: Session = Depends(get_db)):
             valve_id=valve.id
         )
 
+        # 4. Формируем ответ
         return CalculationResultDBSchema(
             id=new_result.id,
             user_name=new_result.user_name,
@@ -49,13 +60,17 @@ async def calculate(params: CalculationParams, db: Session = Depends(get_db)):
             input_data=json.loads(new_result.input_data) if isinstance(new_result.input_data, str) else new_result.input_data,
             output_data=json.loads(new_result.output_data) if isinstance(new_result.output_data, str) else new_result.output_data
         )
-    except CalculationError as ce:
-        logger.error(f"Ошибка при выполнении расчётов: {ce.message}")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=ce.message)
+
+    # Ловим HTTPException (404 или 400), которые мы сами сгенерировали выше, и прокидываем дальше
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Ошибка при выполнении расчётов: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                            detail=f"Не удалось выполнить расчёты: {e}")
+        logger.error(f"Критическая ошибка сервера: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Не удалось выполнить расчёты: {e}"
+        )
+
 
 @router.get("/valves/{valve_name:path}/results/", response_model=list[CalculationResultDBSchema], summary="Получить результаты расчётов")
 async def get_calculation_results(valve_name: str, db: Session = Depends(get_db)):
@@ -96,12 +111,14 @@ async def get_calculation_results(valve_name: str, db: Session = Depends(get_db)
             detail=f"Не удалось получить результаты расчётов: {e}",
         )
 
+
 @router.get("/{result_id}", response_model=CalculationResultDBSchema, summary="Получить результат расчета по ID")
 async def read_calculation_result(result_id: int, db: Session = Depends(get_db)):
     db_result = get_calculation_result_by_id(db, result_id=result_id)
     if db_result is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Результат расчёта не найден")
     return db_result
+
 
 @router.delete("/{result_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Удалить результат расчёта")
 async def delete_calculation_result(result_id: int, db: Session = Depends(get_db)):
