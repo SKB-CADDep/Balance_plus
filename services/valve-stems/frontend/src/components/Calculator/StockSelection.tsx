@@ -1,65 +1,55 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
-    Box,
-    Button,
-    Flex,
-    Heading,
-    Icon,
-    List,
-    ListItem,
-    Spinner,
-    Tag,
-    Text,
-    useColorModeValue,
-    VStack,
+    Box, Button, Flex, Heading, Icon, List, ListItem, Spinner, Tag, Text,
+    useColorModeValue, VStack, NumberInput, NumberInputField, NumberInputStepper,
+    NumberIncrementStepper, NumberDecrementStepper, HStack
 } from '@chakra-ui/react';
-import { FiChevronLeft } from "react-icons/fi";
+import { FiChevronLeft, FiArrowRight } from "react-icons/fi";
 
-import {
-    type TurbineInfo,
-    TurbinesService,
-    type TurbineValves as ClientTurbineValvesResponse,
-    type ValveInfo_Output as ClientValveInfo
-} from '../../client';
+import { type TurbineInfo, TurbinesService, type TurbineValves as ClientTurbineValvesResponse, type ValveInfo_Output as ClientValveInfo } from '../../client';
 
-type Valve = ClientValveInfo;
+export type SelectedStock = { valve: ClientValveInfo; quantity: number };
 
 type Props = {
-    // Временно расширяем тип для новых полей, пока клиент OpenAPI не обновлен
     turbine: (TurbineInfo & { station_name?: string; station_number?: string; factory_number?: string }) | null;
-    onSelectValve: (valve: Valve) => void;
+    onSelectValves: (selections: SelectedStock[]) => void;
     onGoBack?: () => void;
 };
 
 const fetchValvesForTurbineAPI = async (turbineId: number) => {
-    if (!turbineId) {
-        return { count: 0, valves: [] };
-    }
-    // ВНИМАНИЕ: Если вы перегенерируете OpenAPI клиент, ключ здесь изменится с turbineName на turbineId
-    // Пока оставляем как в старом клиенте, но передаем строковое значение ID
+    if (!turbineId) return { count: 0, valves: [] };
     return TurbinesService.turbinesGetValvesByTurbineEndpoint({ turbineName: turbineId.toString() as any });
 };
 
-const StockSelection: React.FC<Props> = ({ turbine, onSelectValve, onGoBack }) => {
-    // Используем ID вместо имени для уникальности
+const StockSelection: React.FC<Props> = ({ turbine, onSelectValves, onGoBack }) => {
     const turbineId = turbine?.id;
 
-    const {
-        data: turbineValvesResponse,
-        isLoading,
-        isError,
-        error,
-    } = useQuery<ClientTurbineValvesResponse, Error>({
+    const { data: turbineValvesResponse, isLoading, isError, error } = useQuery<ClientTurbineValvesResponse, Error>({
         queryKey: ['valvesForTurbine', turbineId],
         queryFn: () => fetchValvesForTurbineAPI(turbineId!),
         enabled: !!turbineId,
     });
 
-    const listItemHoverBg = useColorModeValue('teal.50', 'gray.700');
-    const listItemHoverBorderColor = useColorModeValue('teal.300', 'teal.500');
+    const [counts, setCounts] = useState<Record<number, number>>({});
 
     const valves = turbineValvesResponse?.valves || [];
+    const totalSelected = Object.values(counts).reduce((a, b) => a + b, 0);
+
+    const handleCountChange = (id: number, valString: string) => {
+        const val = parseInt(valString, 10);
+        setCounts(prev => ({ ...prev, [id]: isNaN(val) ? 0 : val }));
+    };
+
+    const handleNext = () => {
+        const selections = valves
+            .filter(v => (counts[v.id] || 0) > 0)
+            .map(v => ({ valve: v, quantity: counts[v.id] }));
+        onSelectValves(selections);
+    };
+
+    const listItemHoverBg = useColorModeValue('teal.50', 'gray.700');
+    const listItemHoverBorderColor = useColorModeValue('teal.300', 'teal.500');
 
     if (!turbine) {
         return (
@@ -84,20 +74,14 @@ const StockSelection: React.FC<Props> = ({ turbine, onSelectValve, onGoBack }) =
 
             {onGoBack && (
                 <Box width="100%" textAlign="center" mb={2}>
-                    <Button
-                        onClick={onGoBack}
-                        variant="outline"
-                        colorScheme="teal"
-                        size="sm"
-                        leftIcon={<Icon as={FiChevronLeft} />}
-                    >
+                    <Button onClick={onGoBack} variant="outline" colorScheme="teal" size="sm" leftIcon={<Icon as={FiChevronLeft} />}>
                         Изменить проект
                     </Button>
                 </Box>
             )}
 
             <Heading as="h3" size="md" textAlign="center" mt={4}>
-                Выберите клапан для расчёта
+                Укажите количество для необходимых клапанов
             </Heading>
 
             {isLoading ? (
@@ -114,21 +98,37 @@ const StockSelection: React.FC<Props> = ({ turbine, onSelectValve, onGoBack }) =
                     {valves.map((valve) => (
                         <ListItem
                             key={valve.id}
-                            onClick={() => onSelectValve(valve)}
                             p={4}
                             borderWidth="1px"
                             borderRadius="lg"
-                            _hover={{
-                                bg: listItemHoverBg,
-                                cursor: 'pointer',
-                                shadow: 'md',
-                                borderColor: listItemHoverBorderColor,
-                            }}
+                            borderColor={counts[valve.id] > 0 ? listItemHoverBorderColor : undefined}
+                            bg={counts[valve.id] > 0 ? listItemHoverBg : undefined}
                             transition="all 0.2s"
                         >
-                            <Flex justify="space-between" align="center">
-                                <Text fontSize="lg" fontWeight="medium">{valve.name}</Text>
-                                {valve.type && <Tag size="sm" colorScheme="cyan">{valve.type}</Tag>}
+                            <Flex justify="space-between" align="center" wrap="wrap" gap={4}>
+                                <Box>
+                                    <Text fontSize="lg" fontWeight="medium">{valve.name}</Text>
+                                    <HStack mt={1}>
+                                        {valve.type && <Tag size="sm" colorScheme="cyan">{valve.type}</Tag>}
+                                        <Text fontSize="xs" color="gray.500">Участков: {valve.count_parts || 3}</Text>
+                                    </HStack>
+                                </Box>
+                                <HStack>
+                                    <Text fontWeight="medium" fontSize="sm">Количество:</Text>
+                                    <NumberInput 
+                                        min={0} max={20} 
+                                        value={counts[valve.id] || 0} 
+                                        onChange={(valueAsString) => handleCountChange(valve.id, valueAsString)}
+                                        w="100px"
+                                        bg={useColorModeValue('white', 'gray.800')}
+                                    >
+                                        <NumberInputField />
+                                        <NumberInputStepper>
+                                            <NumberIncrementStepper />
+                                            <NumberDecrementStepper />
+                                        </NumberInputStepper>
+                                    </NumberInput>
+                                </HStack>
                             </Flex>
                         </ListItem>
                     ))}
@@ -138,6 +138,17 @@ const StockSelection: React.FC<Props> = ({ turbine, onSelectValve, onGoBack }) =
                     Для данного проекта клапаны не найдены.
                 </Text>
             )}
+
+            <Button 
+                colorScheme="teal" 
+                size="lg" 
+                mt={6} 
+                isDisabled={totalSelected === 0}
+                onClick={handleNext}
+                rightIcon={<Icon as={FiArrowRight} />}
+            >
+                Далее (Выбрано: {totalSelected})
+            </Button>
         </VStack>
     );
 };
