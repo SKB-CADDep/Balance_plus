@@ -1,11 +1,10 @@
 import { useState, useCallback, useEffect } from 'react';
 import { createFileRoute, useSearch, useNavigate } from '@tanstack/react-router';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { Box, Spinner, Text, VStack, useToast } from '@chakra-ui/react';
 
 import TurbineSearch from '../components/Calculator/TurbineSearch';
-import StockSelection from '../components/Calculator/StockSelection';
-import EarlyCalculationPage from '../components/Calculator/EarlyCalculationPage';
+import StockSelection, { type SelectedStock } from '../components/Calculator/StockSelection';
 import StockInputPage from '../components/Calculator/StockInputPage';
 import ResultsPage from '../components/Calculator/ResultsPage';
 import { type HistoryEntry, LOCAL_STORAGE_HISTORY_KEY } from '../components/Common/Sidebar';
@@ -13,10 +12,8 @@ import { type HistoryEntry, LOCAL_STORAGE_HISTORY_KEY } from '../components/Comm
 import {
     CalculationsService,
     TurbinesService,
-    ValvesService,
     ApiError,
     type TurbineInfo,
-    type ValveInfo_Output as ValveInfo,
     type CalculationResultDB as ClientCalculationResult,
     type MultiCalculationParams,
     type MultiCalculationResult,
@@ -25,8 +22,6 @@ import {
 type CalculatorStep =
     | 'turbineSearch'
     | 'stockSelection'
-    | 'loadingPreviousCalculation'
-    | 'earlyCalculation'
     | 'stockInput'
     | 'loadingHistoryResult'
     | 'results';
@@ -35,7 +30,6 @@ export const Route = createFileRoute('/calculator')({
     component: CalculatorPage,
     validateSearch: (search: Record<string, unknown>) => ({
         resultId: search.resultId ? String(search.resultId) : undefined,
-        stockIdToLoad: search.stockIdToLoad ? String(search.stockIdToLoad) : undefined,
         turbineIdToLoad: search.turbineIdToLoad ? String(search.turbineIdToLoad) : undefined,
     }),
 });
@@ -51,21 +45,22 @@ export function getApiErrorDetail(error: any): string | undefined {
 
 function CalculatorPage() {
     const navigate = useNavigate();
-    const queryClient = useQueryClient();
     const toast = useToast();
-    const searchParams = useSearch({from: Route.fullPath});
+    const searchParams = useSearch({ from: Route.fullPath });
 
     const [currentStep, setCurrentStep] = useState<CalculatorStep>('turbineSearch');
     const [selectedTurbine, setSelectedTurbine] = useState<TurbineInfo | null>(null);
-    const [selectedStock, setSelectedStock] = useState<ValveInfo | null>(null);
+    const [selectedStocks, setSelectedStocks] = useState<SelectedStock[]>([]);
     const [calculationData, setCalculationData] = useState<ClientCalculationResult | null>(null);
 
-    const isLoadingFromHistory = !!searchParams.resultId;
-
+    // ==========================================
+    // ЛОГИКА ЗАГРУЗКИ ИЗ ИСТОРИИ (SIDEBAR)
+    // ==========================================
     const {
         data: loadedResultDataFromHistory,
         isLoading: isLoadingResultFromHistory,
         isError: isErrorResultFromHistory,
+        error: errorResultFromHistory,
     } = useQuery({
         queryKey: ['calculationResultById', searchParams.resultId],
         queryFn: async () => {
@@ -76,7 +71,7 @@ function CalculatorPage() {
                 ...result,
                 input_data: typeof result.input_data === 'string' ? JSON.parse(result.input_data) : result.input_data,
                 output_data: typeof result.output_data === 'string' ? JSON.parse(result.output_data) : result.output_data,
-            };
+            } as ClientCalculationResult;
         },
         enabled: !!searchParams.resultId,
         retry: 1,
@@ -96,99 +91,57 @@ function CalculatorPage() {
         retry: 1,
     });
 
-    const {
-        data: loadedStockFromHistory,
-        isLoading: isLoadingStockFromHistory,
-    } = useQuery({
-        queryKey: ['stockByIdForHistory', searchParams.stockIdToLoad],
-        queryFn: async () => {
-            if (!searchParams.stockIdToLoad) throw new Error("ID штока не предоставлен");
-            const id = parseInt(searchParams.stockIdToLoad, 10);
-            return ValvesService.valvesReadValveById({ valveId: id });
-        },
-        enabled: !!searchParams.stockIdToLoad && !!searchParams.resultId,
-        retry: 1,
-    });
-
-    const {
-        data: latestPreviousResultData,
-        isLoading: isLoadingLatestPrevious,
-        isError: isErrorLatestPrevious,
-    } = useQuery({
-        queryKey: ['valveResults', selectedStock?.name],
-        queryFn: async () => {
-            if (!selectedStock?.name) return [];
-            const encodedStockName = encodeURIComponent(selectedStock.name);
-            const results = await CalculationsService.calculationsGetCalculationResults({ valveName: encodedStockName });
-            return results.map((r: any) => ({
-                ...r,
-                input_data: typeof r.input_data === 'string' ? JSON.parse(r.input_data) : r.input_data,
-                output_data: typeof r.output_data === 'string' ? JSON.parse(r.output_data) : r.output_data,
-            }));
-        },
-        enabled: !!selectedStock?.name && !isLoadingFromHistory,
-        select: (data) => (data && data.length > 0 ? data[0] : null),
-        retry: (failureCount, error) => (error as ApiError)?.status !== 404 && failureCount < 1,
-    });
-
     useEffect(() => {
         if (!searchParams.resultId) {
             if (currentStep === 'loadingHistoryResult') setCurrentStep('turbineSearch');
             return;
         }
 
-        if (isLoadingResultFromHistory || (searchParams.turbineIdToLoad && isLoadingTurbineFromHistory) || (searchParams.stockIdToLoad && isLoadingStockFromHistory)) {
+        if (isLoadingResultFromHistory || (searchParams.turbineIdToLoad && isLoadingTurbineFromHistory)) {
             if (currentStep !== 'loadingHistoryResult') setCurrentStep('loadingHistoryResult');
             return;
         }
 
         if (isErrorResultFromHistory || !loadedResultDataFromHistory) {
-            toast({ title: "Ошибка загрузки из истории", status: "error" });
+            toast({ 
+                title: "Ошибка загрузки из истории", 
+                description: getApiErrorDetail(errorResultFromHistory) || "Не удалось загрузить расчет",
+                status: "error" 
+            });
             setCurrentStep('turbineSearch');
         } else {
             setCalculationData(loadedResultDataFromHistory);
-            setSelectedTurbine((loadedTurbineFromHistory as any) || null);
-            setSelectedStock((loadedStockFromHistory as any) || null);
+            setSelectedTurbine(loadedTurbineFromHistory || null);
             setCurrentStep('results');
+            toast({ title: `Расчет "${loadedResultDataFromHistory.stock_name}" загружен`, status: "success" });
         }
 
-        navigate({ search: (prev: any) => ({ ...prev, resultId: undefined, stockIdToLoad: undefined, turbineIdToLoad: undefined }), replace: true });
-    }, [searchParams.resultId, loadedResultDataFromHistory, isLoadingResultFromHistory, isErrorResultFromHistory, navigate, toast]);
+        // Очищаем URL параметры после обработки
+        navigate({
+            search: (prev: any) => ({ ...prev, resultId: undefined, turbineIdToLoad: undefined }),
+            replace: true
+        });
+    }, [
+        searchParams.resultId, searchParams.turbineIdToLoad,
+        loadedResultDataFromHistory, isLoadingResultFromHistory, isErrorResultFromHistory,
+        loadedTurbineFromHistory, isLoadingTurbineFromHistory,
+        navigate, toast, currentStep, errorResultFromHistory
+    ]);
 
-    useEffect(() => {
-        if (!selectedStock || searchParams.resultId || calculationData || currentStep === 'loadingHistoryResult') return;
-
-        if (isLoadingLatestPrevious) {
-            if (currentStep !== 'loadingPreviousCalculation') setCurrentStep('loadingPreviousCalculation');
-            return;
-        }
-
-        if (currentStep === 'loadingPreviousCalculation' && selectedStock) {
-            if (isErrorLatestPrevious || !latestPreviousResultData) {
-                setCalculationData(null);
-                setCurrentStep('stockInput');
-            } else {
-                setCalculationData(latestPreviousResultData);
-                setCurrentStep('earlyCalculation');
-            }
-        }
-    }, [latestPreviousResultData, isLoadingLatestPrevious, isErrorLatestPrevious, selectedStock, searchParams.resultId, calculationData, currentStep]);
-
-    const handleStockSelect = useCallback((stock: ValveInfo) => {
-        navigate({ search: (p: any) => ({ ...p, resultId: undefined, stockIdToLoad: undefined, turbineIdToLoad: undefined }), replace: true });
-        setSelectedStock(stock);
-        setCalculationData(null);
-        queryClient.invalidateQueries({queryKey: ['valveResults', stock.id]});
-        setCurrentStep('loadingPreviousCalculation');
-    }, [navigate, queryClient]);
-
+    // ==========================================
+    // ЛОГИКА НОВОГО МУЛЬТИ-РАСЧЕТА
+    // ==========================================
     const calculationMutation = useMutation<MultiCalculationResult, ApiError, MultiCalculationParams>({
-        mutationFn: (params: MultiCalculationParams) => CalculationsService.calculationsCalculate({requestBody: params}),
+        mutationFn: (params: MultiCalculationParams) => CalculationsService.calculationsCalculate({ requestBody: params }),
         onSuccess: (data, variables) => {
+            // Формируем красивое имя для отображения (как в БД)
+            const stockName = variables.groups.map(g => `${g.type}(${g.quantity}шт)`).join(" + ");
+            
+            // Оборачиваем ответ бэкенда в формат БД для компонента ResultsPage
             const mockDbResult: ClientCalculationResult = {
-                id: Date.now(), 
-                user_name: "Current User",
-                stock_name: variables.groups.map((g: any) => `${g.type}(${g.quantity}шт)`).join(" + "),
+                id: Date.now(), // Fallback ID для UI
+                user_name: "Engineer",
+                stock_name: stockName,
                 turbine_name: selectedTurbine?.name || "Unknown",
                 calc_timestamp: new Date().toISOString(),
                 input_data: variables as any,
@@ -197,80 +150,110 @@ function CalculatorPage() {
 
             setCalculationData(mockDbResult);
             setCurrentStep('results');
-            toast({title: "Расчет выполнен успешно!", status: "success"});
+            toast({ title: "Расчет выполнен успешно!", status: "success" });
 
-            if (selectedStock?.id !== undefined && selectedTurbine?.id !== undefined) {
+            // Сохранение в историю (Sidebar)
+            if (selectedTurbine?.id !== undefined) {
                 const newHistoryEntry: HistoryEntry = {
                     id: String(mockDbResult.id),
-                    stockName: mockDbResult.stock_name,
-                    stockId: selectedStock.id ?? 0,
+                    stockName: stockName,
+                    stockId: selectedStocks[0]?.valve?.id || 0, // Сохраняем ID первого клапана группы
                     turbineName: selectedTurbine.name,
                     turbineId: selectedTurbine.id ?? 0,
                     timestamp: Date.now(),
                 };
+                
                 const storedHistory = localStorage.getItem(LOCAL_STORAGE_HISTORY_KEY);
                 let currentHistory: HistoryEntry[] = [];
                 if (storedHistory) {
-                    try { currentHistory = JSON.parse(storedHistory); } catch (e) {}
+                    try { currentHistory = JSON.parse(storedHistory); } catch (e) { console.error(e); }
                 }
                 const updatedHistory = [newHistoryEntry, ...currentHistory].slice(0, 20);
                 localStorage.setItem(LOCAL_STORAGE_HISTORY_KEY, JSON.stringify(updatedHistory));
-                window.dispatchEvent(new Event('wsaHistoryUpdated'));
+                window.dispatchEvent(new Event('wsaHistoryUpdated')); // Триггер для Sidebar
             }
         },
         onError: (error: ApiError) => {
             const detail = getApiErrorDetail(error);
-            toast({ title: "Ошибка при выполнении расчета", description: detail || error.message, status: "error" });
+            toast({ 
+                title: "Ошибка при выполнении расчета", 
+                description: detail || error.message || "Неизвестная ошибка", 
+                status: "error" 
+            });
         },
     });
 
+    // ==========================================
+    // ОБРАБОТЧИКИ НАВИГАЦИИ МЕЖДУ ШАГАМИ
+    // ==========================================
     const handleTurbineSelect = useCallback((turbine: TurbineInfo) => {
-        navigate({ search: (p: any) => ({ ...p, resultId: undefined, stockIdToLoad: undefined, turbineIdToLoad: undefined }), replace: true });
         setSelectedTurbine(turbine);
-        setSelectedStock(null);
-        setCalculationData(null);
-        setCurrentStep('stockSelection');
-    }, [navigate]);
-
-    const handleRecalculateDecision = useCallback((recalculate: boolean) => {
-        if (!recalculate && calculationData) setCurrentStep('results');
-        else setCurrentStep('stockInput');
-    }, [calculationData]);
-
-    const handleStockInputSubmit = useCallback((inputData: MultiCalculationParams) => {
-        calculationMutation.mutate(inputData);
-    }, [calculationMutation]);
-
-    const handleGoBackToTurbineSearch = useCallback(() => {
-        setSelectedTurbine(null);
-        setSelectedStock(null);
-        setCalculationData(null);
-        setCurrentStep('turbineSearch');
-    }, []);
-
-    const handleGoBackToStockSelection = useCallback(() => {
-        setSelectedStock(null);
+        setSelectedStocks([]);
         setCalculationData(null);
         setCurrentStep('stockSelection');
     }, []);
+
+    const handleValvesSelect = useCallback((selections: SelectedStock[]) => {
+        setSelectedStocks(selections);
+        setCalculationData(null);
+        setCurrentStep('stockInput');
+    }, []);
+
+    const handleStockInputSubmit = useCallback((payload: MultiCalculationParams) => {
+        if (!selectedTurbine?.id || selectedStocks.length === 0) {
+            toast({ title: "Ошибка", description: "Турбина или клапаны не выбраны.", status: "error" });
+            setCurrentStep('turbineSearch');
+            return;
+        }
+        calculationMutation.mutate(payload);
+    }, [calculationMutation, selectedTurbine, selectedStocks, toast]);
 
     const renderContent = () => {
         if (currentStep === 'loadingHistoryResult' || calculationMutation.isPending || (isLoadingResultFromHistory && searchParams.resultId)) {
+            const loadingText = calculationMutation.isPending ? "Выполняется расчет..." : "Загрузка из истории...";
             return (
                 <VStack spacing={4} align="center" justify="center" minH="calc(100vh - 200px)">
-                    <Spinner size="xl" color="teal.500"/>
-                    <Text>{calculationMutation.isPending ? "Выполняется расчет..." : "Загрузка..."}</Text>
+                    <Spinner size="xl" color="teal.500" />
+                    <Text>{loadingText}</Text>
                 </VStack>
             );
         }
 
         switch (currentStep) {
-            case 'turbineSearch': return <TurbineSearch onSelectTurbine={handleTurbineSelect as any}/>;
-            case 'stockSelection': return <StockSelection turbine={selectedTurbine as any} onSelectValve={handleStockSelect as any} onGoBack={handleGoBackToTurbineSearch} />;
-            case 'earlyCalculation': return <EarlyCalculationPage stockId={selectedStock?.name || 'N/A'} lastCalculation={calculationData!} onRecalculate={handleRecalculateDecision} onGoBack={handleGoBackToStockSelection} />;
-            case 'stockInput': return <StockInputPage stock={selectedStock!} turbine={selectedTurbine!} onSubmit={handleStockInputSubmit} initialData={calculationData?.input_data} onGoBack={handleGoBackToStockSelection} />;
-            case 'results': return <ResultsPage stockId={calculationData!.stock_name} stockInfo={selectedStock} calculationId={calculationData!.id} inputData={calculationData!.input_data as any} outputData={calculationData!.output_data as any} onGoBack={handleGoBackToStockSelection} />;
-            default: return null;
+            case 'turbineSearch':
+                return <TurbineSearch onSelectTurbine={handleTurbineSelect} />;
+            case 'stockSelection':
+                return <StockSelection
+                    turbine={selectedTurbine as any}
+                    onSelectValves={handleValvesSelect as any}
+                    onGoBack={() => setCurrentStep('turbineSearch')}
+                />;
+            case 'stockInput':
+                return <StockInputPage
+                    selectedStocks={selectedStocks}
+                    turbine={selectedTurbine!}
+                    onSubmit={handleStockInputSubmit as any}
+                    onGoBack={() => setCurrentStep('stockSelection')}
+                />;
+            case 'results':
+                if (calculationData) {
+                    return <ResultsPage
+                        stockId={calculationData.stock_name}
+                        inputData={calculationData.input_data as any}
+                        outputData={calculationData.output_data as any}
+                        onGoBack={() => {
+                            setCalculationData(null);
+                            if (selectedStocks.length > 0) setCurrentStep('stockInput');
+                            else if (selectedTurbine) setCurrentStep('stockSelection');
+                            else setCurrentStep('turbineSearch');
+                        }}
+                    />;
+                }
+                setCurrentStep('turbineSearch');
+                return null;
+            default:
+                if (currentStep !== 'turbineSearch') setCurrentStep('turbineSearch');
+                return null;
         }
     };
 
@@ -282,3 +265,5 @@ function CalculatorPage() {
         </Box>
     );
 }
+
+export default CalculatorPage;
