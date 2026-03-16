@@ -10,15 +10,14 @@ import ResultsPage from '../components/Calculator/ResultsPage';
 import { type HistoryEntry, LOCAL_STORAGE_HISTORY_KEY } from '../components/Common/Sidebar';
 
 import {
-    ResultsService,
+    CalculationsService,
     TurbinesService,
     ApiError,
     type TurbineInfo,
+    type CalculationResultDB as ClientCalculationResult,
+    type MultiCalculationParams,
+    type MultiCalculationResult,
 } from '../client';
-
-// Используем прямой запрос, так как OpenAPI клиент еще не обновлен под новые схемы
-import { request as __request } from '../client/core/request';
-import { OpenAPI } from '../client/core/OpenAPI';
 
 type CalculatorStep =
     | 'turbineSearch'
@@ -52,7 +51,7 @@ function CalculatorPage() {
     const [currentStep, setCurrentStep] = useState<CalculatorStep>('turbineSearch');
     const [selectedTurbine, setSelectedTurbine] = useState<TurbineInfo | null>(null);
     const [selectedStocks, setSelectedStocks] = useState<SelectedStock[]>([]);
-    const [calculationData, setCalculationData] = useState<any>(null);
+    const [calculationData, setCalculationData] = useState<ClientCalculationResult | null>(null);
 
     // ==========================================
     // ЛОГИКА ЗАГРУЗКИ ИЗ ИСТОРИИ (SIDEBAR)
@@ -67,13 +66,12 @@ function CalculatorPage() {
         queryFn: async () => {
             if (!searchParams.resultId) throw new Error("ID результата не предоставлен");
             const id = parseInt(searchParams.resultId, 10);
-            if (isNaN(id)) throw new Error("Неверный ID результата");
-            const result = await ResultsService.resultsReadCalculationResult({ resultId: id });
+            const result = await CalculationsService.calculationsReadCalculationResult({ resultId: id });
             return {
                 ...result,
                 input_data: typeof result.input_data === 'string' ? JSON.parse(result.input_data) : result.input_data,
                 output_data: typeof result.output_data === 'string' ? JSON.parse(result.output_data) : result.output_data,
-            };
+            } as ClientCalculationResult;
         },
         enabled: !!searchParams.resultId,
         retry: 1,
@@ -105,10 +103,10 @@ function CalculatorPage() {
         }
 
         if (isErrorResultFromHistory || !loadedResultDataFromHistory) {
-            toast({
-                title: "Ошибка загрузки данных расчета из истории",
-                description: getApiErrorDetail(errorResultFromHistory) || (errorResultFromHistory as Error)?.message,
-                status: "error"
+            toast({ 
+                title: "Ошибка загрузки из истории", 
+                description: getApiErrorDetail(errorResultFromHistory) || "Не удалось загрузить расчет",
+                status: "error" 
             });
             setCurrentStep('turbineSearch');
         } else {
@@ -118,7 +116,7 @@ function CalculatorPage() {
             toast({ title: `Расчет "${loadedResultDataFromHistory.stock_name}" загружен`, status: "success" });
         }
 
-        // Очищаем URL
+        // Очищаем URL параметры после обработки
         navigate({
             search: (prev: any) => ({ ...prev, resultId: undefined, turbineIdToLoad: undefined }),
             replace: true
@@ -133,38 +131,35 @@ function CalculatorPage() {
     // ==========================================
     // ЛОГИКА НОВОГО МУЛЬТИ-РАСЧЕТА
     // ==========================================
-    const calculationMutation = useMutation<any, any, any>({
-        mutationFn: async (payload: any) => {
-            return await __request(OpenAPI, {
-                method: 'POST',
-                url: '/api/v1/calculate',
-                body: payload,
-            });
-        },
+    const calculationMutation = useMutation<MultiCalculationResult, ApiError, MultiCalculationParams>({
+        mutationFn: (params: MultiCalculationParams) => CalculationsService.calculationsCalculate({ requestBody: params }),
         onSuccess: (data, variables) => {
-            // Бэкенд теперь сам возвращает схему CalculationResultDB, 
-            // но на всякий случай парсим JSON, если он пришел строкой
-            const stockName = data.stock_name || "Групповой расчёт штоков";
-            const parsedData = {
-                id: data.id, // Бэкенд должен вернуть ID сохраненного расчета
-                stock_name: stockName,
-                turbine_name: selectedTurbine?.name || "",
-                input_data: variables,
-                output_data: data.output_data || data, // Зависит от того, как бэк отдает ответ
-            };
+            // Формируем красивое имя для отображения (как в БД)
+            const stockName = variables.groups.map(g => `${g.type}(${g.quantity}шт)`).join(" + ");
             
-            setCalculationData(parsedData);
+            // Оборачиваем ответ бэкенда в формат БД для компонента ResultsPage
+            const mockDbResult: ClientCalculationResult = {
+                id: Date.now(), // Fallback ID для UI
+                user_name: "Engineer",
+                stock_name: stockName,
+                turbine_name: selectedTurbine?.name || "Unknown",
+                calc_timestamp: new Date().toISOString(),
+                input_data: variables as any,
+                output_data: data as any,
+            };
+
+            setCalculationData(mockDbResult);
             setCurrentStep('results');
             toast({ title: "Расчет выполнен успешно!", status: "success" });
 
-            // Сохранение в историю Sidebar
-            if (selectedTurbine?.id !== undefined && data.id !== undefined) {
+            // Сохранение в историю (Sidebar)
+            if (selectedTurbine?.id !== undefined) {
                 const newHistoryEntry: HistoryEntry = {
-                    id: String(data.id),
+                    id: String(mockDbResult.id),
                     stockName: stockName,
-                    stockId: selectedStocks[0]?.valve?.id || 0, // Берем ID первого клапана для совместимости
+                    stockId: selectedStocks[0]?.valve?.id || 0, // Сохраняем ID первого клапана группы
                     turbineName: selectedTurbine.name,
-                    turbineId: selectedTurbine.id,
+                    turbineId: selectedTurbine.id ?? 0,
                     timestamp: Date.now(),
                 };
                 
@@ -178,11 +173,12 @@ function CalculatorPage() {
                 window.dispatchEvent(new Event('wsaHistoryUpdated')); // Триггер для Sidebar
             }
         },
-        onError: (error: any) => {
-            toast({
-                title: "Ошибка при выполнении расчета",
-                description: error?.body?.detail || error.message || "Неизвестная ошибка",
-                status: "error"
+        onError: (error: ApiError) => {
+            const detail = getApiErrorDetail(error);
+            toast({ 
+                title: "Ошибка при выполнении расчета", 
+                description: detail || error.message || "Неизвестная ошибка", 
+                status: "error" 
             });
         },
     });
@@ -203,7 +199,7 @@ function CalculatorPage() {
         setCurrentStep('stockInput');
     }, []);
 
-    const handleStockInputSubmit = useCallback((payload: any) => {
+    const handleStockInputSubmit = useCallback((payload: MultiCalculationParams) => {
         if (!selectedTurbine?.id || selectedStocks.length === 0) {
             toast({ title: "Ошибка", description: "Турбина или клапаны не выбраны.", status: "error" });
             setCurrentStep('turbineSearch');
@@ -228,23 +224,23 @@ function CalculatorPage() {
                 return <TurbineSearch onSelectTurbine={handleTurbineSelect} />;
             case 'stockSelection':
                 return <StockSelection
-                    turbine={selectedTurbine}
-                    onSelectValves={handleValvesSelect}
+                    turbine={selectedTurbine as any}
+                    onSelectValves={handleValvesSelect as any}
                     onGoBack={() => setCurrentStep('turbineSearch')}
                 />;
             case 'stockInput':
                 return <StockInputPage
                     selectedStocks={selectedStocks}
                     turbine={selectedTurbine!}
-                    onSubmit={handleStockInputSubmit}
+                    onSubmit={handleStockInputSubmit as any}
                     onGoBack={() => setCurrentStep('stockSelection')}
                 />;
             case 'results':
                 if (calculationData) {
                     return <ResultsPage
                         stockId={calculationData.stock_name}
-                        inputData={calculationData.input_data}
-                        outputData={calculationData.output_data}
+                        inputData={calculationData.input_data as any}
+                        outputData={calculationData.output_data as any}
                         onGoBack={() => {
                             setCalculationData(null);
                             if (selectedStocks.length > 0) setCurrentStep('stockInput');
@@ -269,3 +265,5 @@ function CalculatorPage() {
         </Box>
     );
 }
+
+export default CalculatorPage;

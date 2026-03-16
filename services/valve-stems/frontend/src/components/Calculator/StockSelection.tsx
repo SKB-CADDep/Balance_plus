@@ -18,8 +18,11 @@ type Props = {
 };
 
 const fetchValvesForTurbineAPI = async (turbineId: number) => {
-    if (!turbineId) return { count: 0, valves: [] };
-    return TurbinesService.turbinesGetValvesByTurbineEndpoint({ turbineName: turbineId.toString() as any });
+    if (!turbineId) {
+        return { count: 0, valves: [] };
+    }
+    // Используем правильное имя метода из нового клиента
+    return TurbinesService.turbinesGetValvesByTurbine({ turbineId });
 };
 
 const StockSelection: React.FC<Props> = ({ turbine, onSelectValves, onGoBack }) => {
@@ -43,8 +46,8 @@ const StockSelection: React.FC<Props> = ({ turbine, onSelectValves, onGoBack }) 
 
     const handleNext = () => {
         const selections = valves
-            .filter(v => (counts[v.id] || 0) > 0)
-            .map(v => ({ valve: v, quantity: counts[v.id] }));
+            .filter(v => v.id != null && (counts[v.id] || 0) > 0)
+            .map(v => ({ valve: v, quantity: counts[v.id as number] }));
         onSelectValves(selections);
     };
 
@@ -95,43 +98,48 @@ const StockSelection: React.FC<Props> = ({ turbine, onSelectValves, onGoBack }) 
                 </VStack>
             ) : valves.length > 0 ? (
                 <List spacing={3} w="100%" mt={4}>
-                    {valves.map((valve) => (
-                        <ListItem
-                            key={valve.id}
-                            p={4}
-                            borderWidth="1px"
-                            borderRadius="lg"
-                            borderColor={counts[valve.id] > 0 ? listItemHoverBorderColor : undefined}
-                            bg={counts[valve.id] > 0 ? listItemHoverBg : undefined}
-                            transition="all 0.2s"
-                        >
-                            <Flex justify="space-between" align="center" wrap="wrap" gap={4}>
-                                <Box>
-                                    <Text fontSize="lg" fontWeight="medium">{valve.name}</Text>
-                                    <HStack mt={1}>
-                                        {valve.type && <Tag size="sm" colorScheme="cyan">{valve.type}</Tag>}
-                                        <Text fontSize="xs" color="gray.500">Участков: {valve.count_parts || 3}</Text>
+                    {valves.map((valve) => {
+                        if (valve.id == null) return null;
+                        const vId = valve.id; // Строго number
+                        
+                        return (
+                            <ListItem
+                                key={vId}
+                                p={4}
+                                borderWidth="1px"
+                                borderRadius="lg"
+                                borderColor={counts[vId] > 0 ? listItemHoverBorderColor : undefined}
+                                bg={counts[vId] > 0 ? listItemHoverBg : undefined}
+                                transition="all 0.2s"
+                            >
+                                <Flex justify="space-between" align="center" wrap="wrap" gap={4}>
+                                    <Box>
+                                        <Text fontSize="lg" fontWeight="medium">{valve.name}</Text>
+                                        <HStack mt={1}>
+                                            {valve.type && <Tag size="sm" colorScheme="cyan">{valve.type}</Tag>}
+                                            <Text fontSize="xs" color="gray.500">Участков: {valve.count_parts || 3}</Text>
+                                        </HStack>
+                                    </Box>
+                                    <HStack>
+                                        <Text fontWeight="medium" fontSize="sm">Количество:</Text>
+                                        <NumberInput 
+                                            min={0} max={20} 
+                                            value={counts[vId] || 0} 
+                                            onChange={(valueAsString) => handleCountChange(vId, valueAsString)}
+                                            w="100px"
+                                            bg={useColorModeValue('white', 'gray.800')}
+                                        >
+                                            <NumberInputField />
+                                            <NumberInputStepper>
+                                                <NumberIncrementStepper />
+                                                <NumberDecrementStepper />
+                                            </NumberInputStepper>
+                                        </NumberInput>
                                     </HStack>
-                                </Box>
-                                <HStack>
-                                    <Text fontWeight="medium" fontSize="sm">Количество:</Text>
-                                    <NumberInput 
-                                        min={0} max={20} 
-                                        value={counts[valve.id] || 0} 
-                                        onChange={(valueAsString) => handleCountChange(valve.id, valueAsString)}
-                                        w="100px"
-                                        bg={useColorModeValue('white', 'gray.800')}
-                                    >
-                                        <NumberInputField />
-                                        <NumberInputStepper>
-                                            <NumberIncrementStepper />
-                                            <NumberDecrementStepper />
-                                        </NumberInputStepper>
-                                    </NumberInput>
-                                </HStack>
-                            </Flex>
-                        </ListItem>
-                    ))}
+                                </Flex>
+                            </ListItem>
+                        );
+                    })}
                 </List>
             ) : (
                 <Text textAlign="center" color="gray.500" p={4} borderWidth="1px" borderRadius="md" borderStyle="dashed">

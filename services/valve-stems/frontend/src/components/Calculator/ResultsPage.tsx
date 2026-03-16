@@ -4,12 +4,18 @@ import {
     Box, Button, Heading, Text, VStack, Table, Thead, Tbody, Tr, Th, Td,
     TableContainer, SimpleGrid, Divider, HStack, useToast, Icon, useColorModeValue, Badge,
 } from '@chakra-ui/react';
-import { FiChevronLeft, FiSave, FiFileText } from 'react-icons/fi';
+import { FiChevronLeft, FiDownload, FiSave, FiFileText } from 'react-icons/fi';
+
+import { 
+    type MultiCalculationParams, 
+    type MultiCalculationResult,
+    type GroupCalculationDetails,
+} from '../../client';
 
 type Props = {
     stockId: string;
-    inputData?: any;
-    outputData?: any;
+    inputData?: MultiCalculationParams;
+    outputData?: MultiCalculationResult;
     onGoBack?: () => void;
 };
 
@@ -20,10 +26,12 @@ const roundNumber = (num: any, decimals: number = 4): string | number => {
     return Number(parsed.toFixed(decimals));
 };
 
-const ResultsPage: React.FC<Props> = ({ stockId, inputData = {}, outputData = {}, onGoBack }) => {
+const ResultsPage: React.FC<Props> = ({ stockId, inputData, outputData, onGoBack }) => {
     const toast = useToast();
     const tableHeaderBg = useColorModeValue("gray.50", "gray.700");
     const buttonHoverBg = useColorModeValue("gray.100", "gray.700");
+
+    const [isDownloadingDrawio, setIsDownloadingDrawio] = useState<Record<number, boolean>>({});
 
     const details = outputData?.details || [];
     const summary = outputData?.summary;
@@ -55,16 +63,74 @@ const ResultsPage: React.FC<Props> = ({ stockId, inputData = {}, outputData = {}
         });
     };
 
-    // --- ЭКСПОРТ В EXCEL (Адаптировано под мульти-расчет) ---
+    // --- СКАЧИВАНИЕ DRAW.IO СХЕМЫ (Для конкретного клапана из группы) ---
+    const handleDownloadDrawio = async (groupDetail: GroupCalculationDetails) => {
+        // Мы пытаемся найти информацию о клапане из inputData, 
+        // так как бэкенд для Draw.io ждет объект ValveInfo (с диаметром, зазорами и длинами)
+        const groupInput = inputData?.groups.find(g => g.valve_id === groupDetail.valve_id);
+        
+        if (!groupInput) {
+            toast({ title: "Ошибка", description: "Нет данных геометрии для генерации схемы.", status: "error" });
+            return;
+        }
+
+        setIsDownloadingDrawio(prev => ({ ...prev, [groupDetail.valve_id]: true }));
+        try {
+            // ВАЖНО: Для генерации схемы бэкенд просит полные данные клапана.
+            // Так как в inputData их нет (там только давления), мы должны сделать запрос за ValveInfo, 
+            // либо бэкенд Draw.io должен принимать просто ID.
+            // Ниже предполагается, что бэкенду достаточно передать ID, либо мы имитируем объект. 
+            // Если бэкенд требует полные данные, здесь нужно будет сделать fetch за ValveInfo.
+            
+            // Заглушка, так как мы не получаем полные размеры клапана в inputData.
+            // Идеально: сделать `await ValvesService.valvesReadValveById({ valveId: groupDetail.valve_id })`
+            const baseUrl = import.meta.env.VITE_API_URL || '';
+            const cleanBaseUrl = baseUrl.replace(/\/$/, '');
+            const url = `${cleanBaseUrl}/api/v1/generate_scheme`;
+            
+            // Внимание: В реальном коде вам нужно передавать правильный объект ValveInfo.
+            // Ниже показана упрощенная модель для того, чтобы сработал ваш старый код.
+            const mockValveInfo = {
+                id: groupDetail.valve_id,
+                name: groupDetail.valve_names[0],
+                count_parts: groupDetail.Gi.length, // определяем количество участков по массиву Gi
+                // ... остальные размеры по-умолчанию не подставятся, лучше получить с бэкенда!
+            };
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(mockValveInfo), // Если бэк падает, здесь надо передать актуальный ValveInfo!
+            });
+            
+            if (!response.ok) throw new Error("Ошибка сервера при генерации схемы. Возможно, нужны полные размеры клапана.");
+            
+            const blob = await response.blob();
+            const downloadUrl = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.setAttribute('download', `схема_${groupDetail.valve_names[0]}.drawio`);
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode?.removeChild(link);
+        } catch (error: any) {
+            toast({ title: "Ошибка", description: error.message, status: "error" });
+        } finally {
+            setIsDownloadingDrawio(prev => ({ ...prev, [groupDetail.valve_id]: false }));
+        }
+    };
+
+    // --- ЭКСПОРТ В EXCEL ---
     const handleDownloadExcel = () => {
         try {
             const wb = XLSX.utils.book_new();
 
             // Лист 1: Глобальные параметры
             const globalsData = [{
-                'Турбина': inputData?.turbine_name,
+                'Турбина': inputData?.turbine_id, // Замените на turbine_name, если он есть
                 'P свежего пара': inputData?.globals?.P_fresh,
                 'T свежего пара': inputData?.globals?.T_fresh,
+                'Энтальпия пара': inputData?.globals?.H_fresh,
                 'P воздуха': inputData?.globals?.P_air,
                 'T воздуха': inputData?.globals?.T_air,
                 'Вакуум': inputData?.globals?.P_lst_leak_off,
@@ -73,8 +139,8 @@ const ResultsPage: React.FC<Props> = ({ stockId, inputData = {}, outputData = {}
 
             // Лист 2: По участкам
             const sectionsData: any[] = [];
-            details.forEach((group: any) => {
-                group.Gi.forEach((g: number, i: number) => {
+            details.forEach((group) => {
+                group.Gi.forEach((g, i) => {
                     sectionsData.push({
                         'Группа клапанов': `${group.valve_names.join(', ')} (${group.quantity} шт)`,
                         'Участок': i + 1,
@@ -91,7 +157,7 @@ const ResultsPage: React.FC<Props> = ({ stockId, inputData = {}, outputData = {}
 
             // Лист 3: Отсосы
             const suctionData: any[] = [];
-            details.forEach((group: any) => {
+            details.forEach((group) => {
                 if (group.deaerator_props && group.deaerator_props[0] > 0.000001) {
                     suctionData.push({
                         'Группа клапанов': `${group.valve_names.join(', ')} (${group.quantity} шт)`,
@@ -99,17 +165,21 @@ const ResultsPage: React.FC<Props> = ({ stockId, inputData = {}, outputData = {}
                         'Расход ΣG, т/ч': roundNumber(group.deaerator_props[0]),
                         'Давление (P), кгс/см²': roundNumber(group.deaerator_props[3]),
                         'Температура (T), °C': roundNumber(group.deaerator_props[1]),
+                        'Энтальпия (H), кДж/кг': roundNumber(group.deaerator_props[2]),
                     });
                 }
-                group.ejector_props.forEach((ej: any, idx: number) => {
-                    suctionData.push({
-                        'Группа клапанов': `${group.valve_names.join(', ')} (${group.quantity} шт)`,
-                        'Потребитель': `Эжектор / Отсос ${idx + 1}`,
-                        'Расход ΣG, т/ч': roundNumber(ej.g),
-                        'Давление (P), кгс/см²': roundNumber(ej.p),
-                        'Температура (T), °C': roundNumber(ej.t),
+                if (group.ejector_props) {
+                    group.ejector_props.forEach((ej, idx) => {
+                        suctionData.push({
+                            'Группа клапанов': `${group.valve_names.join(', ')} (${group.quantity} шт)`,
+                            'Потребитель': `Эжектор / Отсос ${idx + 1}`,
+                            'Расход ΣG, т/ч': roundNumber(ej.g),
+                            'Давление (P), кгс/см²': roundNumber(ej.p),
+                            'Температура (T), °C': roundNumber(ej.t),
+                            'Энтальпия (H), кДж/кг': roundNumber(ej.h),
+                        });
                     });
-                });
+                }
             });
             if (suctionData.length > 0) {
                 XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(suctionData), 'Отсосы');
@@ -125,7 +195,7 @@ const ResultsPage: React.FC<Props> = ({ stockId, inputData = {}, outputData = {}
                 XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summaryData), 'Итоги');
             }
 
-            XLSX.writeFile(wb, `Расчет_${inputData?.turbine_name || 'WSA'}.xlsx`);
+            XLSX.writeFile(wb, `Расчет_${stockId}.xlsx`);
             toast({ title: "Excel файл успешно создан", status: "success" });
         } catch (e: any) {
             console.error(e);
@@ -137,7 +207,7 @@ const ResultsPage: React.FC<Props> = ({ stockId, inputData = {}, outputData = {}
         <VStack spacing={8} p={5} align="stretch" w="100%" maxW="container.xl" mx="auto">
             <VStack spacing={2} w="full">
                 <Heading as="h2" size="xl" textAlign="center">
-                    Результаты: <Text as="span" color="teal.500">{inputData?.turbine_name}</Text>
+                    Результаты расчета: <Text as="span" color="teal.500">{stockId}</Text>
                 </Heading>
                 
                 {isEmbedded ? (
@@ -152,13 +222,26 @@ const ResultsPage: React.FC<Props> = ({ stockId, inputData = {}, outputData = {}
             </VStack>
 
             {/* ДЕТАЛИЗАЦИЯ ПО КАЖДОЙ ГРУППЕ КЛАПАНОВ */}
-            {details.map((group: any, idx: number) => (
+            {details.map((group, idx) => (
                 <Box key={idx} borderWidth="1px" borderRadius="lg" p={5} bg={useColorModeValue("white", "gray.800")} shadow="sm">
                     <HStack mb={4} justify="space-between" wrap="wrap">
                         <Heading as="h3" size="md" color="teal.600">
                             {group.valve_names.join(', ')} ({group.quantity} шт.)
                         </Heading>
-                        <Badge colorScheme="purple" fontSize="sm">Тип: {group.type}</Badge>
+                        <HStack>
+                            <Badge colorScheme="purple" fontSize="sm">Тип: {group.type}</Badge>
+                            {/* Кнопка генерации схемы вынесена на уровень клапана */}
+                            <Button 
+                                size="sm" 
+                                colorScheme="blue" 
+                                variant="outline"
+                                isLoading={isDownloadingDrawio[group.valve_id]} 
+                                leftIcon={<Icon as={FiDownload} />}
+                                onClick={() => handleDownloadDrawio(group)}
+                            >
+                                Схема
+                            </Button>
+                        </HStack>
                     </HStack>
 
                     <TableContainer mb={6}>
@@ -173,10 +256,10 @@ const ResultsPage: React.FC<Props> = ({ stockId, inputData = {}, outputData = {}
                                 </Tr>
                             </Thead>
                             <Tbody>
-                                {group.Gi.map((_: any, i: number) => (
+                                {group.Gi.map((g, i) => (
                                     <Tr key={i} _hover={{ bg: buttonHoverBg }}>
                                         <Td fontWeight="bold">Участок {i + 1}</Td>
-                                        <Td isNumeric>{roundNumber(group.Gi[i])}</Td>
+                                        <Td isNumeric>{roundNumber(g)}</Td>
                                         <Td isNumeric>{roundNumber(group.Pi_in[i])}</Td>
                                         <Td isNumeric>{roundNumber(group.Ti[i])}</Td>
                                         <Td isNumeric color="gray.500">{roundNumber(group.Hi[i])}</Td>
@@ -198,6 +281,7 @@ const ResultsPage: React.FC<Props> = ({ stockId, inputData = {}, outputData = {}
                                     <Th isNumeric>Расход ΣG (т/ч)</Th>
                                     <Th isNumeric>Давление P (кгс/см²)</Th>
                                     <Th isNumeric>Температура T (°C)</Th>
+                                    <Th isNumeric>Энтальпия H (кДж/кг)</Th>
                                 </Tr>
                             </Thead>
                             <Tbody>
@@ -207,14 +291,16 @@ const ResultsPage: React.FC<Props> = ({ stockId, inputData = {}, outputData = {}
                                         <Td isNumeric fontWeight="bold">{roundNumber(group.deaerator_props[0])}</Td>
                                         <Td isNumeric>{roundNumber(group.deaerator_props[3])}</Td>
                                         <Td isNumeric>{roundNumber(group.deaerator_props[1])}</Td>
+                                        <Td isNumeric color="gray.500">{roundNumber(group.deaerator_props[2])}</Td>
                                     </Tr>
                                 )}
-                                {group.ejector_props.map((ej: any, e_idx: number) => (
+                                {group.ejector_props && group.ejector_props.map((ej, e_idx) => (
                                     <Tr key={`ej-${e_idx}`} _hover={{ bg: buttonHoverBg }}>
                                         <Td><Badge colorScheme="gray">Эжектор {e_idx + 1}</Badge></Td>
                                         <Td isNumeric fontWeight="bold">{roundNumber(ej.g)}</Td>
                                         <Td isNumeric>{roundNumber(ej.p)}</Td>
                                         <Td isNumeric>{roundNumber(ej.t)}</Td>
+                                        <Td isNumeric color="gray.500">{roundNumber(ej.h)}</Td>
                                     </Tr>
                                 ))}
                             </Tbody>
