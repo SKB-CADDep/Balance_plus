@@ -13,6 +13,13 @@ const config: ThemeConfig = {
 
 const theme = extendTheme({
     config,
+    styles: {
+        global: (props: any) => ({
+            body: {
+                colorScheme: props.colorMode === 'dark' ? 'dark' : 'light',
+            },
+        }),
+    },
     colors: {
         ui: {
             main: "#009688",
