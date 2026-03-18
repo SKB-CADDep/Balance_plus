@@ -1,5 +1,5 @@
+
 from pydantic import BaseModel, ConfigDict
-from typing import Optional
 
 from .valve import SimpleValveInfo, ValveInfo
 
@@ -7,17 +7,17 @@ from .valve import SimpleValveInfo, ValveInfo
 class TurbineInfo(BaseModel):
     id: int
     name: str
-    station_name: Optional[str] = None
-    station_number: Optional[str] = None
-    factory_number: Optional[str] = None
-    
+    station_name: str | None = None
+    station_number: str | None = None
+    factory_number: str | None = None
+
     model_config = ConfigDict(from_attributes=True)
 
 class TurbineWithValvesInfo(TurbineInfo):
     valves: list[SimpleValveInfo] = []
     # Полезно знать, нашли ли мы эту турбину через конкретный клапан
-    matched_valve_id: Optional[int] = None 
-    
+    matched_valve_id: int | None = None
+
     model_config = ConfigDict(from_attributes=True)
 
 class TurbineValves(BaseModel):
