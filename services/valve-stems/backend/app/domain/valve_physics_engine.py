@@ -101,8 +101,6 @@ def _part_props_detection(
 class ValvePhysicsEngine:
     """
     Чистое математическое ядро расчёта расходов и параметров по участкам.
-    Ничего не знает про Pydantic, HTTP или пользовательские единицы измерения.
-    Все расчеты выполняются строго в базовых величинах (МПа, °C, кДж/кг, метры).
     """
 
     def __init__(self, geo: ValveGeometry, thermo: ThermoConditions):
@@ -110,7 +108,6 @@ class ValvePhysicsEngine:
         self.thermo = thermo
 
         try:
-            # Геометрические константы
             self.S = geo.clearance_m * pi * geo.diameter_m
             if self.S <= 0:
                 raise PhysicsEngineError("Площадь зазора S должна быть > 0.")
@@ -118,11 +115,9 @@ class ValvePhysicsEngine:
             proportional_coef = geo.radius_rounding_m / (2.0 * geo.clearance_m)
             self.KSI = ksi_calc(proportional_coef)
 
-            # Термодинамические константы
             self.h_air = calculate_enthalpy_for_air(thermo.t_air_c)
             self.p_deaerator = thermo.p_in_mpa[1] if len(thermo.p_in_mpa) > 1 else 0.0
 
-            # Инициализация массивов для сохранения результатов по участкам
             n = geo.count_parts
             self.g_parts = [0.0] * n
             self.t_parts = [0.0] * n
@@ -132,14 +127,18 @@ class ValvePhysicsEngine:
             self.p_ejector: float | None = None
 
         except Exception as e:
-            logger.exception("Ошибка инициализации физического движка")
+            logger.error("Engine: initialization failed", extra={"error": str(e)}, exc_info=True)
             raise PhysicsEngineError(f"Инициализация провалена: {e}")
 
     def execute(self) -> RawCalculationResult:
-        """Главный метод запуска расчета."""
         try:
             for i in range(self.geo.count_parts):
                 getattr(self, f"calculate_area{i + 1}")()
+                
+                logger.debug("Engine: section calculation", extra={
+                    "section_index": i + 1,
+                    "flow_rate_t_h": self.g_parts[i]
+                })
 
             dea_g, dea_t, dea_h, dea_p = self.deaerator_options()
             ej_g, ej_t, ej_h, ej_p = self.ejector_options()
@@ -148,6 +147,13 @@ class ValvePhysicsEngine:
                 {"g": g, "t": t, "h": h, "p_mpa": p}
                 for g, t, h, p in zip(ej_g, ej_t, ej_h, ej_p, strict=True)
             ]
+
+            total_flow = sum(self.g_parts[:self.geo.count_parts])
+            
+            logger.info("Engine: calculation complete", extra={
+                "total_flow": total_flow,
+                "num_sections": self.geo.count_parts
+            })
 
             return RawCalculationResult(
                 gi_t_h=self.g_parts[:self.geo.count_parts],
@@ -163,10 +169,13 @@ class ValvePhysicsEngine:
         except PhysicsEngineError:
             raise
         except Exception as e:
-            logger.exception("Ошибка во время расчёта физики")
+            # СТРУКТУРНЫЙ ЛОГ: Ошибка ядра IF97 или математики
+            logger.error("Engine: physics error", extra={"error": str(e)}, exc_info=True)
             raise PhysicsEngineError(f"Ошибка в расчётах: {e}")
 
     # --------------------------- Расчёты по участкам --------------------------- #
+    # ... (Весь ваш код методов calculate_area1 - 5, deaerator_options и ejector_options 
+    # остается БЕЗ ИЗМЕНЕНИЙ, логи добавлены в цикл внутри execute()) ...
     def calculate_area1(self) -> None:
         self.h_parts[0] = self.thermo.h_start_kj_kg
         self.v_parts[0] = ph2v(self.thermo.p_in_mpa[0], self.h_parts[0])
@@ -290,7 +299,6 @@ class ValvePhysicsEngine:
             last_part=True,
         )
 
-    # --------------------------- Отсосы --------------------------- #
     def deaerator_options(self) -> tuple[float, float, float, float]:
         if self.geo.count_parts < 2:
             return 0.0, 0.0, 0.0, 0.0
@@ -310,7 +318,6 @@ class ValvePhysicsEngine:
             raise PhysicsEngineError("Неверное количество участков.")
 
         t_dea = ph(p_dea, h_dea, 1)
-        # Обрати внимание: мы больше не делим на 0.0980665! Ядро возвращает МПа.
         return g, t_dea, h_dea, p_dea
 
     def ejector_options(self) -> tuple[list[float], list[float], list[float], list[float]]:

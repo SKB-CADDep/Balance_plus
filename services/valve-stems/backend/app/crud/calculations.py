@@ -13,9 +13,14 @@ def create_calculation_result(
     db: Session,
     parameters: MultiCalculationParams,
     results: MultiCalculationResult,
-    stock_name: str,       # <-- Добавили
-    turbine_name: str      # <-- Добавили
+    stock_name: str,
+    turbine_name: str
 ) -> CalculationResultDB:
+    logger.info("DB: saving calculation result", extra={
+        "turbine_name": turbine_name,
+        "stock_name": stock_name
+    })
+    
     try:
         db_result = CalculationResultDB(
             user_name="Engineer",
@@ -31,30 +36,33 @@ def create_calculation_result(
         return db_result
     except Exception as e:
         db.rollback()
-        logger.error(f"Ошибка при сохранении результата расчета в БД: {e}")
+        logger.error("DB: integrity error", extra={"error": str(e)}, exc_info=True)
         raise
 
 def get_results_by_valve_drawing(db: Session, valve_drawing: str):
-    """
-    Получает историю расчетов, в которых участвовал данный клапан.
-    Используем ilike, так как stock_name теперь содержит список клапанов.
-    """
     try:
-        return db.query(CalculationResultDB)\
+        results = db.query(CalculationResultDB)\
             .filter(CalculationResultDB.stock_name.ilike(f"%{valve_drawing}%"))\
             .order_by(CalculationResultDB.calc_timestamp.desc())\
             .all()
+            
+        if not results:
+            logger.warning("DB: entity not found", extra={
+                "entity": "calculation_results", 
+                "valve_drawing": valve_drawing
+            })
+            
+        return results
     except Exception as e:
-        logger.error(f"Ошибка БД при получении результатов для {valve_drawing}: {e}")
+        logger.error("DB: error fetching results", extra={"error": str(e), "valve_drawing": valve_drawing}, exc_info=True)
         return []
 
 def get_calculation_result_by_id(db: Session, result_id: int) -> CalculationResultDB | None:
-    """
-    Получает один результат расчета по его ID.
-    """
     try:
         result = db.query(CalculationResultDB).filter(CalculationResultDB.id == result_id).first()
+        if not result:
+            logger.warning("DB: entity not found", extra={"entity": "calculation", "id": result_id})
         return result
     except Exception as e:
-        logger.error(f"Ошибка базы данных при получении результата расчета по ID {result_id}: {e!s}")
+        logger.error("DB: error fetching result by id", extra={"error": str(e), "id": result_id}, exc_info=True)
         return None

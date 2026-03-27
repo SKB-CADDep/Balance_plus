@@ -1,3 +1,4 @@
+import os
 import logging
 
 from fastapi import FastAPI
@@ -6,13 +7,12 @@ from fastapi.routing import APIRoute
 
 from app.api.main import api_router
 from app.core.config import settings
+from app.core.logging_config import setup_logging
+from app.middleware.logging_middleware import RequestLoggingMiddleware
 
+log_level = os.getenv("LOG_LEVEL", "INFO")
+setup_logging(log_level)
 
-# Настройка логирования
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
 logger = logging.getLogger(__name__)
 
 def custom_generate_unique_id(route: APIRoute) -> str:
@@ -25,6 +25,8 @@ app = FastAPI(
     generate_unique_id_function=custom_generate_unique_id,
 )
 
+app.add_middleware(RequestLoggingMiddleware)
+
 # ИСПРАВЛЕННЫЙ CORS: разрешаем любые адреса (магическая строка allow_origin_regex=".*")
 app.add_middleware(
     CORSMiddleware,
@@ -36,3 +38,8 @@ app.add_middleware(
 
 # Подключаем ВСЕ роуты одной строкой
 app.include_router(api_router, prefix=settings.API_V1_STR)
+
+
+@app.on_event("startup")
+async def startup_event():
+    logger.info("Application starting up", extra={"log_level": log_level})

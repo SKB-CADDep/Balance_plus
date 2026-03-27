@@ -15,15 +15,18 @@ from app.models import CalculationResultDB, Valve
 from app.schemas import CalculationResultDB as CalculationResultDBSchema
 from app.schemas import MultiCalculationParams, MultiCalculationResult, ValveInfo
 
-
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
 
 @router.post("/calculate", response_model=MultiCalculationResult, summary="Выполнить мульти-расчет")
-async def calculate(params: MultiCalculationParams, db: Session = Depends(get_db)):
+async def calculate(params: MultiCalculationParams, db: Session = Depends(get_db)): 
+    logger.info("API: calculation requested", extra={
+        "turbine_id": params.turbine_id,
+        "valve_count": len(params.groups)
+    })
+    
     try:
-        # 1. Собираем данные по всем клапанам из БД (Оптимизация: 1 запрос вместо N)
         valve_ids = [g.valve_id for g in params.groups]
         valves = db.query(Valve).filter(Valve.id.in_(valve_ids)).all()
         valve_dict = {v.id: v for v in valves}
@@ -32,21 +35,20 @@ async def calculate(params: MultiCalculationParams, db: Session = Depends(get_db
         for group in params.groups:
             valve_db = valve_dict.get(group.valve_id)
             if not valve_db:
+                logger.warning("API: Validation error - Valve not found", extra={"valve_id": group.valve_id})
                 raise HTTPException(status_code=404, detail=f"Клапан ID={group.valve_id} не найден")
             groups_data.append((group, ValveInfo.model_validate(valve_db)))
             
-        # 2. Вызываем мульти-адаптер
         try:
             calculation_result = CalculationAdapter.run_multi_calculation(params.globals, groups_data)
         except ValueError as ve:
+            logger.warning("API: calculation adapter error", extra={"error": str(ve)})
             raise HTTPException(status_code=400, detail=str(ve))
 
-               # 3. Формируем красивые имена
         stock_name_parts = [f"{v_info.name} ({g.quantity}шт)" for g, v_info in groups_data]
         pretty_stock_name = " + ".join(stock_name_parts)
         turbine_name = f"Проект ID: {params.turbine_id}"
 
-        # 4. Сохраняем (Идеальный CRUD)
         _new_result = create_calculation_result(
             db=db,
             parameters=params,
@@ -60,12 +62,13 @@ async def calculate(params: MultiCalculationParams, db: Session = Depends(get_db
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Критическая ошибка сервера: {e}")
+        logger.error("API: Critical server error", extra={"error": str(e)}, exc_info=True)
         raise HTTPException(status_code=500, detail=f"Ошибка: {e}")
 
 
 @router.get("/valves/{valve_name:path}/results/", response_model=list[CalculationResultDBSchema], summary="Получить результаты расчётов")
 async def get_calculation_results(valve_name: str, db: Session = Depends(get_db)):
+    logger.info("API: fetching results for valve", extra={"valve_name": valve_name})
     try:
         db_results = get_results_by_valve_drawing(db, valve_drawing=valve_name)
 
@@ -97,7 +100,7 @@ async def get_calculation_results(valve_name: str, db: Session = Depends(get_db)
         return calculation_results
 
     except Exception as e:
-        logger.error(f"Ошибка при получении результатов расчётов для клапана {valve_name}: {e}")
+        logger.error("API: error fetching results", extra={"valve_name": valve_name, "error": str(e)}, exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Не удалось получить результаты расчётов: {e}",
@@ -114,6 +117,7 @@ async def read_calculation_result(result_id: int, db: Session = Depends(get_db))
 
 @router.delete("/{result_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Удалить результат расчёта")
 async def delete_calculation_result(result_id: int, db: Session = Depends(get_db)):
+    logger.info("API: deleting calculation", extra={"result_id": result_id})
     try:
         result = db.query(CalculationResultDB).filter(CalculationResultDB.id == result_id).first()
         if not result:
@@ -122,6 +126,6 @@ async def delete_calculation_result(result_id: int, db: Session = Depends(get_db
         db.commit()
         return Response(status_code=status.HTTP_204_NO_CONTENT)
     except Exception as e:
-        logger.error(f"Ошибка при удалении результата расчёта {result_id}: {e}")
+        logger.error("API: error deleting result", extra={"result_id": result_id, "error": str(e)}, exc_info=True)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                             detail=f"Не удалось удалить результат расчёта: {e}")
