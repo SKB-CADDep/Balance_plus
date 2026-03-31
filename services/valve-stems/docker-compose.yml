@@ -15,6 +15,7 @@ services:
     env_file:
       - .env
     environment:
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - POSTGRES_SERVER=${POSTGRES_SERVER}
       - POSTGRES_PORT=${POSTGRES_PORT:-5432}
       - POSTGRES_USER=${POSTGRES_USER}

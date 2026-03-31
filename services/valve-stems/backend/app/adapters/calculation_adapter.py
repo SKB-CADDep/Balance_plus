@@ -15,13 +15,10 @@ from app.schemas import (
     ValveInfo,
 )
 
-
 logger = logging.getLogger(__name__)
-
 
 class AdapterError(Exception):
     pass
-
 
 class CalculationAdapter:
     @staticmethod
@@ -34,6 +31,13 @@ class CalculationAdapter:
         t_air_c: float,
         p_lst_mpa: float
     ) -> tuple[GroupCalculationDetails, float, float]:
+
+        # Логируем начало обработки группы
+        logger.info("Adapter: processing group", extra={
+            "group_type": group_in.type,
+            "valve_id": group_in.valve_id,
+            "quantity": group_in.quantity
+        })
 
         raw_lengths = getattr(valve_info, "section_lengths", []) or []
         len_parts_m = [float(L) / 1000.0 for L in raw_lengths if L is not None]
@@ -67,6 +71,13 @@ class CalculationAdapter:
                               to_unit="МПа", parameter_type="pressure")
             for p in group_in.p_leak_offs
         ]
+        
+        logger.debug("Adapter: unit conversion", extra={
+            "field": "p_leak_offs",
+            "from_value": group_in.p_leak_offs,
+            "to_value_mpa": user_inputs_mpa,
+            "valve_id": group_in.valve_id
+        })
 
         # 2. Строим массив P_in для Ядра (Свежий пар + Промежуточные + Вакуум)
         p_in_mpa = [p_fresh_mpa] + user_inputs_mpa + [p_lst_mpa]
@@ -74,6 +85,21 @@ class CalculationAdapter:
         # 3. Строим массив Отсосов для Ядра
         # (Откидываем первый отсос - Деаэратор, остальные отдаем Эжекторам + глобальный Вакуум)
         p_suctions_mpa = user_inputs_mpa[1:] + [p_lst_mpa]
+        
+        logger.debug("Adapter: suction array formed", extra={
+            "p_in_mpa": p_in_mpa,
+            "p_suctions_mpa": p_suctions_mpa,
+            "count_parts": count_parts,
+            "valve_id": group_in.valve_id
+        })
+
+        # Валидация подозрительных значений
+        if any(p > p_fresh_mpa for p in p_suctions_mpa):
+            logger.warning("Adapter: suction pressure is higher than fresh steam pressure!", extra={
+                "valve_id": group_in.valve_id,
+                "p_fresh_mpa": p_fresh_mpa,
+                "p_suctions_mpa": p_suctions_mpa
+            })
         # -------------------------------------------------------------------
 
         thermo = ThermoConditions(
@@ -134,6 +160,12 @@ class CalculationAdapter:
                                           from_unit=globals_data.P_lst_leak_off_unit,
                                           to_unit="МПа", parameter_type="pressure")
 
+            logger.debug("Adapter: globals converted", extra={
+                "p_fresh_mpa": p_fresh_mpa,
+                "t_air_c": t_air_c,
+                "p_lst_mpa": p_lst_mpa
+            })
+
             if globals_data.T_fresh is not None:
                 t_start_c = converter.convert(globals_data.T_fresh, from_unit=globals_data.T_fresh_unit,
                                               to_unit="°C", parameter_type="temperature")
@@ -178,8 +210,8 @@ class CalculationAdapter:
             )
 
         except (PhysicsEngineError, AdapterError) as e:
-            logger.error(f"Calculation Error: {e}")
+            logger.error("Calculation Domain Error", extra={"error_detail": str(e)})
             raise ValueError(str(e))
         except Exception as e:
-            logger.exception("System error")
+            logger.error("System error in CalculationAdapter", extra={"error_detail": str(e)}, exc_info=True)
             raise ValueError(f"Системная ошибка: {e}")
