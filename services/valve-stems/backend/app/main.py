@@ -10,10 +10,19 @@ from app.core.config import settings
 from app.core.logging_config import setup_logging
 from app.middleware.logging_middleware import RequestLoggingMiddleware
 
+from app.api.routes import health
+
 log_level = os.getenv("LOG_LEVEL", "INFO")
 setup_logging(log_level)
 
 logger = logging.getLogger(__name__)
+
+class HealthCheckFilter(logging.Filter):
+    def filter(self, record: logging.LogRecord) -> bool:
+        return record.getMessage().find("/health") == -1
+
+logging.getLogger("uvicorn.access").addFilter(HealthCheckFilter())
+
 
 def custom_generate_unique_id(route: APIRoute) -> str:
     return f"{route.tags[0]}-{route.name}"
@@ -35,6 +44,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# === ПОДКЛЮЧАЕМ HEALTHCHECK БЕЗ ПРЕФИКСА ===
+app.include_router(health.router)
 
 # Подключаем ВСЕ роуты одной строкой
 app.include_router(api_router, prefix=settings.API_V1_STR)

@@ -7,7 +7,7 @@ from app.core.logging_config import request_id_ctx
 
 logger = logging.getLogger("app.middleware.access")
 
-SILENT_PATHS = {"/health", "/api/v1/health", "/openapi.json", "/docs", "/redoc", "/metrics"}
+SILENT_PATHS = {"/health", "/health/db", "/api/v1/health", "/openapi.json", "/docs", "/redoc", "/metrics"}
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
