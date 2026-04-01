@@ -34,17 +34,11 @@ services:
       - ./backend/alembic.ini:/app/alembic.ini
       - ./backend/entrypoint.sh:/app/entrypoint.sh
     healthcheck:
-      test:
-        - "CMD-SHELL"
-        - >
-          curl -fsS http://127.0.0.1:5253/openapi.json >/dev/null
-          || curl -fsS http://127.0.0.1:5253/health >/dev/null
-          || wget -q -O- http://127.0.0.1:5253/health >/dev/null
-          || python -c 'import socket; s=socket.create_connection(("127.0.0.1",5253),2); s.close()'
+      test: ["CMD", "curl", "-f", "http://localhost:5253/health"]
       interval: 30s
       timeout: 5s
-      retries: 5
-      start_period: 30s
+      retries: 3
+      start_period: 15s
     logging: *default-logging
     labels:
       app_name: automation_of_construction
