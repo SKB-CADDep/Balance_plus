@@ -8,8 +8,10 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 # REQUEST SCHEMAS (Входящие данные)
 # =====================================================================
 
+
 class CalculationGlobals(BaseModel):
     """Глобальные параметры расчета для всей турбины/группы."""
+
     P_fresh: float
     P_fresh_unit: str = "кгс/см²"
 
@@ -28,7 +30,7 @@ class CalculationGlobals(BaseModel):
     P_lst_leak_off: float = 0.97
     P_lst_leak_off_unit: str = "кгс/см²"
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def check_temperature_and_enthalpy(self) -> "CalculationGlobals":
         """Валидация взаимоисключающих параметров T_fresh и H_fresh."""
         t_given = self.T_fresh is not None
@@ -49,21 +51,27 @@ class CalculationGlobals(BaseModel):
 
 class ValveGroupInput(BaseModel):
     """Описание одной группы клапанов (с одинаковой геометрией)."""
+
     valve_id: int = Field(..., description="ID клапана, чью геометрию берем за основу")
     type: str = Field(..., description="Тип группы: 'СК' или 'РК'")
     valve_names: list[str] = Field(..., description="Список имен клапанов")
     quantity: int = Field(..., ge=1, description="Количество клапанов в группе")
 
     # ВОТ ЭТИ ДВЕ СТРОКИ ДОБАВЛЕНЫ ДЛЯ ЯДРА:
-    p_values: list[float] = Field(default_factory=list, description="Давления перед участками")
+    p_values: list[float] = Field(
+        default_factory=list, description="Давления перед участками"
+    )
     p_values_unit: str = "кгс/см²"
 
-    p_leak_offs: list[float] = Field(default_factory=list, description="Промежуточные отсосы")
+    p_leak_offs: list[float] = Field(
+        default_factory=list, description="Промежуточные отсосы"
+    )
     p_leak_offs_unit: str = "кгс/см²"
 
 
 class MultiCalculationParams(BaseModel):
     """Главная схема входящего запроса на мульти-расчет."""
+
     turbine_id: int
     globals: CalculationGlobals
     groups: list[ValveGroupInput]
@@ -73,8 +81,10 @@ class MultiCalculationParams(BaseModel):
 # RESPONSE SCHEMAS (Исходящие данные)
 # =====================================================================
 
+
 class GroupCalculationDetails(BaseModel):
     """Детализация результатов для одной конкретной группы."""
+
     valve_id: int
     type: str
     valve_names: list[str]
@@ -96,12 +106,14 @@ class GroupCalculationDetails(BaseModel):
 
 class TypeSummary(BaseModel):
     """Сводные агрегированные данные для конкретного типа (Σ СК или Σ РК)."""
+
     total_g: float  # Суммарный расход всех клапанов этого типа
     mixed_h: float  # Средневзвешенная энтальпия смеси отсосов
 
 
 class CalculationSummary(BaseModel):
     """Главный объект сводных таблиц."""
+
     sk: TypeSummary
     rk: TypeSummary
     srk: TypeSummary
@@ -109,6 +121,7 @@ class CalculationSummary(BaseModel):
 
 class MultiCalculationResult(BaseModel):
     """Главная схема ответа на мульти-расчет."""
+
     details: list[GroupCalculationDetails]
     summary: CalculationSummary
 
@@ -116,6 +129,7 @@ class MultiCalculationResult(BaseModel):
 # =====================================================================
 # DATABASE SCHEMAS (Хранение)
 # =====================================================================
+
 
 class CalculationResultDB(BaseModel):
     id: int
@@ -127,10 +141,3 @@ class CalculationResultDB(BaseModel):
     output_data: dict[str, Any]
 
     model_config = ConfigDict(from_attributes=True)
-
-
-class ErrorResponse(BaseModel):
-    """Общая схема для отображения ошибок API."""
-    error: bool
-    message: str
-    detail: str | None = None
