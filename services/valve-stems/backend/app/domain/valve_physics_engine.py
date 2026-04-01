@@ -8,20 +8,15 @@ from seuif97 import ph, ph2t, ph2v
 from WSAProperties import air_calc, ksi_calc, lambda_calc
 
 from app.domain.models import RawCalculationResult, ThermoConditions, ValveGeometry
-
+from app.core.exceptions import PhysicsCalculationError, SteamPropertiesError
 
 logger = logging.getLogger(__name__)
-
-class PhysicsEngineError(Exception):
-    """Специфичная ошибка математического ядра (неверные данные для формул)"""
-    def __init__(self, message: str):
-        self.message = message
-        super().__init__(self.message)
 
 
 def calculate_enthalpy_for_air(t_air_c: float) -> float:
     """Энтальпия воздуха (приближение): h ≈ 1.006 * t (кДж/кг), t — °C."""
     return float(t_air_c) * 1.006
+
 
 def _expected_suctions(count_parts: int) -> int:
     """Сколько нужно давлений отсоса эжектора по числу участков."""
@@ -30,6 +25,7 @@ def _expected_suctions(count_parts: int) -> int:
     if count_parts == 2:
         return 1
     return max(count_parts - 2, 0)
+
 
 def _suction_index_for_area(count_parts: int, area_n: int) -> int:
     if area_n == 2:
@@ -40,37 +36,62 @@ def _suction_index_for_area(count_parts: int, area_n: int) -> int:
         return 1 if count_parts == 4 else 2
     if area_n == 5:
         return 2
-    raise PhysicsEngineError(f"Нет отсоса для участка {area_n} при count_parts={count_parts}")
+    raise PhysicsCalculationError(
+        message=f"Нет отсоса для участка {area_n} при count_parts={count_parts}"
+    )
 
-def _compute_G(last_part: bool, alpha: float, p1_pa: float, p2_pa: float, v: float, area_S: float) -> float:
-    under_root = (p1_pa ** 2 - p2_pa ** 2) / (p1_pa * v)
+
+def _compute_G(
+    last_part: bool, alpha: float, p1_pa: float, p2_pa: float, v: float, area_S: float
+) -> float:
+    under_root = (p1_pa**2 - p2_pa**2) / (p1_pa * v)
     if under_root <= 0:
-        raise PhysicsEngineError(f"Отрицательное/нулевое выражение под корнем: {under_root:.3e}")
+        raise PhysicsCalculationError(
+            message="Физически невозможный режим течения: \
+                давление после участка выше начального или перепад отсутствует.",
+            details=f"P1={p1_pa} Па, P2={p2_pa} Па, под корнем={under_root:.3e}",
+        )
     g_t_per_h = alpha * area_S * sqrt(under_root) * 3.6
     if last_part:
         g_t_per_h = max(0.001, g_t_per_h)
     return g_t_per_h
 
+
 def _part_props_detection(
-    p_first_mpa: float, p_second_mpa: float, v: float, dyn_viscosity: float,
-    len_part_m: float, delta_clearance_m: float, area_S: float, ksi: float,
-    last_part: bool = False, w_min: float = 1.0, w_max: float = 1000.0,
+    p_first_mpa: float,
+    p_second_mpa: float,
+    v: float,
+    dyn_viscosity: float,
+    len_part_m: float,
+    delta_clearance_m: float,
+    area_S: float,
+    ksi: float,
+    last_part: bool = False,
+    w_min: float = 1.0,
+    w_max: float = 1000.0,
 ) -> float:
     if p_first_mpa <= p_second_mpa:
         if abs(p_first_mpa - p_second_mpa) < 1e-9:
             p_first_mpa += 0.003
         else:
-            raise PhysicsEngineError(f"Для течения нужно P_first > P_second: p1={p_first_mpa:.6f} MPa, p2={p_second_mpa:.6f} MPa")
+            raise PhysicsCalculationError(
+                message="Для течения пара давление на входе должно быть строго больше давления на выходе.",
+                details=f"P_вх={p_first_mpa:.6f} МПа, P_вых={p_second_mpa:.6f} МПа",
+            )
 
     if area_S <= 0 or delta_clearance_m <= 0 or len_part_m <= 0:
-        raise PhysicsEngineError("Некорректная геометрия участка (S, delta_clearance, len_part должны быть > 0)")
+        raise PhysicsCalculationError(
+            message="Некорректная геометрия участка (площадь, зазор, длина должны быть > 0)"
+        )
 
     p1_pa = p_first_mpa * 1e6
     p2_pa = p_second_mpa * 1e6
     kin_vis = v * dyn_viscosity
 
     if kin_vis <= 0:
-        raise PhysicsEngineError(f"Кинематическая вязкость должна быть > 0, получено: {kin_vis:.3e}")
+        raise PhysicsCalculationError(
+            message=f"Кинематическая вязкость должна быть > 0, получено: {kin_vis:.3e}"
+        )
 
     iters = 0
     while (w_max - w_min) > 1e-3:
@@ -110,7 +131,9 @@ class ValvePhysicsEngine:
         try:
             self.S = geo.clearance_m * pi * geo.diameter_m
             if self.S <= 0:
-                raise PhysicsEngineError("Площадь зазора S должна быть > 0.")
+                raise PhysicsCalculationError(
+                    message="Площадь зазора S должна быть > 0."
+                )
 
             proportional_coef = geo.radius_rounding_m / (2.0 * geo.clearance_m)
             self.KSI = ksi_calc(proportional_coef)
@@ -126,19 +149,25 @@ class ValvePhysicsEngine:
             self.din_vis_parts = [0.0] * n
             self.p_ejector: float | None = None
 
+        except PhysicsCalculationError:
+            raise
         except Exception as e:
-            logger.error("Engine: initialization failed", extra={"error": str(e)}, exc_info=True)
-            raise PhysicsEngineError(f"Инициализация провалена: {e}")
+            logger.error(
+                "Engine: initialization failed", extra={"error": str(e)}, exc_info=True
+            )
+            raise PhysicsCalculationError(
+                message="Инициализация физического ядра провалена.", details=str(e)
+            )
 
     def execute(self) -> RawCalculationResult:
         try:
             for i in range(self.geo.count_parts):
                 getattr(self, f"calculate_area{i + 1}")()
-                
-                logger.debug("Engine: section calculation", extra={
-                    "section_index": i + 1,
-                    "flow_rate_t_h": self.g_parts[i]
-                })
+
+                logger.debug(
+                    "Engine: section calculation",
+                    extra={"section_index": i + 1, "flow_rate_t_h": self.g_parts[i]},
+                )
 
             dea_g, dea_t, dea_h, dea_p = self.deaerator_options()
             ej_g, ej_t, ej_h, ej_p = self.ejector_options()
@@ -148,34 +177,39 @@ class ValvePhysicsEngine:
                 for g, t, h, p in zip(ej_g, ej_t, ej_h, ej_p, strict=True)
             ]
 
-            total_flow = sum(self.g_parts[:self.geo.count_parts])
-            
-            logger.info("Engine: calculation complete", extra={
-                "total_flow": total_flow,
-                "num_sections": self.geo.count_parts
-            })
+            total_flow = sum(self.g_parts[: self.geo.count_parts])
+
+            logger.info(
+                "Engine: calculation complete",
+                extra={"total_flow": total_flow, "num_sections": self.geo.count_parts},
+            )
 
             return RawCalculationResult(
-                gi_t_h=self.g_parts[:self.geo.count_parts],
-                pi_in_mpa=self.thermo.p_in_mpa[:self.geo.count_parts],
-                ti_c=self.t_parts[:self.geo.count_parts],
-                hi_kj_kg=self.h_parts[:self.geo.count_parts],
+                gi_t_h=self.g_parts[: self.geo.count_parts],
+                pi_in_mpa=self.thermo.p_in_mpa[: self.geo.count_parts],
+                ti_c=self.t_parts[: self.geo.count_parts],
+                hi_kj_kg=self.h_parts[: self.geo.count_parts],
                 dea_g=dea_g,
                 dea_t=dea_t,
                 dea_h=dea_h,
                 dea_p_mpa=dea_p,
-                ej_results=ej_results
+                ej_results=ej_results,
             )
-        except PhysicsEngineError:
+        except (PhysicsCalculationError, SteamPropertiesError):
             raise
         except Exception as e:
-            # СТРУКТУРНЫЙ ЛОГ: Ошибка ядра IF97 или математики
-            logger.error("Engine: physics error", extra={"error": str(e)}, exc_info=True)
-            raise PhysicsEngineError(f"Ошибка в расчётах: {e}")
+            logger.error(
+                "Engine: unexpected physics error",
+                extra={"error": str(e)},
+                exc_info=True,
+            )
+            raise PhysicsCalculationError(
+                message="Ошибка в математическом ядре \
+                    (возможно, свойства пара вышли за пределы зоны IAPWS-IF97).",
+                details=str(e),
+            )
 
     # --------------------------- Расчёты по участкам --------------------------- #
-    # ... (Весь ваш код методов calculate_area1 - 5, deaerator_options и ejector_options 
-    # остается БЕЗ ИЗМЕНЕНИЙ, логи добавлены в цикл внутри execute()) ...
     def calculate_area1(self) -> None:
         self.h_parts[0] = self.thermo.h_start_kj_kg
         self.v_parts[0] = ph2v(self.thermo.p_in_mpa[0], self.h_parts[0])
@@ -183,9 +217,14 @@ class ValvePhysicsEngine:
         self.din_vis_parts[0] = ph(self.thermo.p_in_mpa[0], self.h_parts[0], 24)
 
         self.g_parts[0] = _part_props_detection(
-            self.thermo.p_in_mpa[0], self.thermo.p_in_mpa[1],
-            self.v_parts[0], self.din_vis_parts[0],
-            self.geo.len_parts_m[0], self.geo.clearance_m, self.S, self.KSI,
+            self.thermo.p_in_mpa[0],
+            self.thermo.p_in_mpa[1],
+            self.v_parts[0],
+            self.din_vis_parts[0],
+            self.geo.len_parts_m[0],
+            self.geo.clearance_m,
+            self.S,
+            self.KSI,
         )
 
     def calculate_area2(self) -> None:
@@ -200,9 +239,14 @@ class ValvePhysicsEngine:
             self.t_parts[1] = ph(self.thermo.p_in_mpa[1], self.h_parts[1], 1)
             self.din_vis_parts[1] = ph(self.thermo.p_in_mpa[1], self.h_parts[1], 24)
             self.g_parts[1] = _part_props_detection(
-                self.thermo.p_in_mpa[1], self.p_ejector,
-                self.v_parts[1], self.din_vis_parts[1],
-                self.geo.len_parts_m[1], self.geo.clearance_m, self.S, self.KSI,
+                self.thermo.p_in_mpa[1],
+                self.p_ejector,
+                self.v_parts[1],
+                self.din_vis_parts[1],
+                self.geo.len_parts_m[1],
+                self.geo.clearance_m,
+                self.S,
+                self.KSI,
             )
         else:
             self.h_parts[0] = self.thermo.h_start_kj_kg
@@ -210,9 +254,14 @@ class ValvePhysicsEngine:
             self.t_parts[0] = ph2t(self.thermo.p_in_mpa[0], self.h_parts[0])
             self.din_vis_parts[0] = ph(self.thermo.p_in_mpa[0], self.h_parts[0], 24)
             self.g_parts[0] = _part_props_detection(
-                self.thermo.p_in_mpa[0], self.p_ejector,
-                self.v_parts[0], self.din_vis_parts[0],
-                self.geo.len_parts_m[0], self.geo.clearance_m, self.S, self.KSI,
+                self.thermo.p_in_mpa[0],
+                self.p_ejector,
+                self.v_parts[0],
+                self.din_vis_parts[0],
+                self.geo.len_parts_m[0],
+                self.geo.clearance_m,
+                self.S,
+                self.KSI,
             )
 
             self.h_parts[1] = self.h_air
@@ -220,9 +269,14 @@ class ValvePhysicsEngine:
             self.v_parts[1] = air_calc(self.t_parts[1], 1)
             self.din_vis_parts[1] = air_calc(self.t_parts[1], 2)
             self.g_parts[1] = _part_props_detection(
-                0.1013, self.p_ejector,
-                self.v_parts[1], self.din_vis_parts[1],
-                self.geo.len_parts_m[1], self.geo.clearance_m, self.S, self.KSI,
+                0.1013,
+                self.p_ejector,
+                self.v_parts[1],
+                self.din_vis_parts[1],
+                self.geo.len_parts_m[1],
+                self.geo.clearance_m,
+                self.S,
+                self.KSI,
                 last_part=True,
             )
 
@@ -238,9 +292,14 @@ class ValvePhysicsEngine:
             self.t_parts[2] = ph(self.thermo.p_in_mpa[2], self.h_parts[2], 1)
             self.din_vis_parts[2] = ph(self.thermo.p_in_mpa[2], self.h_parts[2], 24)
             self.g_parts[2] = _part_props_detection(
-                self.thermo.p_in_mpa[2], self.p_ejector,
-                self.v_parts[2], self.din_vis_parts[2],
-                self.geo.len_parts_m[2], self.geo.clearance_m, self.S, self.KSI,
+                self.thermo.p_in_mpa[2],
+                self.p_ejector,
+                self.v_parts[2],
+                self.din_vis_parts[2],
+                self.geo.len_parts_m[2],
+                self.geo.clearance_m,
+                self.S,
+                self.KSI,
             )
         else:
             self.h_parts[2] = self.h_air
@@ -248,9 +307,14 @@ class ValvePhysicsEngine:
             self.v_parts[2] = air_calc(self.t_parts[2], 1)
             self.din_vis_parts[2] = air_calc(self.t_parts[2], 2)
             self.g_parts[2] = _part_props_detection(
-                0.1013, self.p_ejector,
-                self.v_parts[2], self.din_vis_parts[2],
-                self.geo.len_parts_m[2], self.geo.clearance_m, self.S, self.KSI,
+                0.1013,
+                self.p_ejector,
+                self.v_parts[2],
+                self.din_vis_parts[2],
+                self.geo.len_parts_m[2],
+                self.geo.clearance_m,
+                self.S,
+                self.KSI,
                 last_part=True,
             )
 
@@ -266,9 +330,14 @@ class ValvePhysicsEngine:
             self.t_parts[3] = ph(self.thermo.p_in_mpa[3], self.h_parts[3], 1)
             self.din_vis_parts[3] = ph(self.thermo.p_in_mpa[3], self.h_parts[3], 24)
             self.g_parts[3] = _part_props_detection(
-                self.thermo.p_in_mpa[3], self.p_ejector,
-                self.v_parts[3], self.din_vis_parts[3],
-                self.geo.len_parts_m[3], self.geo.clearance_m, self.S, self.KSI,
+                self.thermo.p_in_mpa[3],
+                self.p_ejector,
+                self.v_parts[3],
+                self.din_vis_parts[3],
+                self.geo.len_parts_m[3],
+                self.geo.clearance_m,
+                self.S,
+                self.KSI,
             )
         else:
             self.h_parts[3] = self.h_air
@@ -276,9 +345,14 @@ class ValvePhysicsEngine:
             self.v_parts[3] = air_calc(self.t_parts[3], 1)
             self.din_vis_parts[3] = air_calc(self.t_parts[3], 2)
             self.g_parts[3] = _part_props_detection(
-                0.1013, self.p_ejector,
-                self.v_parts[3], self.din_vis_parts[3],
-                self.geo.len_parts_m[3], self.geo.clearance_m, self.S, self.KSI,
+                0.1013,
+                self.p_ejector,
+                self.v_parts[3],
+                self.din_vis_parts[3],
+                self.geo.len_parts_m[3],
+                self.geo.clearance_m,
+                self.S,
+                self.KSI,
                 last_part=True,
             )
 
@@ -293,9 +367,14 @@ class ValvePhysicsEngine:
         self.v_parts[4] = air_calc(self.t_parts[4], 1)
         self.din_vis_parts[4] = air_calc(self.t_parts[4], 2)
         self.g_parts[4] = _part_props_detection(
-            0.1013, self.p_ejector,
-            self.v_parts[4], self.din_vis_parts[4],
-            self.geo.len_parts_m[4], self.geo.clearance_m, self.S, self.KSI,
+            0.1013,
+            self.p_ejector,
+            self.v_parts[4],
+            self.din_vis_parts[4],
+            self.geo.len_parts_m[4],
+            self.geo.clearance_m,
+            self.S,
+            self.KSI,
             last_part=True,
         )
 
@@ -313,16 +392,23 @@ class ValvePhysicsEngine:
         elif self.geo.count_parts == 4:
             g = (self.g_parts[0] - self.g_parts[1] - self.g_parts[2]) * cv
         elif self.geo.count_parts == 5:
-            g = (self.g_parts[0] - self.g_parts[1] - self.g_parts[2] - self.g_parts[3]) * cv
+            g = (
+                self.g_parts[0] - self.g_parts[1] - self.g_parts[2] - self.g_parts[3]
+            ) * cv
         else:
-            raise PhysicsEngineError("Неверное количество участков.")
+            raise PhysicsCalculationError(
+                message="Неверное количество участков клапана для расчета отсоса в деаэратор.",
+                details=f"count_parts={self.geo.count_parts} (поддерживается от 2 до 5)",
+            )
 
         t_dea = ph(p_dea, h_dea, 1)
         return g, t_dea, h_dea, p_dea
 
-    def ejector_options(self) -> tuple[list[float], list[float], list[float], list[float]]:
+    def ejector_options(
+        self,
+    ) -> tuple[list[float], list[float], list[float], list[float]]:
         n = _expected_suctions(self.geo.count_parts)
-        g_list, t_list, h_list, p_list = [0.0]*n, [0.0]*n, [0.0]*n, [0.0]*n
+        g_list, t_list, h_list, p_list = [0.0] * n, [0.0] * n, [0.0] * n, [0.0] * n
 
         if n == 0:
             return g_list, t_list, h_list, p_list
@@ -331,14 +417,19 @@ class ValvePhysicsEngine:
         if self.geo.count_parts == 2:
             den = max(self.g_parts[1] + self.g_parts[0], 1e-9)
             g_list[0] = (self.g_parts[1] + self.g_parts[0]) * cv
-            h_list[0] = (self.h_parts[1] * self.g_parts[1] + self.h_parts[0] * self.g_parts[0]) / den
+            h_list[0] = (
+                self.h_parts[1] * self.g_parts[1] + self.h_parts[0] * self.g_parts[0]
+            ) / den
             p_list[0] = self.thermo.p_suctions_mpa[0]
             t_list[0] = ph(p_list[0], h_list[0], 1)
 
         elif self.geo.count_parts == 3:
             den = max(self.g_parts[2] + self.g_parts[1], 1e-9)
             g_list[0] = (self.g_parts[2] + self.g_parts[1]) * cv
-            h_list[0] = (self.h_parts[2] * 4.1868 * self.g_parts[2] + self.h_parts[1] * self.g_parts[1]) / den
+            h_list[0] = (
+                self.h_parts[2] * 4.1868 * self.g_parts[2]
+                + self.h_parts[1] * self.g_parts[1]
+            ) / den
             p_list[0] = self.thermo.p_suctions_mpa[0]
             t_list[0] = ph(p_list[0], h_list[0], 1)
 
@@ -349,10 +440,17 @@ class ValvePhysicsEngine:
 
             den2 = max(self.g_parts[3] + self.g_parts[2], 1e-9)
             g2 = abs(self.g_parts[2] - self.g_parts[3]) * cv
-            h2 = (self.h_parts[3] * self.g_parts[3] + self.h_parts[2] * self.g_parts[2]) / den2
+            h2 = (
+                self.h_parts[3] * self.g_parts[3] + self.h_parts[2] * self.g_parts[2]
+            ) / den2
             p2 = self.thermo.p_suctions_mpa[1]
             t2 = ph(p2, h2, 1)
-            g_list[:2], h_list[:2], p_list[:2], t_list[:2] = [g1, g2], [h1, h2], [p1, p2], [t1, t2]
+            g_list[:2], h_list[:2], p_list[:2], t_list[:2] = (
+                [g1, g2],
+                [h1, h2],
+                [p1, p2],
+                [t1, t2],
+            )
 
         elif self.geo.count_parts == 5:
             g1 = max(self.g_parts[1] - self.g_parts[2] - self.g_parts[3], 0.0) * cv
@@ -365,9 +463,16 @@ class ValvePhysicsEngine:
 
             den3 = max(self.g_parts[4] + self.g_parts[3], 1e-9)
             g3 = (self.g_parts[3] + self.g_parts[4]) * cv
-            h3 = (self.h_parts[4] * self.g_parts[4] + self.h_parts[3] * self.g_parts[3]) / den3
+            h3 = (
+                self.h_parts[4] * self.g_parts[4] + self.h_parts[3] * self.g_parts[3]
+            ) / den3
             p3 = self.thermo.p_suctions_mpa[2]
             t3 = ph(p3, h3, 1)
-            g_list[:3], h_list[:3], p_list[:3], t_list[:3] = [g1, g2, g3], [h1, h2, h3], [p1, p2, p3], [t1, t2, t3]
+            g_list[:3], h_list[:3], p_list[:3], t_list[:3] = (
+                [g1, g2, g3],
+                [h1, h2, h3],
+                [p1, p2, p3],
+                [t1, t2, t3],
+            )
 
         return g_list, t_list, h_list, p_list

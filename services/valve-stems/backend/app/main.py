@@ -8,15 +8,19 @@ from fastapi.routing import APIRoute
 from app.api.main import api_router
 from app.core.config import settings
 from app.core.logging_config import setup_logging
+from app.core.error_handlers import setup_exception_handlers
 from app.middleware.logging_middleware import RequestLoggingMiddleware
+
 
 log_level = os.getenv("LOG_LEVEL", "INFO")
 setup_logging(log_level)
 
 logger = logging.getLogger(__name__)
 
+
 def custom_generate_unique_id(route: APIRoute) -> str:
     return f"{route.tags[0]}-{route.name}"
+
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -27,7 +31,6 @@ app = FastAPI(
 
 app.add_middleware(RequestLoggingMiddleware)
 
-# ИСПРАВЛЕННЫЙ CORS: разрешаем любые адреса (магическая строка allow_origin_regex=".*")
 app.add_middleware(
     CORSMiddleware,
     allow_origin_regex=".*",
@@ -35,6 +38,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+setup_exception_handlers(app)
 
 # Подключаем ВСЕ роуты одной строкой
 app.include_router(api_router, prefix=settings.API_V1_STR)
