@@ -1,20 +1,20 @@
 import logging
-
 from sqlalchemy import and_
 from sqlalchemy.orm import Session, joinedload
 
 from app.models import Turbine, Valve
 from app.schemas import TurbineValves, ValveInfo
-
+from app.core.exceptions import EntityNotFoundError
 
 logger = logging.getLogger(__name__)
+
 
 def search_turbines(
     db: Session,
     query: str | None = None,
     station: str | None = None,
     factory_num: str | None = None,
-    valve_drawing: str | None = None
+    valve_drawing: str | None = None,
 ) -> list[Turbine]:
     try:
         sql_query = db.query(Turbine).options(joinedload(Turbine.valves))
@@ -27,7 +27,9 @@ def search_turbines(
         if factory_num:
             filters.append(Turbine.factory_number.ilike(f"%{factory_num}%"))
         if valve_drawing:
-            sql_query = sql_query.join(Turbine.valves).filter(Valve.name.ilike(f"%{valve_drawing}%"))
+            sql_query = sql_query.join(Turbine.valves).filter(
+                Valve.name.ilike(f"%{valve_drawing}%")
+            )
 
         if filters:
             sql_query = sql_query.filter(and_(*filters))
@@ -37,41 +39,33 @@ def search_turbines(
         logger.error(f"Ошибка поиска турбин: {e!s}")
         return []
 
-def get_turbine_by_id(db: Session, turbine_id: int) -> Turbine | None:
-    return db.query(Turbine).filter(Turbine.id == turbine_id).first()
 
-# Новая функция для нашего обновленного поиска фронтенда
-def get_valves_by_turbine_id(db: Session, turbine_id: int) -> TurbineValves | None:
-    try:
-        turbine = db.query(Turbine).filter(Turbine.id == turbine_id).first()
-        if not turbine:
-            return None
+def get_turbine_by_id(db: Session, turbine_id: int) -> Turbine:
+    turbine = db.query(Turbine).filter(Turbine.id == turbine_id).first()
+    if not turbine:
+        raise EntityNotFoundError(entity_name="Турбина", entity_id=turbine_id)
+    return turbine
 
-        valves = turbine.valves
-        valve_info_list = [ValveInfo.model_validate(v) for v in valves]
 
-        return TurbineValves(
-            count=len(valve_info_list),
-            valves=valve_info_list
+def get_valves_by_turbine_id(db: Session, turbine_id: int) -> TurbineValves:
+    turbine = db.query(Turbine).filter(Turbine.id == turbine_id).first()
+    if not turbine:
+        raise EntityNotFoundError(entity_name="Турбина", entity_id=turbine_id)
+
+    valves = turbine.valves
+    valve_info_list = [ValveInfo.model_validate(v) for v in valves]
+
+    return TurbineValves(count=len(valve_info_list), valves=valve_info_list)
+
+
+def get_valves_by_turbine(db: Session, turbine_name: str) -> TurbineValves:
+    turbine = db.query(Turbine).filter(Turbine.name == turbine_name).first()
+    if not turbine:
+        raise EntityNotFoundError(
+            entity_name="Турбина по имени", entity_id=turbine_name
         )
-    except Exception as e:
-        logger.error(f"Ошибка БД при получении клапанов по ID: {e!s}")
-        return None
 
-# СТАРАЯ функция для обратной совместимости (чтобы не сломать calculations.py)
-def get_valves_by_turbine(db: Session, turbine_name: str) -> TurbineValves | None:
-    try:
-        turbine = db.query(Turbine).filter(Turbine.name == turbine_name).first()
-        if not turbine:
-            return None
+    valves = turbine.valves
+    valve_info_list = [ValveInfo.model_validate(v) for v in valves]
 
-        valves = turbine.valves
-        valve_info_list = [ValveInfo.model_validate(v) for v in valves]
-
-        return TurbineValves(
-            count=len(valve_info_list),
-            valves=valve_info_list
-        )
-    except Exception as e:
-        logger.error(f"Ошибка базы данных при получении клапанов по турбине: {e!s}")
-        raise
+    return TurbineValves(count=len(valve_info_list), valves=valve_info_list)

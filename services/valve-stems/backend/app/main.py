@@ -8,8 +8,8 @@ from fastapi.routing import APIRoute
 from app.api.main import api_router
 from app.core.config import settings
 from app.core.logging_config import setup_logging
+from app.core.error_handlers import setup_exception_handlers
 from app.middleware.logging_middleware import RequestLoggingMiddleware
-
 from app.api.routes import health
 
 log_level = os.getenv("LOG_LEVEL", "INFO")
@@ -27,6 +27,7 @@ logging.getLogger("uvicorn.access").addFilter(HealthCheckFilter())
 def custom_generate_unique_id(route: APIRoute) -> str:
     return f"{route.tags[0]}-{route.name}"
 
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     openapi_url="/api/v1/openapi.json",
@@ -36,7 +37,6 @@ app = FastAPI(
 
 app.add_middleware(RequestLoggingMiddleware)
 
-# ИСПРАВЛЕННЫЙ CORS: разрешаем любые адреса (магическая строка allow_origin_regex=".*")
 app.add_middleware(
     CORSMiddleware,
     allow_origin_regex=".*",
@@ -45,10 +45,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# === ПОДКЛЮЧАЕМ HEALTHCHECK БЕЗ ПРЕФИКСА ===
-app.include_router(health.router)
+setup_exception_handlers(app)
 
-# Подключаем ВСЕ роуты одной строкой
+app.include_router(health.router) # healthcheck
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
 

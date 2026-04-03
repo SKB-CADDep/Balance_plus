@@ -1,31 +1,30 @@
 import logging
-
 from sqlalchemy.orm import Session
-
 from app.models import Valve
-
+from app.core.exceptions import EntityNotFoundError
 
 logger = logging.getLogger(__name__)
 
-def get_valve_by_id(db: Session, valve_id: int) -> Valve | None:
+
+def get_valve_by_id(db: Session, valve_id: int) -> Valve:
     """
     Получает один клапан (шток) по его ID.
+    Если не найден - выбрасывает EntityNotFoundError.
     """
-    try:
-        valve = db.query(Valve).filter(Valve.id == valve_id).first()
-        return valve
-    except Exception as e:
-        logger.error(f"Ошибка базы данных при получении клапана по ID {valve_id}: {e!s}")
-        return None
+    valve = db.query(Valve).filter(Valve.id == valve_id).first()
+    if not valve:
+        raise EntityNotFoundError(entity_name="Клапан (шток)", entity_id=valve_id)
+    return valve
 
-def get_valve_by_drawing(db: Session, valve_drawing: str) -> Valve | None:
+
+def get_valve_by_drawing(db: Session, valve_drawing: str) -> Valve:
     """
     Получает клапан по его чертежному номеру (имени).
+    Если не найден - выбрасывает EntityNotFoundError.
     """
-    try:
-        # В модели Valve поле называется 'name', но в контексте чертежа это оно и есть
-        valve = db.query(Valve).filter(Valve.name == valve_drawing).first()
-        return valve
-    except Exception as e:
-        logger.error(f"Ошибка БД при поиске клапана по чертежу {valve_drawing}: {e!s}")
-        return None
+    valve = db.query(Valve).filter(Valve.name == valve_drawing).first()
+    if not valve:
+        raise EntityNotFoundError(
+            entity_name="Клапан (шток) по чертежу", entity_id=valve_drawing
+        )
+    return valve
