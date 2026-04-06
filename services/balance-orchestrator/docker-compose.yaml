@@ -1,0 +1,24 @@
+services:
+  backend:
+    build: ./backend
+    container_name: balance_backend
+    restart: always
+    env_file:
+      - ./backend/.env
+    ports:
+      - "8005:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      start_period: 10s
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+  frontend:
+    build: ./frontend
+    container_name: balance_frontend
+    restart: always
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend

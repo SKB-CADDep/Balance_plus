@@ -11,7 +11,9 @@ from app.schemas import ValveInfo
 
 
 # Настройка логирования
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
@@ -39,10 +41,14 @@ class DiagramModifier:
             logger.info(f"Шаблон XML успешно загружен из {self.template_path}")
         except ET.ParseError as e:
             logger.error(f"Ошибка парсинга XML-файла: {e}")
-            raise HTTPException(status_code=500, detail=f"Ошибка парсинга XML-файла: {e}")
+            raise HTTPException(
+                status_code=500, detail=f"Ошибка парсинга XML-файла: {e}"
+            )
         except FileNotFoundError:
             logger.error(f"Файл шаблона {self.template_path} не найден")
-            raise HTTPException(status_code=404, detail=f"Файл шаблона {self.template_path} не найден")
+            raise HTTPException(
+                status_code=404, detail=f"Файл шаблона {self.template_path} не найден"
+            )
 
     def update_parameter(self, cell_id: str, new_value: str) -> None:
         """
@@ -80,7 +86,9 @@ class DiagramModifier:
             logger.info(f"Изменённый XML-файл сохранён по пути: {output_path}")
         except Exception as e:
             logger.error(f"Ошибка сохранения XML-файла: {e}")
-            raise HTTPException(status_code=500, detail=f"Ошибка сохранения XML-файла: {e}")
+            raise HTTPException(
+                status_code=500, detail=f"Ошибка сохранения XML-файла: {e}"
+            )
 
 
 # Класс для сопоставления параметров ValveInfo с элементами XML
@@ -100,29 +108,29 @@ class ParameterMapper:
             "clearance": {
                 "cell_id": f"clearance_{count_parts}_parts",
                 "label": "delt",
-                "format": lambda x: f"{x:.2f}" if x is not None else None
+                "format": lambda x: f"{x:.2f}" if x is not None else None,
             },
             "diameter": {
                 "cell_id": f"diameter_{count_parts}_parts",
                 "label": "D",
-                "format": lambda x: f"{int(x)}" if x is not None else None
+                "format": lambda x: f"{int(x)}" if x is not None else None,
             },
             "round_radius": {
                 "cell_id": f"round_radius_{count_parts}_parts",
                 "label": "R",
-                "format": lambda x: f"{x:.2f}" if x is not None else None
-            }
+                "format": lambda x: f"{x:.2f}" if x is not None else None,
+            },
         }
         # Добавляем маппинг для длин секций в зависимости от count_parts
         for i in range(1, count_parts + 1):
             self.mapping[f"len_part{i}"] = {
                 "cell_id": f"len_part{i}_{count_parts}_parts",
                 "label": f"L{i}",
-                "format": lambda x: f"{int(x)}" if x is not None else None
+                "format": lambda x: f"{int(x)}" if x is not None else None,
             }
 
     def get_html_value(self, label: str, formatted_value: str) -> str:
-        """        Формирует HTML-строку для атрибута value в <mxCell>.
+        """Формирует HTML-строку для атрибута value в <mxCell>.
 
         Args:
             label (str): Название параметра (например, 'delt', 'D').
@@ -134,7 +142,7 @@ class ParameterMapper:
         return (
             f'<font style="font-size: 18px;" face="Times New Roman">'
             f'<b style="">{label} = {formatted_value}</b>'
-            f'</font>'
+            f"</font>"
         )
 
     def map_parameters(self, valve_info: ValveInfo) -> dict[str, str]:
@@ -180,7 +188,7 @@ class DiagramGenerator:
             2: os.path.join(templates_dir, "template_2_parts.xml"),
             3: os.path.join(templates_dir, "template_3_parts.xml"),
             4: os.path.join(templates_dir, "template_4_parts.xml"),
-            5: os.path.join(templates_dir, "template_5_parts.xml")
+            5: os.path.join(templates_dir, "template_5_parts.xml"),
         }
 
     def _validate_count_parts(self, count_parts: int | None) -> int:
@@ -198,15 +206,21 @@ class DiagramGenerator:
         """
         if count_parts is None:
             logger.error("Параметр count_parts не указан")
-            raise HTTPException(status_code=400, detail="Параметр count_parts обязателен")
+            raise HTTPException(
+                status_code=400, detail="Параметр count_parts обязателен"
+            )
         if count_parts == 1:
             logger.error("Количество частей не может быть равно 1")
-            raise HTTPException(status_code=400, detail="Количество частей не может быть равно 1")
+            raise HTTPException(
+                status_code=400, detail="Количество частей не может быть равно 1"
+            )
         if count_parts not in self.template_mapping:
-            logger.error(f"Недопустимое количество частей: {count_parts}. Допустимые значения: 2, 3, 4, 5")
+            logger.error(
+                f"Недопустимое количество частей: {count_parts}. Допустимые значения: 2, 3, 4, 5"
+            )
             raise HTTPException(
                 status_code=400,
-                detail=f"Недопустимое количество частей: {count_parts}. Допустимые значения: 2, 3, 4, 5"
+                detail=f"Недопустимое количество частей: {count_parts}. Допустимые значения: 2, 3, 4, 5",
             )
         return count_parts
 
@@ -224,8 +238,7 @@ class DiagramGenerator:
         if not os.path.exists(template_path):
             logger.error(f"Шаблон для {count_parts} частей не найден: {template_path}")
             raise HTTPException(
-                status_code=404,
-                detail=f"Шаблон для {count_parts} частей не найден"
+                status_code=404, detail=f"Шаблон для {count_parts} частей не найден"
             )
         return template_path
 
@@ -287,8 +300,12 @@ except Exception as e:
     diagram_generator = None
 
 
-@router.post("/generate_scheme", response_class=FileResponse,
-             summary="Сгенерировать схему Draw.io", tags=["diagrams"])
+@router.post(
+    "/generate_scheme",
+    response_class=FileResponse,
+    summary="Сгенерировать схему Draw.io",
+    tags=["diagrams"],
+)
 async def generate_scheme(valve_info: ValveInfo):
     """
     Эндпоинт для генерации XML-схемы с обновлёнными параметрами.
@@ -303,7 +320,9 @@ async def generate_scheme(valve_info: ValveInfo):
         HTTPException: Если произошла ошибка при генерации файла.
     """
     if diagram_generator is None:
-        raise HTTPException(status_code=500, detail="Генератор диаграмм не инициализирован")
+        raise HTTPException(
+            status_code=500, detail="Генератор диаграмм не инициализирован"
+        )
 
     try:
         # Генерируем XML-файл с обновлёнными параметрами
@@ -312,14 +331,18 @@ async def generate_scheme(valve_info: ValveInfo):
         # Проверяем, что файл был создан
         if not os.path.exists(output_path):
             logger.error(f"Файл {output_path} не был создан")
-            raise HTTPException(status_code=500, detail="Ошибка: сгенерированный файл не найден")
+            raise HTTPException(
+                status_code=500, detail="Ошибка: сгенерированный файл не найден"
+            )
 
         # Возвращаем файл для скачивания
         return FileResponse(
             path=output_path,
             media_type="application/xml",
             filename=os.path.basename(output_path),
-            headers={"Content-Disposition": f"attachment; filename={os.path.basename(output_path)}"}
+            headers={
+                "Content-Disposition": f"attachment; filename={os.path.basename(output_path)}"
+            },
         )
     except HTTPException as e:
         raise e
