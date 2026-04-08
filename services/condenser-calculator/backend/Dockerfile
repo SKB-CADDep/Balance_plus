@@ -7,7 +7,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    POETRY_VERSION=1.8.2 \
+    POETRY_VERSION=2.0.1 \
     POETRY_VIRTUALENVS_CREATE=false
 
 RUN pip install "poetry==$POETRY_VERSION"
