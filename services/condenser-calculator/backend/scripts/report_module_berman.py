@@ -1,6 +1,5 @@
 from _common import setup_path
 
-
 setup_path()
 
 # generate_berman_report.py

@@ -4,7 +4,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Condenser Calculator API"
     API_V1_STR: str = "/api/v1"
-    
+
     # Настройки подключения к PostgreSQL
     POSTGRES_SERVER: str = "db"
     POSTGRES_USER: str = "condenser"

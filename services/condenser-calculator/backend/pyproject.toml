@@ -40,3 +40,19 @@ addopts = "-v --tb=short"
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+    "E", "F", "B", "I", "W", "C", "UP", "RUF", "ANN", "ASYNC", "PLC"
+]
+ignore = ["E501", "ANN401", "B008"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
