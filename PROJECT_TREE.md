@@ -1,7 +1,7 @@
 # 🌳 Дерево проекта: Balance_plus-1
 
-> Автоматически сгенерировано: `2026-03-04 12:11:03`  
-> Директорий: **102** | Файлов: **319**
+> Автоматически сгенерировано: `2026-04-06 15:18:28`  
+> Директорий: **117** | Файлов: **383**
 
 ```
 Balance_plus-1/
@@ -101,9 +101,15 @@ Balance_plus-1/
 │   │   │   ├── 📁 tests/
 │   │   │   │   ├── 📁 api/
 │   │   │   │   │   └── 📁 routes/
+│   │   │   │   │       ├── ⚙️ __group__.yml
+│   │   │   │   │       ├── 🐍 test_berman_demo_calc.py
 │   │   │   │   │       ├── 🐍 test_calculations.py
+│   │   │   │   │       ├── ⚙️ test_calculations.tavern.yaml
 │   │   │   │   │       ├── 🐍 test_projects.py
-│   │   │   │   │       └── 🐍 test_tasks.py
+│   │   │   │   │       ├── 🐍 test_tasks.py
+│   │   │   │   │       └── ⚙️ test_turbines.db.yaml
+│   │   │   │   ├── 📁 unit/
+│   │   │   │   │   └── ⚙️ __group__.yml
 │   │   │   │   ├── 🐍 conftest.py
 │   │   │   │   └── 📖 README.md
 │   │   │   ├── 📄 .env.example
@@ -111,96 +117,150 @@ Balance_plus-1/
 │   │   │   ├── 🔒 poetry.lock
 │   │   │   ├── 📦 pyproject.toml
 │   │   │   └── ⚙️ pytest.ini
-│   │   └── 📁 frontend/
-│   │       ├── 📁 .vscode/
-│   │       │   └── 📋 extensions.json
-│   │       ├── 📁 public/
-│   │       │   └── 🖼️ vite.svg
-│   │       ├── 📁 src/
-│   │       │   ├── 📁 assets/
-│   │       │   │   └── 🖼️ vue.svg
-│   │       │   ├── 📁 components/
-│   │       │   │   ├── 📁 apps/
-│   │       │   │   │   └── 📄 WsaWrapper.vue
-│   │       │   │   ├── 📁 layout/
-│   │       │   │   │   └── 📄 Header.vue
-│   │       │   │   ├── 📁 task-board/
-│   │       │   │   │   ├── 📄 CreateTaskModal.vue
-│   │       │   │   │   ├── 📄 NewTaskCard.vue
-│   │       │   │   │   └── 📄 TaskCard.vue
-│   │       │   │   ├── 📁 ui/
-│   │       │   │   │   └── 📄 Badge.vue
-│   │       │   │   └── 📄 HelloWorld.vue
-│   │       │   ├── 📄 App.vue
-│   │       │   ├── 📜 main.ts
-│   │       │   └── 🎨 style.css
-│   │       ├── 🙈 .gitignore
-│   │       ├── 🐳 Dockerfile
-│   │       ├── 🌐 index.html
-│   │       ├── 📄 nginx.conf
-│   │       ├── 📋 package-lock.json
-│   │       ├── 📋 package.json
-│   │       ├── 📖 README.md
-│   │       ├── 📋 tsconfig.app.json
-│   │       ├── 📋 tsconfig.json
-│   │       ├── 📋 tsconfig.node.json
-│   │       └── 📜 vite.config.ts
+│   │   ├── 📁 frontend/
+│   │   │   ├── 📁 .vscode/
+│   │   │   │   └── 📋 extensions.json
+│   │   │   ├── 📁 public/
+│   │   │   │   └── 🖼️ vite.svg
+│   │   │   ├── 📁 src/
+│   │   │   │   ├── 📁 assets/
+│   │   │   │   │   └── 🖼️ vue.svg
+│   │   │   │   ├── 📁 components/
+│   │   │   │   │   ├── 📁 apps/
+│   │   │   │   │   │   └── 📄 WsaWrapper.vue
+│   │   │   │   │   ├── 📁 layout/
+│   │   │   │   │   │   └── 📄 Header.vue
+│   │   │   │   │   ├── 📁 task-board/
+│   │   │   │   │   │   ├── 📄 CreateTaskModal.vue
+│   │   │   │   │   │   ├── 📄 NewTaskCard.vue
+│   │   │   │   │   │   └── 📄 TaskCard.vue
+│   │   │   │   │   ├── 📁 ui/
+│   │   │   │   │   │   └── 📄 Badge.vue
+│   │   │   │   │   └── 📄 HelloWorld.vue
+│   │   │   │   ├── 📄 App.vue
+│   │   │   │   ├── 📜 main.ts
+│   │   │   │   └── 🎨 style.css
+│   │   │   ├── 🙈 .gitignore
+│   │   │   ├── 🐳 Dockerfile
+│   │   │   ├── 🌐 index.html
+│   │   │   ├── 📄 nginx.conf
+│   │   │   ├── 📋 package-lock.json
+│   │   │   ├── 📋 package.json
+│   │   │   ├── 📖 README.md
+│   │   │   ├── 📋 tsconfig.app.json
+│   │   │   ├── 📋 tsconfig.json
+│   │   │   ├── 📋 tsconfig.node.json
+│   │   │   └── 📜 vite.config.ts
+│   │   └── ⚙️ docker-compose.yaml
 │   ├── 📁 condenser-calculator/
-│   │   └── 📁 backend/
-│   │       ├── 📁 app/
-│   │       │   ├── 📁 utils/
-│   │       │   │   ├── 🐍 __init__.py
-│   │       │   │   ├── 🐍 base_for_selection.py
-│   │       │   │   ├── 🐍 berman_strategy.py
-│   │       │   │   ├── 🐍 calculation_engine.py
-│   │       │   │   ├── 🐍 Constants.py
-│   │       │   │   ├── 🐍 division_range.py
-│   │       │   │   ├── 🐍 exceptions_method.py
-│   │       │   │   ├── 🐍 metrovickers_strategy.py
-│   │       │   │   ├── 🐍 selection_methods.py
-│   │       │   │   ├── 🐍 table_models.py
-│   │       │   │   ├── 🐍 TPS_module.py
-│   │       │   │   ├── 🐍 uniconv.py
-│   │       │   │   └── 🐍 VKU_strategy.py
-│   │       │   └── 🐍 __init__.py
-│   │       ├── 📁 scripts/
-│   │       │   ├── 🐍 _common.py
-│   │       │   ├── 🐍 compare_selection_methods.py
-│   │       │   ├── 🐍 generate_report_on_selecting_values.py
-│   │       │   ├── 🐍 report_calculation_engine.py
-│   │       │   ├── 🐍 report_metrovickers_strategy.py
-│   │       │   ├── 🐍 report_module_berman.py
-│   │       │   ├── 🐍 report_TPS_module.py
-│   │       │   ├── 🐍 validate_exceptions_method.py
-│   │       │   ├── 🐍 validate_TPS_module.py
-│   │       │   └── 🐍 validate_vku.py
-│   │       ├── 📁 tests/
-│   │       │   ├── 📁 unit/
-│   │       │   │   ├── 🐍 __init__.py
-│   │       │   │   ├── 🐍 test_division_range.py
-│   │       │   │   ├── 🐍 test_metrovickers_strategy.py
-│   │       │   │   ├── 🐍 test_module_berman.py
-│   │       │   │   ├── 🐍 test_selecting_values.py
-│   │       │   │   ├── 🐍 test_table_models.py
-│   │       │   │   ├── 🐍 test_uniconv.py
-│   │       │   │   └── 🐍 test_VKU_strategy.py
-│   │       │   ├── 📁 validation/
-│   │       │   │   ├── 📁 berman/
-│   │       │   │   │   ├── 🐍 __init__.py
-│   │       │   │   │   ├── 🐍 conftest.py
-│   │       │   │   │   ├── 🐍 test_mode_1.py
-│   │       │   │   │   ├── 🐍 test_mode_2.py
-│   │       │   │   │   ├── 🐍 test_mode_3.py
-│   │       │   │   │   ├── 🐍 test_mode_4.py
-│   │       │   │   │   └── 🐍 test_verification.py
-│   │       │   │   └── 🐍 __init__.py
-│   │       │   ├── 🐍 __init__.py
-│   │       │   ├── 🐍 conftest.py
-│   │       │   └── 📖 README.md
-│   │       ├── 📄 .env
-│   │       ├── 🔒 poetry.lock
-│   │       ├── 📦 pyproject.toml
-│   │       └── 📖 README.md
+│   │   ├── 📁 backend/
+│   │   │   ├── 📁 alembic/
+│   │   │   ├── 📁 app/
+│   │   │   │   ├── 📁 adapters/
+│   │   │   │   │   ├── 🐍 __init__.py
+│   │   │   │   │   └── 🐍 calculation_adapter.py
+│   │   │   │   ├── 📁 api/
+│   │   │   │   │   ├── 📁 routes/
+│   │   │   │   │   │   ├── 🐍 __init__.py
+│   │   │   │   │   │   ├── 🐍 calculations.py
+│   │   │   │   │   │   ├── 🐍 condensers.py
+│   │   │   │   │   │   ├── 🐍 health.py
+│   │   │   │   │   │   └── 🐍 materials.py
+│   │   │   │   │   ├── 🐍 __init__.py
+│   │   │   │   │   └── 🐍 main.py
+│   │   │   │   ├── 📁 core/
+│   │   │   │   │   ├── 🐍 __init__.py
+│   │   │   │   │   ├── 🐍 config.py
+│   │   │   │   │   ├── 🐍 database.py
+│   │   │   │   │   ├── 🐍 exceptions.py
+│   │   │   │   │   └── 🐍 range_parser.py
+│   │   │   │   ├── 📁 crud/
+│   │   │   │   │   ├── 🐍 __init__.py
+│   │   │   │   │   ├── 🐍 calculations.py
+│   │   │   │   │   ├── 🐍 condensers.py
+│   │   │   │   │   └── 🐍 materials.py
+│   │   │   │   ├── 📁 models/
+│   │   │   │   │   ├── 🐍 __init__.py
+│   │   │   │   │   ├── 🐍 calculation_result.py
+│   │   │   │   │   ├── 🐍 condenser.py
+│   │   │   │   │   └── 🐍 material.py
+│   │   │   │   ├── 📁 schemas/
+│   │   │   │   │   ├── 🐍 __init__.py
+│   │   │   │   │   ├── 🐍 calculation.py
+│   │   │   │   │   ├── 🐍 condenser.py
+│   │   │   │   │   ├── 🐍 errors.py
+│   │   │   │   │   └── 🐍 material.py
+│   │   │   │   ├── 📁 scripts/
+│   │   │   │   │   ├── 🐍 __init__.py
+│   │   │   │   │   ├── 🐍 load_condensers.py
+│   │   │   │   │   └── 🐍 load_materials.py
+│   │   │   │   ├── 📁 utils/
+│   │   │   │   │   ├── 🐍 __init__.py
+│   │   │   │   │   ├── 🐍 base_for_selection.py
+│   │   │   │   │   ├── 🐍 berman_strategy.py
+│   │   │   │   │   ├── 🐍 calculation_engine.py
+│   │   │   │   │   ├── 🐍 Constants.py
+│   │   │   │   │   ├── 🐍 division_range.py
+│   │   │   │   │   ├── 🐍 exceptions_method.py
+│   │   │   │   │   ├── 🐍 metrovickers_strategy.py
+│   │   │   │   │   ├── 🐍 selection_methods.py
+│   │   │   │   │   ├── 🐍 table_models.py
+│   │   │   │   │   ├── 🐍 TPS_module.py
+│   │   │   │   │   ├── 🐍 uniconv.py
+│   │   │   │   │   └── 🐍 VKU_strategy.py
+│   │   │   │   ├── 🐍 __init__.py
+│   │   │   │   ├── 🐍 dependencies.py
+│   │   │   │   └── 🐍 main.py
+│   │   │   ├── 📁 scripts/
+│   │   │   │   ├── 🐍 _common.py
+│   │   │   │   ├── 🐍 compare_selection_methods.py
+│   │   │   │   ├── 🐍 generate_report_on_selecting_values.py
+│   │   │   │   ├── 🐍 report_calculation_engine.py
+│   │   │   │   ├── 🐍 report_metrovickers_strategy.py
+│   │   │   │   ├── 🐍 report_module_berman.py
+│   │   │   │   ├── 🐍 report_TPS_module.py
+│   │   │   │   ├── 🐍 validate_exceptions_method.py
+│   │   │   │   ├── 🐍 validate_TPS_module.py
+│   │   │   │   └── 🐍 validate_vku.py
+│   │   │   ├── 📁 tests/
+│   │   │   │   ├── 📁 api/
+│   │   │   │   │   └── 🐍 __init__.py
+│   │   │   │   ├── 📁 unit/
+│   │   │   │   │   ├── ⚙️ __group__.yml
+│   │   │   │   │   ├── 🐍 __init__.py
+│   │   │   │   │   ├── 🐍 test_division_range.py
+│   │   │   │   │   ├── 🐍 test_metrovickers_strategy.py
+│   │   │   │   │   ├── 🐍 test_module_berman.py
+│   │   │   │   │   ├── 🐍 test_selecting_values.py
+│   │   │   │   │   ├── 🐍 test_table_models.py
+│   │   │   │   │   ├── 🐍 test_uniconv.py
+│   │   │   │   │   └── 🐍 test_VKU_strategy.py
+│   │   │   │   ├── 📁 validation/
+│   │   │   │   │   ├── 📁 berman/
+│   │   │   │   │   │   ├── ⚙️ __group__.yml
+│   │   │   │   │   │   ├── 🐍 __init__.py
+│   │   │   │   │   │   ├── 🐍 conftest.py
+│   │   │   │   │   │   ├── 🐍 test_mode_1.py
+│   │   │   │   │   │   ├── 🐍 test_mode_2.py
+│   │   │   │   │   │   ├── 🐍 test_mode_3.py
+│   │   │   │   │   │   ├── 🐍 test_mode_4.py
+│   │   │   │   │   │   └── 🐍 test_verification.py
+│   │   │   │   │   └── 🐍 __init__.py
+│   │   │   │   ├── 🐍 __init__.py
+│   │   │   │   ├── 🐍 conftest.py
+│   │   │   │   └── 📖 README.md
+│   │   │   ├── 📄 .env
+│   │   │   ├── 🐳 Dockerfile
+│   │   │   ├── ⚡ entrypoint.sh
+│   │   │   ├── 🔒 poetry.lock
+│   │   │   ├── 📦 pyproject.toml
+│   │   │   └── 📖 README.md
+│   │   ├── 📁 db/
+│   │   │   ├── 📁 materials/
+│   │   │   │   └── 📋 12MHL.json
+│   │   │   ├── 📊 condensers_data.xlsx
+│   │   │   └── 📄 init.dump
+│   │   └── ⚙️ docker-compose.yml
 │   └── 📁 valve-stems/
 │       ├── 📁 backend/
 │       │   ├── 📁 _archive/
@@ -243,6 +303,7 @@ Balance_plus-1/
 │       │   │   │   ├── 📁 routes/
 │       │   │   │   │   ├── 🐍 calculations.py
 │       │   │   │   │   ├── 🐍 drawio.py
+│       │   │   │   │   ├── 🐍 health.py
 │       │   │   │   │   ├── 🐍 turbines.py
 │       │   │   │   │   ├── 🐍 utils.py
 │       │   │   │   │   └── 🐍 valves.py
@@ -251,7 +312,10 @@ Balance_plus-1/
 │       │   │   │   ├── 🐍 __init__.py
 │       │   │   │   ├── 🐍 config.py
 │       │   │   │   ├── 🐍 converter.py
-│       │   │   │   └── 🐍 database.py
+│       │   │   │   ├── 🐍 database.py
+│       │   │   │   ├── 🐍 error_handlers.py
+│       │   │   │   ├── 🐍 exceptions.py
+│       │   │   │   └── 🐍 logging_config.py
 │       │   │   ├── 📁 crud/
 │       │   │   │   ├── 🐍 __init__.py
 │       │   │   │   ├── 🐍 calculations.py
@@ -261,6 +325,9 @@ Balance_plus-1/
 │       │   │   │   ├── 🐍 models.py
 │       │   │   │   └── 🐍 valve_physics_engine.py
 │       │   │   ├── 📁 generated_diagrams/
+│       │   │   ├── 📁 middleware/
+│       │   │   │   ├── 🐍 __init__.py
+│       │   │   │   └── 🐍 logging_middleware.py
 │       │   │   ├── 📁 models/
 │       │   │   │   ├── 🐍 __init__.py
 │       │   │   │   ├── 🐍 calculation_result.py
@@ -269,6 +336,7 @@ Balance_plus-1/
 │       │   │   ├── 📁 schemas/
 │       │   │   │   ├── 🐍 __init__.py
 │       │   │   │   ├── 🐍 calculation.py
+│       │   │   │   ├── 🐍 errors.py
 │       │   │   │   ├── 🐍 turbine.py
 │       │   │   │   └── 🐍 valve.py
 │       │   │   ├── 📁 scripts/
@@ -281,17 +349,26 @@ Balance_plus-1/
 │       │   │   ├── 📁 templates/
 │       │   │   │   └── 📄 template_2_parts.xml
 │       │   │   ├── 📁 tests/
+│       │   │   │   ├── 📁 api/
+│       │   │   │   │   ├── ⚙️ __group__.yml
+│       │   │   │   │   ├── 🐍 __init__.py
+│       │   │   │   │   └── ⚙️ test_full_cycle.tavern.yaml
 │       │   │   │   ├── 📁 crud/
+│       │   │   │   │   ├── ⚙️ __group__.yml
 │       │   │   │   │   ├── 🐍 __init__.py
 │       │   │   │   │   ├── 🐍 conftest.py
 │       │   │   │   │   └── 🐍 test_crud.py
 │       │   │   │   ├── 📁 scripts/
+│       │   │   │   │   ├── ⚙️ __group__.yml
 │       │   │   │   │   ├── 🐍 __init__.py
 │       │   │   │   │   └── 🐍 test_backend_pre_start.py
 │       │   │   │   ├── 📁 utils/
+│       │   │   │   │   ├── ⚙️ __group__.yml
 │       │   │   │   │   ├── 🐍 __init__.py
-│       │   │   │   │   └── 🐍 test_calculations.py
-│       │   │   │   └── 🐍 __init__.py
+│       │   │   │   │   ├── 🐍 test_calculations.py
+│       │   │   │   │   └── 🐍 test_valve_stems_calc.py
+│       │   │   │   ├── 🐍 __init__.py
+│       │   │   │   └── 🐍 conftest.py
 │       │   │   ├── 🐍 __init__.py
 │       │   │   ├── 🐍 dependencies.py
 │       │   │   └── 🐍 main.py
@@ -303,9 +380,11 @@ Balance_plus-1/
 │       │   ├── 📋 package-lock.json
 │       │   ├── 🔒 poetry.lock
 │       │   ├── 📦 pyproject.toml
-│       │   └── 📖 README.md
+│       │   ├── 📖 README.md
+│       │   └── 📄 valve-stems-v2.tar.gz
 │       ├── 📁 db/
 │       │   ├── 📊 Data.xlsx
+│       │   ├── 📊 Data_1.xlsx
 │       │   ├── 📄 init.dump
 │       │   └── ⚡ restore.sh
 │       ├── 📁 frontend/
@@ -418,14 +497,14 @@ Balance_plus-1/
 │   │   └── 📋 group_of_stocks_results.json
 │   └── 📖 README.md
 ├── 🙈 .gitignore
+├── 📄 balance-orchestrator.tar.gz
 ├── 📝 CONTRIBUTING.md
-├── ⚙️ docker-compose.yml
 ├── 🐍 generate_tree.py
 ├── 📋 package-lock.json
 ├── 📖 README.md
+├── 📖 README_TESTING.md
 ├── ⚙️ ruff.toml
-├── 📄 valve-stems-deploy.tar.gz
-└── 📄 valve-stems-v2.tar.gz
+└── 🐍 test_runner.py
 ```
 
 ---

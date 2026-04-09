@@ -17,7 +17,6 @@ from .conftest import (
     load_results,
 )
 
-
 _geometry = load_geometry("geometry")
 _mode = load_mode(3)
 _results = load_results(3)

@@ -16,7 +16,6 @@ from .conftest import (
     load_results,
 )
 
-
 _geometry = load_geometry("geometry_4")  # Специальная геометрия для mode_4
 _mode = load_mode(4)
 _results = load_results(4)
