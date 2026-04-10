@@ -1,0 +1,1322 @@
+{
+  "material_id": "8ac32b92-abcc-4889-bdbe-5eb600257771",
+  "metadata": {
+    "name_material_standard": "20Х13",
+    "name_material_alternative": [
+      "2Х13",
+      "Ж2",
+      "ЭЖ2"
+    ],
+    "application_area": [
+      "Крепежные материалы"
+    ],
+    "comment": "",
+    "classification": {
+      "classification_category": "",
+      "classification_class": "",
+      "classification_subclass": ""
+    }
+  },
+  "physical_properties": {
+    "modulus_elasticity": {
+      "property_name": "Модуль упругости",
+      "property_unit": "МПа",
+      "property_source": "ТУ 24-22-073-2004",
+      "property_subsource": "[1]",
+      "comment": "",
+      "temperature_value_pairs": [
+        [
+          20.0,
+          218000.0
+        ],
+        [
+          100.0,
+          214000.0
+        ],
+        [
+          200.0,
+          208000.0
+        ],
+        [
+          300.0,
+          200000.0
+        ],
+        [
+          400.0,
+          189000.0
+        ],
+        [
+          500.0,
+          181000.0
+        ],
+        [
+          600.0,
+          169000.0
+        ]
+      ],
+      "property_last_updated": "2025-11-12T15:25:12.441256"
+    },
+    "coefficient_linear_expansion": {
+      "property_name": "Коэффициент линейного расширения",
+      "property_unit": "1/°С",
+      "property_source": "ТУ 24-22-073-2004",
+      "property_subsource": "[1]",
+      "comment": "",
+      "temperature_value_pairs": [
+        [
+          100.0,
+          10.2
+        ],
+        [
+          200.0,
+          11.2
+        ],
+        [
+          300.0,
+          11.5
+        ],
+        [
+          400.0,
+          11.9
+        ],
+        [
+          500.0,
+          12.2
+        ],
+        [
+          600.0,
+          12.8
+        ],
+        [
+          700.0,
+          12.8
+        ],
+        [
+          800.0,
+          13.0
+        ]
+      ],
+      "property_last_updated": "2025-11-12T15:25:12.441256"
+    },
+    "coefficient_thermal_conductivity": {
+      "property_name": "Коэффициент теплопроводности",
+      "property_unit": "Вт/(м·°С)",
+      "property_source": "ТУ 24-22-073-2004",
+      "property_subsource": "[1]",
+      "comment": "",
+      "temperature_value_pairs": [
+        [
+          100.0,
+          26.0
+        ],
+        [
+          200.0,
+          26.0
+        ],
+        [
+          300.0,
+          26.0
+        ],
+        [
+          400.0,
+          26.0
+        ],
+        [
+          500.0,
+          27.0
+        ],
+        [
+          600.0,
+          26.0
+        ],
+        [
+          700.0,
+          26.0
+        ],
+        [
+          800.0,
+          27.0
+        ],
+        [
+          900.0,
+          28.0
+        ]
+      ],
+      "property_last_updated": "2025-11-12T15:25:12.441256"
+    },
+    "density": {
+      "property_name": "Плотность",
+      "property_unit": "кг/м³",
+      "property_source": "ТУ 24-22-073-2004",
+      "property_subsource": "[1]",
+      "comment": "",
+      "temperature_value_pairs": [
+        [
+          20.0,
+          7670.0
+        ],
+        [
+          100.0,
+          7650.0
+        ],
+        [
+          200.0,
+          7620.0
+        ],
+        [
+          300.0,
+          7600.0
+        ],
+        [
+          400.0,
+          7570.0
+        ],
+        [
+          500.0,
+          7540.0
+        ],
+        [
+          600.0,
+          7510.0
+        ],
+        [
+          700.0,
+          7480.0
+        ],
+        [
+          800.0,
+          7450.0
+        ],
+        [
+          900.0,
+          7460.0
+        ]
+      ],
+      "property_last_updated": "2025-11-12T15:25:12.441256"
+    },
+    "specific_heat": {
+      "property_name": "Удельная теплоемкость",
+      "property_unit": "Дж/(кг·°С)",
+      "property_source": "ТУ 24-22-073-2004",
+      "property_subsource": "[1]",
+      "comment": "",
+      "temperature_value_pairs": [
+        [
+          20.0,
+          440.0
+        ],
+        [
+          100.0,
+          461.0
+        ],
+        [
+          200.0,
+          523.0
+        ],
+        [
+          300.0,
+          565.0
+        ],
+        [
+          400.0,
+          628.0
+        ],
+        [
+          500.0,
+          691.0
+        ],
+        [
+          600.0,
+          775.0
+        ],
+        [
+          700.0,
+          963.0
+        ]
+      ],
+      "property_last_updated": "2025-11-12T15:25:12.441256"
+    }
+  },
+  "mechanical_properties": {
+    "strength_category": [
+      {
+        "value_strength_category": "КП60",
+        "hardness": [
+          {
+            "property_source": "ТУ 24-22-073-2004",
+            "property_subsource": "",
+            "unit_value": "HB",
+            "min_value": 241.0,
+            "max_value": 269.0
+          },
+          {
+            "property_source": "ОСТ 108.020.03-82",
+            "property_subsource": "",
+            "unit_value": "HB",
+            "min_value": 229.0,
+            "max_value": 269.0
+          }
+        ],
+        "yield_strength": {
+          "property_name": "Предел текучести",
+          "property_unit": "МПа",
+          "property_source": "ТУ 24-22-073-2004",
+          "property_subsource": "[1]",
+          "comment": "*Предел текучести записан с разницей в 58,4 МПа = 568,4 (кп60) - 510 (максимальное значение по [1, стр.1079])",
+          "temperature_value_pairs": [
+            [
+              20.0,
+              568.4
+            ],
+            [
+              100.0,
+              568.4
+            ],
+            [
+              200.0,
+              548.8
+            ],
+            [
+              300.0,
+              450.4
+            ],
+            [
+              400.0,
+              450.4
+            ],
+            [
+              450.0,
+              430.4
+            ],
+            [
+              475.0,
+              470.4
+            ],
+            [
+              500.0,
+              411.4
+            ],
+            [
+              550.0,
+              332.4
+            ]
+          ],
+          "property_last_updated": "2025-11-12T15:25:12.441256"
+        },
+        "tensile_strength": {
+          "property_name": "Предел прочности",
+          "property_unit": "МПа",
+          "property_source": "ТУ 24-22-073-2004",
+          "property_subsource": "[1]",
+          "comment": "*Предел прочности записан с разницей в 40 МПа = 755 (кп60) - 715 (максимальное значение по [1, стр.1079])",
+          "temperature_value_pairs": [
+            [
+              20.0,
+              755.0
+            ],
+            [
+              100.0,
+              744.8
+            ],
+            [
+              200.0,
+              735.0
+            ],
+            [
+              300.0,
+              579.0
+            ],
+            [
+              400.0,
+              559.0
+            ],
+            [
+              450.0,
+              520.0
+            ],
+            [
+              475.0,
+              520.0
+            ],
+            [
+              500.0,
+              471.0
+            ],
+            [
+              550.0,
+              383.0
+            ]
+          ],
+          "property_last_updated": "2025-11-12T15:25:12.441256"
+        },
+        "impact_strength": {
+          "property_name": "Ударная вязкость",
+          "property_unit": "Дж/см²",
+          "property_source": "ТУ 24-22-073-2004",
+          "property_subsource": "[3]",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              20.0,
+              58.8
+            ],
+            [
+              100.0,
+              156.8
+            ],
+            [
+              200.0,
+              176.4
+            ],
+            [
+              300.0,
+              196.0
+            ],
+            [
+              400.0,
+              196.0
+            ],
+            [
+              450.0,
+              235.2
+            ],
+            [
+              500.0,
+              245.0
+            ],
+            [
+              550.0,
+              215.6
+            ]
+          ],
+          "property_last_updated": "2025-11-12T15:25:12.441256"
+        },
+        "tensile_strength_limit_10_thousands_hours": {
+          "property_name": "Предел длит. прочности за 10 тыс.ч",
+          "property_unit": "МПа",
+          "property_source": "ТУ 24-22-073-2004",
+          "property_subsource": "[1]",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              450.0,
+              300.0
+            ],
+            [
+              470.0,
+              258.0
+            ],
+            [
+              500.0,
+              195.0
+            ],
+            [
+              530.0,
+              105.0
+            ]
+          ],
+          "property_last_updated": "2025-11-12T15:25:12.441256"
+        },
+        "tensile_strength_limit_100_thousands_hours": {
+          "property_name": "Предел длит. прочности за 100 тыс.ч",
+          "property_unit": "МПа",
+          "property_source": "ТУ 24-22-073-2004",
+          "property_subsource": "[1]",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              450.0,
+              260.0
+            ],
+            [
+              470.0,
+              220.0
+            ],
+            [
+              500.0,
+              160.0
+            ],
+            [
+              530.0,
+              76.0
+            ]
+          ],
+          "property_last_updated": "2025-11-12T15:25:12.441256"
+        },
+        "tensile_strength_limit_200_thousands_hours": {
+          "property_name": "Предел длит. прочности за 200 тыс.ч",
+          "property_unit": "МПа",
+          "property_source": "ТУ 24-22-073-2004",
+          "property_subsource": "*Данные получены экстраполяцией по зависимости Ларсона-Миллера",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              450.0,
+              249.0
+            ],
+            [
+              470.0,
+              209.0
+            ],
+            [
+              500.0,
+              144.0
+            ],
+            [
+              530.0,
+              60.0
+            ]
+          ],
+          "property_last_updated": "2025-11-12T15:25:12.441256"
+        },
+        "tensile_strength_limit_250_thousands_hours": {
+          "property_name": "Предел длит. прочности за 250 тыс.ч",
+          "property_unit": "МПа",
+          "property_source": "ТУ 24-22-073-2004",
+          "property_subsource": "*Данные получены экстраполяцией по зависимости Ларсона-Миллера",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              450.0,
+              245.0
+            ],
+            [
+              470.0,
+              205.0
+            ],
+            [
+              500.0,
+              139.0
+            ],
+            [
+              530.0,
+              55.0
+            ]
+          ],
+          "property_last_updated": "2025-11-12T15:25:12.441256"
+        },
+        "fatigue_limit_for_notched_specimen": {
+          "property_name": "Предел выносливости для образца с надрезом",
+          "property_unit": "МПа",
+          "property_source": "ТУ 24-22-073-2004",
+          "property_subsource": "[1]",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              20.0,
+              235.0
+            ],
+            [
+              200.0,
+              216.0
+            ],
+            [
+              300.0,
+              196.0
+            ],
+            [
+              400.0,
+              167.0
+            ],
+            [
+              500.0,
+              127.0
+            ]
+          ],
+          "property_last_updated": "2025-11-12T15:25:12.441256"
+        },
+        "сreep_strain_rate_1_100_thousands_hours": {
+          "property_source": "ТУ 24-22-073-2004",
+          "property_subsource": "1",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              450.0,
+              128.0
+            ],
+            [
+              470.0,
+              76.0
+            ],
+            [
+              500.0,
+              48.0
+            ],
+            [
+              530.0,
+              30.0
+            ]
+          ],
+          "property_name": "Ползучесть при скорости деформации 1%/100 тыс.ч",
+          "property_unit": "МПа",
+          "property_last_updated": "2025-11-12T15:25:12.441256"
+        },
+        "decrement_oscillations_at_800": {
+          "property_source": "ТУ 24-22-073-2004",
+          "property_subsource": "3",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              20.0,
+              310.0
+            ],
+            [
+              300.0,
+              314.0
+            ],
+            [
+              400.0,
+              275.0
+            ],
+            [
+              500.0,
+              205.0
+            ]
+          ],
+          "property_name": "Декремент колебаний при 800 кгс/см²",
+          "property_unit": "-",
+          "property_last_updated": "2025-11-12T15:25:12.441256"
+        },
+        "decrement_oscillations_at_1200": {
+          "property_source": "ТУ 24-22-073-2004",
+          "property_subsource": "3",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              20.0,
+              330.0
+            ],
+            [
+              300.0,
+              325.0
+            ],
+            [
+              400.0,
+              295.0
+            ],
+            [
+              500.0,
+              210.0
+            ]
+          ],
+          "property_name": "Декремент колебаний при 1200 кгс/см²",
+          "property_unit": "-",
+          "property_last_updated": "2025-11-12T15:25:12.441256"
+        },
+        "decrement_oscillations_at_1600": {
+          "property_source": "ТУ 24-22-073-2004",
+          "property_subsource": "3",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              20.0,
+              315.0
+            ],
+            [
+              300.0,
+              280.0
+            ],
+            [
+              400.0,
+              245.0
+            ]
+          ],
+          "property_name": "Декремент колебаний при 1600 кгс/см²",
+          "property_unit": "-",
+          "property_last_updated": "2025-11-12T15:25:12.441256"
+        },
+        "fatigue_limit_for_smooth_specimen": {
+          "property_source": "ТУ 24-22-073-2004",
+          "property_subsource": "1",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              20.0,
+              368.0
+            ],
+            [
+              200.0,
+              343.0
+            ],
+            [
+              300.0,
+              319.0
+            ],
+            [
+              400.0,
+              304.0
+            ],
+            [
+              500.0,
+              235.0
+            ]
+          ],
+          "property_name": "Предел выносливости (гладкий образец, N=10e7)",
+          "property_unit": "МПа",
+          "property_last_updated": "2025-11-12T15:25:12.441256"
+        }
+      },
+      {
+        "value_strength_category": "КП70",
+        "hardness": [
+          {
+            "property_source": "",
+            "property_subsource": "",
+            "unit_value": "HB",
+            "min_value": 262.0,
+            "max_value": 295.0
+          }
+        ],
+        "fatigue_limit_for_notched_specimen": {
+          "property_name": "Предел выносливости для образца с надрезом",
+          "property_unit": "МПа",
+          "property_source": "ТУ 24-22-073-2004",
+          "property_subsource": "[1]",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              20.0,
+              235.0
+            ],
+            [
+              200.0,
+              216.0
+            ],
+            [
+              300.0,
+              196.0
+            ],
+            [
+              400.0,
+              167.0
+            ],
+            [
+              500.0,
+              127.0
+            ]
+          ],
+          "property_last_updated": "2025-11-12T15:25:12.441256"
+        },
+        "decrement_oscillations_at_800": {
+          "property_source": "ТУ 24-22-073-2004",
+          "property_subsource": "3",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              20.0,
+              310.0
+            ],
+            [
+              300.0,
+              314.0
+            ],
+            [
+              400.0,
+              275.0
+            ],
+            [
+              500.0,
+              205.0
+            ]
+          ],
+          "property_name": "Декремент колебаний при 800 кгс/см²",
+          "property_unit": "-",
+          "property_last_updated": "2025-11-12T15:25:12.441256"
+        },
+        "decrement_oscillations_at_1200": {
+          "property_source": "ТУ 24-22-073-2004",
+          "property_subsource": "3",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              20.0,
+              330.0
+            ],
+            [
+              300.0,
+              325.0
+            ],
+            [
+              400.0,
+              295.0
+            ],
+            [
+              500.0,
+              210.0
+            ]
+          ],
+          "property_name": "Декремент колебаний при 1200 кгс/см²",
+          "property_unit": "-",
+          "property_last_updated": "2025-11-12T15:25:12.441256"
+        },
+        "decrement_oscillations_at_1600": {
+          "property_source": "ТУ 24-22-073-2004",
+          "property_subsource": "3",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              20.0,
+              315.0
+            ],
+            [
+              300.0,
+              280.0
+            ],
+            [
+              400.0,
+              245.0
+            ]
+          ],
+          "property_name": "Декремент колебаний при 1600 кгс/см²",
+          "property_unit": "-",
+          "property_last_updated": "2025-11-12T15:25:12.441256"
+        },
+        "fatigue_limit_for_smooth_specimen": {
+          "property_source": "ТУ 24-22-073-2004",
+          "property_subsource": "1",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              20.0,
+              368.0
+            ],
+            [
+              200.0,
+              343.0
+            ],
+            [
+              300.0,
+              319.0
+            ],
+            [
+              400.0,
+              304.0
+            ],
+            [
+              500.0,
+              235.0
+            ]
+          ],
+          "property_name": "Предел выносливости (гладкий образец, N=10e7)",
+          "property_unit": "МПа",
+          "property_last_updated": "2025-11-12T15:25:12.441256"
+        },
+        "yield_strength": {
+          "property_source": "",
+          "property_subsource": "",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              20.0,
+              686.0
+            ]
+          ],
+          "property_name": "Предел текучести",
+          "property_unit": "МПа",
+          "property_last_updated": "2025-11-12T15:25:12.441256"
+        },
+        "tensile_strength": {
+          "property_source": "",
+          "property_subsource": "",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              20.0,
+              833.0
+            ]
+          ],
+          "property_name": "Предел прочности",
+          "property_unit": "МПа",
+          "property_last_updated": "2025-11-12T15:25:12.441256"
+        },
+        "impact_strength": {
+          "property_source": "",
+          "property_subsource": "",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              20.0,
+              49.0
+            ]
+          ],
+          "property_name": "Ударная вязкость",
+          "property_unit": "Дж/см²",
+          "property_last_updated": "2025-11-12T15:25:12.441256"
+        }
+      },
+      {
+        "value_strength_category": "КП50",
+        "hardness": [
+          {
+            "property_source": "ТУ 24-22-073-2004",
+            "property_subsource": "",
+            "unit_value": "HB",
+            "min_value": 217.0,
+            "max_value": 241.0
+          },
+          {
+            "property_source": "ОСТ 108.020.03-82",
+            "property_subsource": "",
+            "unit_value": "HB",
+            "min_value": 207.0,
+            "max_value": 241.0
+          }
+        ],
+        "yield_strength": {
+          "property_source": "ОСТ 108.020.03-82",
+          "property_subsource": "1",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              20.0,
+              510.0
+            ],
+            [
+              100.0,
+              490.0
+            ],
+            [
+              200.0,
+              461.0
+            ],
+            [
+              300.0,
+              392.0
+            ],
+            [
+              400.0,
+              392.0
+            ],
+            [
+              450.0,
+              372.0
+            ],
+            [
+              475.0,
+              412.0
+            ],
+            [
+              500.0,
+              353.0
+            ],
+            [
+              550.0,
+              274.0
+            ]
+          ],
+          "property_name": "Предел текучести",
+          "property_unit": "МПа",
+          "property_last_updated": "2025-11-12T15:25:12.441256"
+        },
+        "tensile_strength": {
+          "property_source": "ОСТ 108.020.03-82",
+          "property_subsource": "1",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              20.0,
+              715.0
+            ],
+            [
+              100.0,
+              657.0
+            ],
+            [
+              200.0,
+              598.0
+            ],
+            [
+              300.0,
+              539.0
+            ],
+            [
+              400.0,
+              519.0
+            ],
+            [
+              450.0,
+              480.0
+            ],
+            [
+              475.0,
+              480.0
+            ],
+            [
+              500.0,
+              431.0
+            ],
+            [
+              550.0,
+              343.0
+            ]
+          ],
+          "property_name": "Предел прочности",
+          "property_unit": "МПа",
+          "property_last_updated": "2025-11-12T15:25:12.441256"
+        },
+        "impact_strength": {
+          "property_source": "ОСТ 108.020.03-82",
+          "property_subsource": "3",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              20.0,
+              68.6
+            ],
+            [
+              100.0,
+              166.6
+            ],
+            [
+              200.0,
+              166.6
+            ],
+            [
+              300.0,
+              206.0
+            ],
+            [
+              400.0,
+              206.0
+            ],
+            [
+              450.0,
+              245.2
+            ],
+            [
+              500.0,
+              255.0
+            ],
+            [
+              550.0,
+              255.6
+            ]
+          ],
+          "property_name": "Ударная вязкость",
+          "property_unit": "Дж/см²",
+          "property_last_updated": "2025-11-12T15:25:12.441256"
+        },
+        "tensile_strength_limit_10_thousands_hours": {
+          "property_source": "ОСТ 108.020.03-82",
+          "property_subsource": "1",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              450.0,
+              289.0
+            ],
+            [
+              470.0,
+              211.0
+            ],
+            [
+              500.0,
+              191.0
+            ],
+            [
+              530.0,
+              135.0
+            ]
+          ],
+          "property_name": "Предел длит. прочности за 10 тыс.ч",
+          "property_unit": "МПа",
+          "property_last_updated": "2025-11-12T15:25:12.441256"
+        },
+        "tensile_strength_limit_100_thousands_hours": {
+          "property_source": "ОСТ 108.020.03-82",
+          "property_subsource": "1",
+          "comment": "Значение для температуры 530 взято не из источника",
+          "temperature_value_pairs": [
+            [
+              450.0,
+              255.0
+            ],
+            [
+              470.0,
+              176.0
+            ],
+            [
+              500.0,
+              157.0
+            ],
+            [
+              530.0,
+              100.0
+            ]
+          ],
+          "property_name": "Предел длит. прочности за 100 тыс.ч",
+          "property_unit": "МПа",
+          "property_last_updated": "2025-11-12T15:25:12.441256"
+        },
+        "tensile_strength_limit_200_thousands_hours": {
+          "property_source": "ОСТ 108.020.03-82",
+          "property_subsource": "*Данные получены экстраполяцией по зависимости Ларсона-Миллера\t\t\t\t\t\t\n",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              450.0,
+              234.0
+            ],
+            [
+              470.0,
+              173.0
+            ],
+            [
+              500.0,
+              153.5
+            ],
+            [
+              530.0,
+              95.0
+            ]
+          ],
+          "property_name": "Предел длит. прочности за 200 тыс.ч",
+          "property_unit": "МПа",
+          "property_last_updated": "2025-11-12T15:25:12.441256"
+        },
+        "tensile_strength_limit_250_thousands_hours": {
+          "property_source": "ОСТ 108.020.03-82",
+          "property_subsource": "*Данные получены экстраполяцией по зависимости Ларсона-Миллера\t\t\t\t\t\t\n",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              450.0,
+              222.0
+            ],
+            [
+              470.0,
+              170.0
+            ],
+            [
+              500.0,
+              140.0
+            ],
+            [
+              530.0,
+              85.0
+            ]
+          ],
+          "property_name": "Предел длит. прочности за 250 тыс.ч",
+          "property_unit": "МПа",
+          "property_last_updated": "2025-11-12T15:25:12.441256"
+        },
+        "сreep_strain_rate_1_100_thousands_hours": {
+          "property_source": "ОСТ 108.020.03-82",
+          "property_subsource": "1",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              450.0,
+              125.0
+            ],
+            [
+              470.0,
+              75.0
+            ],
+            [
+              500.0,
+              47.0
+            ],
+            [
+              550.0,
+              29.0
+            ]
+          ],
+          "property_name": "Ползучесть при скорости деформации 1%/100 тыс.ч",
+          "property_unit": "МПа",
+          "property_last_updated": "2025-11-12T15:25:12.441256"
+        },
+        "decrement_oscillations_at_800": {
+          "property_source": "ОСТ 108.020.03-82",
+          "property_subsource": "3",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              20.0,
+              310.0
+            ],
+            [
+              300.0,
+              314.0
+            ],
+            [
+              400.0,
+              275.0
+            ],
+            [
+              500.0,
+              205.0
+            ]
+          ],
+          "property_name": "Декремент колебаний при 800 кгс/см²",
+          "property_unit": "-",
+          "property_last_updated": "2025-11-12T15:25:12.441256"
+        },
+        "decrement_oscillations_at_1200": {
+          "property_source": "ОСТ 108.020.03-82",
+          "property_subsource": "3",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              20.0,
+              330.0
+            ],
+            [
+              300.0,
+              325.0
+            ],
+            [
+              400.0,
+              295.0
+            ],
+            [
+              500.0,
+              210.0
+            ]
+          ],
+          "property_name": "Декремент колебаний при 1200 кгс/см²",
+          "property_unit": "-",
+          "property_last_updated": "2025-11-12T15:25:12.441256"
+        },
+        "decrement_oscillations_at_1600": {
+          "property_source": "ОСТ 108.020.03-82",
+          "property_subsource": "3",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              20.0,
+              315.0
+            ],
+            [
+              300.0,
+              280.0
+            ],
+            [
+              400.0,
+              245.0
+            ]
+          ],
+          "property_name": "Декремент колебаний при 1600 кгс/см²",
+          "property_unit": "-",
+          "property_last_updated": "2025-11-12T15:25:12.441256"
+        },
+        "fatigue_limit_for_smooth_specimen": {
+          "property_source": "ОСТ 108.020.03-82",
+          "property_subsource": "1",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              20.0,
+              368.0
+            ],
+            [
+              200.0,
+              343.0
+            ],
+            [
+              300.0,
+              319.0
+            ],
+            [
+              400.0,
+              304.0
+            ],
+            [
+              500.0,
+              235.0
+            ]
+          ],
+          "property_name": "Предел выносливости (гладкий образец, N=10e7)",
+          "property_unit": "МПа",
+          "property_last_updated": "2025-11-12T15:25:12.441256"
+        },
+        "fatigue_limit_for_notched_specimen": {
+          "property_source": "ОСТ 108.020.03-82",
+          "property_subsource": "1",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              20.0,
+              235.0
+            ],
+            [
+              200.0,
+              216.0
+            ],
+            [
+              300.0,
+              196.0
+            ],
+            [
+              400.0,
+              167.0
+            ],
+            [
+              500.0,
+              127.0
+            ]
+          ],
+          "property_name": "Предел выносливости (образец с надрезом, N=10e7)",
+          "property_unit": "МПа",
+          "property_last_updated": "2025-11-12T15:25:12.441256"
+        }
+      }
+    ]
+  },
+  "chemical_properties": {
+    "composition": [
+      {
+        "composition_source": "ГОСТ 5632-2014",
+        "composition_subsource": "",
+        "comment": "",
+        "base_element": "Fe",
+        "other_elements": [
+          {
+            "element": "C",
+            "unit_value": "%",
+            "min_value": 0.16,
+            "max_value": 0.25,
+            "min_value_tolerance": "0.15",
+            "max_value_tolerance": "0.27"
+          },
+          {
+            "element": "Si",
+            "unit_value": "%",
+            "min_value": 0.0,
+            "max_value": 0.8,
+            "max_value_tolerance": "0.85"
+          },
+          {
+            "element": "Mn",
+            "unit_value": "%",
+            "min_value": 0.0,
+            "max_value": 0.8,
+            "max_value_tolerance": "0.84"
+          },
+          {
+            "element": "S",
+            "unit_value": "%",
+            "min_value": 0.0,
+            "max_value": 0.025,
+            "max_value_tolerance": "0.03"
+          },
+          {
+            "element": "P",
+            "unit_value": "%",
+            "min_value": 0.0,
+            "max_value": 0.03,
+            "max_value_tolerance": "0.035"
+          },
+          {
+            "element": "Cr",
+            "unit_value": "%",
+            "min_value": 12.0,
+            "max_value": 14.0,
+            "min_value_tolerance": "11.85",
+            "max_value_tolerance": "14.15"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,334 @@
+{
+  "material_id": "2d7182e9-1095-42ff-ac1b-b96682b10894",
+  "metadata": {
+    "name_material_standard": "35Х",
+    "name_material_alternative": [],
+    "application_area": [
+      "Крепежные материалы"
+    ],
+    "comment": "",
+    "classification": {
+      "classification_category": "",
+      "classification_class": "",
+      "classification_subclass": ""
+    }
+  },
+  "physical_properties": {
+    "modulus_elasticity": {
+      "property_name": "Модуль упругости",
+      "property_unit": "МПа",
+      "property_source": "ГОСТ 20700-75",
+      "property_subsource": "",
+      "comment": "",
+      "temperature_value_pairs": [
+        [
+          20.0,
+          213793.0
+        ],
+        [
+          100.0,
+          210851.0
+        ],
+        [
+          300.0,
+          197121.0
+        ],
+        [
+          500.0,
+          175545.0
+        ]
+      ],
+      "property_last_updated": "2025-09-12T11:55:30.267604"
+    },
+    "coefficient_linear_expansion": {
+      "property_name": "Коэффициент линейного расширения",
+      "property_unit": "1/°С",
+      "property_source": "ГОСТ 20700-75",
+      "property_subsource": "[1]",
+      "comment": "",
+      "temperature_value_pairs": [
+        [
+          100.0,
+          11.3
+        ],
+        [
+          200.0,
+          12.0
+        ],
+        [
+          300.0,
+          12.9
+        ],
+        [
+          400.0,
+          13.7
+        ],
+        [
+          500.0,
+          14.2
+        ],
+        [
+          600.0,
+          14.6
+        ]
+      ],
+      "property_last_updated": "2025-09-12T11:55:30.267604"
+    },
+    "coefficient_thermal_conductivity": {
+      "property_name": "Коэффициент теплопроводности",
+      "property_unit": "Вт/(м·°С)",
+      "property_source": "ГОСТ 20700-75",
+      "property_subsource": "[1]",
+      "comment": "",
+      "temperature_value_pairs": [
+        [
+          100.0,
+          47.0
+        ],
+        [
+          200.0,
+          43.0
+        ],
+        [
+          300.0,
+          40.0
+        ],
+        [
+          400.0,
+          36.0
+        ]
+      ],
+      "property_last_updated": "2025-09-12T11:55:30.267604"
+    },
+    "density": {
+      "property_name": "Плотность",
+      "property_unit": "кг/м³",
+      "property_source": "ГОСТ 20700-75",
+      "property_subsource": "[1]",
+      "comment": "",
+      "temperature_value_pairs": [
+        [
+          20.0,
+          7820.0
+        ],
+        [
+          100.0,
+          7820.0
+        ]
+      ],
+      "property_last_updated": "2025-09-12T11:55:30.267604"
+    },
+    "specific_heat": {
+      "property_name": "Удельная теплоемкость",
+      "property_unit": "Дж/(кг·°С)",
+      "property_source": "ГОСТ 20700-75",
+      "property_subsource": "[1]",
+      "comment": "",
+      "temperature_value_pairs": [
+        [
+          20.0,
+          482.0
+        ],
+        [
+          100.0,
+          496.0
+        ],
+        [
+          200.0,
+          513.0
+        ],
+        [
+          300.0,
+          532.0
+        ],
+        [
+          400.0,
+          555.0
+        ],
+        [
+          500.0,
+          583.0
+        ],
+        [
+          600.0,
+          620.0
+        ],
+        [
+          700.0,
+          703.0
+        ],
+        [
+          800.0,
+          687.0
+        ],
+        [
+          900.0,
+          678.0
+        ]
+      ],
+      "property_last_updated": "2025-09-12T11:55:30.267604"
+    }
+  },
+  "mechanical_properties": {
+    "strength_category": [
+      {
+        "value_strength_category": "КП60",
+        "hardness": [
+          {
+            "property_source": "",
+            "property_subsource": "",
+            "unit_value": "HB",
+            "min_value": 235.0,
+            "max_value": 285.0
+          }
+        ],
+        "yield_strength": {
+          "property_name": "Предел текучести",
+          "property_unit": "МПа",
+          "property_source": "ГОСТ 20700-75",
+          "property_subsource": "[9]",
+          "comment": "*Предел текучести записан с разницей в 69 МПа  = (67 ([9]) - 60 (КП60))*9,80665",
+          "temperature_value_pairs": [
+            [
+              20.0,
+              588.0
+            ],
+            [
+              100.0,
+              500.0
+            ],
+            [
+              200.0,
+              480.0
+            ],
+            [
+              300.0,
+              500.0
+            ],
+            [
+              400.0,
+              441.0
+            ],
+            [
+              500.0,
+              377.0
+            ]
+          ],
+          "property_last_updated": "2025-09-12T11:55:30.267604"
+        },
+        "tensile_strength": {
+          "property_name": "Предел прочности",
+          "property_unit": "МПа",
+          "property_source": "ГОСТ 20700-75",
+          "property_subsource": "[9]",
+          "comment": "*Предел прочности записан с разницей в 78 МПа  = (85 ([9]) - 75 (КП60))*9,80665",
+          "temperature_value_pairs": [
+            [
+              20.0,
+              756.0
+            ],
+            [
+              100.0,
+              657.0
+            ],
+            [
+              200.0,
+              697.0
+            ],
+            [
+              300.0,
+              716.0
+            ],
+            [
+              400.0,
+              569.0
+            ],
+            [
+              500.0,
+              422.0
+            ]
+          ],
+          "property_last_updated": "2025-09-12T11:55:30.267604"
+        },
+        "impact_strength": {
+          "property_source": "",
+          "property_subsource": "[9]",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              20.0,
+              98.0
+            ],
+            [
+              100.0,
+              137.0
+            ],
+            [
+              200.0,
+              137.0
+            ],
+            [
+              300.0,
+              127.0
+            ],
+            [
+              400.0,
+              98.0
+            ],
+            [
+              500.0,
+              83.0
+            ]
+          ],
+          "property_name": "Ударная вязкость",
+          "property_unit": "Дж/см²",
+          "property_last_updated": "2025-09-12T11:55:30.267604"
+        }
+      }
+    ]
+  },
+  "chemical_properties": {
+    "composition": [
+      {
+        "composition_source": "ГОСТ4543-2016",
+        "other_elements": [
+          {
+            "element": "C",
+            "unit_value": "%",
+            "min_value": 0.31,
+            "max_value": 0.39,
+            "min_value_tolerance": "0.30",
+            "max_value_tolerance": "0.40"
+          },
+          {
+            "element": "Si",
+            "unit_value": "%",
+            "min_value": 0.17,
+            "max_value": 0.37,
+            "min_value_tolerance": "0.15",
+            "max_value_tolerance": "0.39"
+          },
+          {
+            "element": "Mn",
+            "unit_value": "%",
+            "min_value": 0.5,
+            "max_value": 0.8,
+            "min_value_tolerance": "0.48",
+            "max_value_tolerance": "0.82"
+          },
+          {
+            "element": "Cr",
+            "unit_value": "%",
+            "min_value": 0.8,
+            "max_value": 1.1,
+            "min_value_tolerance": "0.78",
+            "max_value_tolerance": "1,15"
+          }
+        ],
+        "composition_subsource": "",
+        "comment": "",
+        "base_element": "Fe"
+      }
+    ]
+  }
+}

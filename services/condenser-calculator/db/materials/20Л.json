@@ -1,0 +1,415 @@
+{
+  "material_id": "3c60851d-1b64-4a4c-a246-2198b9d96efd",
+  "metadata": {
+    "name_material_standard": "20Л",
+    "name_material_alternative": [],
+    "application_area": [
+      "Литейные материалы"
+    ],
+    "comment": "",
+    "classification": {
+      "classification_category": "",
+      "classification_class": "",
+      "classification_subclass": ""
+    }
+  },
+  "physical_properties": {
+    "modulus_elasticity": {
+      "property_name": "Модуль упругости",
+      "property_unit": "МПа",
+      "property_source": "ОСТ 108.961.02-79, Обод по ГОСТ 977-88",
+      "property_subsource": "[1]",
+      "comment": "",
+      "temperature_value_pairs": [
+        [
+          20.0,
+          201000.0
+        ],
+        [
+          100.0,
+          196000.0
+        ],
+        [
+          200.0,
+          188000.0
+        ],
+        [
+          300.0,
+          183000.0
+        ],
+        [
+          400.0,
+          173000.0
+        ],
+        [
+          500.0,
+          165000.0
+        ],
+        [
+          600.0,
+          152000.0
+        ],
+        [
+          700.0,
+          132000.0
+        ],
+        [
+          800.0,
+          120000.0
+        ]
+      ],
+      "property_last_updated": "2025-09-10T15:51:20.879022"
+    },
+    "coefficient_linear_expansion": {
+      "property_name": "Коэффициент линейного расширения",
+      "property_unit": "1/°С",
+      "property_source": "ОСТ 108.961.02-79, Обод по ГОСТ 977-88",
+      "property_subsource": "[1]",
+      "comment": "",
+      "temperature_value_pairs": [
+        [
+          100.0,
+          11.1
+        ],
+        [
+          200.0,
+          12.1
+        ],
+        [
+          400.0,
+          13.4
+        ],
+        [
+          500.0,
+          14.4
+        ]
+      ],
+      "property_last_updated": "2025-09-10T15:51:20.879022"
+    },
+    "coefficient_thermal_conductivity": {
+      "property_name": "Коэффициент теплопроводности",
+      "property_unit": "Вт/(м·°С)",
+      "property_source": "ОСТ 108.961.02-79, Обод по ГОСТ 977-88",
+      "property_subsource": "[1]",
+      "comment": "",
+      "temperature_value_pairs": [
+        [
+          100.0,
+          78.0
+        ],
+        [
+          200.0,
+          67.0
+        ],
+        [
+          300.0,
+          48.0
+        ],
+        [
+          800.0,
+          42.0
+        ]
+      ],
+      "property_last_updated": "2025-09-10T15:51:20.879022"
+    },
+    "density": {
+      "property_name": "Плотность",
+      "property_unit": "кг/м³",
+      "property_source": "ОСТ 108.961.02-79, Обод по ГОСТ 977-88",
+      "property_subsource": "[1]",
+      "comment": "",
+      "temperature_value_pairs": [
+        [
+          20.0,
+          7830.0
+        ],
+        [
+          100.0,
+          7830.0
+        ]
+      ],
+      "property_last_updated": "2025-09-10T15:51:20.879022"
+    },
+    "specific_heat": {
+      "property_name": "Удельная теплоемкость",
+      "property_unit": "Дж/(кг·°С)",
+      "property_source": "ОСТ 108.961.02-79, Обод по ГОСТ 977-88",
+      "property_subsource": "[12]",
+      "comment": "",
+      "temperature_value_pairs": [
+        [
+          100.0,
+          468.9
+        ],
+        [
+          200.0,
+          481.5
+        ],
+        [
+          400.0,
+          523.4
+        ],
+        [
+          600.0,
+          569.4
+        ]
+      ],
+      "property_last_updated": "2025-09-10T15:51:20.879022"
+    }
+  },
+  "mechanical_properties": {
+    "strength_category": [
+      {
+        "value_strength_category": "КП22",
+        "hardness": [],
+        "yield_strength": {
+          "property_name": "Предел текучести",
+          "property_unit": "МПа",
+          "property_source": "ОСТ 108.961.02-79, Обод по ГОСТ 977-88",
+          "property_subsource": "[12]",
+          "comment": "Предел текучести записан с разницей в 6 МПа = 216 (КП20) - 210 [12]",
+          "temperature_value_pairs": [
+            [
+              20.0,
+              216.0
+            ],
+            [
+              100.0,
+              206.0
+            ],
+            [
+              200.0,
+              176.0
+            ],
+            [
+              300.0,
+              166.0
+            ],
+            [
+              400.0,
+              166.0
+            ],
+            [
+              450.0,
+              146.0
+            ],
+            [
+              500.0,
+              136.0
+            ],
+            [
+              550.0,
+              126.0
+            ],
+            [
+              600.0,
+              91.0
+            ]
+          ],
+          "property_last_updated": "2025-09-10T15:51:20.879022"
+        },
+        "tensile_strength": {
+          "property_name": "Предел прочности",
+          "property_unit": "МПа",
+          "property_source": "ОСТ 108.961.02-79, Обод по ГОСТ 977-88",
+          "property_subsource": "[12]",
+          "comment": "Предел прочности записан с разницей в 18 МПа = 430 [12] - 412 (КП20)",
+          "temperature_value_pairs": [
+            [
+              20.0,
+              412.0
+            ],
+            [
+              100.0,
+              392.0
+            ],
+            [
+              200.0,
+              352.0
+            ],
+            [
+              300.0,
+              362.0
+            ],
+            [
+              400.0,
+              332.0
+            ],
+            [
+              450.0,
+              212.0
+            ],
+            [
+              500.0,
+              212.0
+            ],
+            [
+              550.0,
+              182.0
+            ],
+            [
+              600.0,
+              92.0
+            ]
+          ],
+          "property_last_updated": "2025-09-10T15:51:20.879022"
+        },
+        "impact_strength": {
+          "property_name": "Ударная вязкость",
+          "property_unit": "Дж/см²",
+          "property_source": "ОСТ 108.961.02-79, Обод по ГОСТ 977-88",
+          "property_subsource": "[12]",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              20.0,
+              55.0
+            ],
+            [
+              100.0,
+              90.0
+            ],
+            [
+              200.0,
+              100.0
+            ],
+            [
+              300.0,
+              90.0
+            ],
+            [
+              400.0,
+              70.0
+            ],
+            [
+              450.0,
+              50.0
+            ],
+            [
+              500.0,
+              55.0
+            ],
+            [
+              550.0,
+              50.0
+            ],
+            [
+              600.0,
+              60.0
+            ]
+          ],
+          "property_last_updated": "2025-09-10T15:51:20.879022"
+        },
+        "tensile_strength_limit_10_thousands_hours": {
+          "property_name": "Предел длит. прочности за 10 тыс.ч",
+          "property_unit": "МПа",
+          "property_source": "ОСТ 108.961.02-79, Обод по ГОСТ 977-88",
+          "property_subsource": "[12]",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              400.0,
+              195.0
+            ],
+            [
+              450.0,
+              125.0
+            ],
+            [
+              500.0,
+              72.0
+            ]
+          ],
+          "property_last_updated": "2025-09-10T15:51:20.879022"
+        },
+        "tensile_strength_limit_100_thousands_hours": {
+          "property_name": "Предел длит. прочности за 100 тыс.ч",
+          "property_unit": "МПа",
+          "property_source": "ОСТ 108.961.02-79, Обод по ГОСТ 977-88",
+          "property_subsource": "[12]",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              400.0,
+              153.0
+            ],
+            [
+              450.0,
+              95.0
+            ],
+            [
+              500.0,
+              50.0
+            ]
+          ],
+          "property_last_updated": "2025-09-10T15:51:20.879022"
+        },
+        "tensile_strength_limit_200_thousands_hours": {
+          "property_name": "Предел длит. прочности за 200 тыс.ч",
+          "property_unit": "МПа",
+          "property_source": "ОСТ 108.961.02-79, Обод по ГОСТ 977-88",
+          "property_subsource": "*Данные получены экстраполяцией по зависимости Ларсона-Миллера",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              400.0,
+              143.0
+            ],
+            [
+              450.0,
+              87.0
+            ],
+            [
+              500.0,
+              42.0
+            ]
+          ],
+          "property_last_updated": "2025-09-10T15:51:20.879022"
+        },
+        "tensile_strength_limit_250_thousands_hours": {
+          "property_name": "Предел длит. прочности за 250 тыс.ч",
+          "property_unit": "МПа",
+          "property_source": "ОСТ 108.961.02-79, Обод по ГОСТ 977-88",
+          "property_subsource": "*Данные получены экстраполяцией по зависимости Ларсона-Миллера",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              400.0,
+              140.0
+            ],
+            [
+              450.0,
+              85.0
+            ],
+            [
+              500.0,
+              40.0
+            ]
+          ],
+          "property_last_updated": "2025-09-10T15:51:20.879022"
+        },
+        "сreep_strain_rate_1_100_thousands_hours": {
+          "property_source": "ОСТ 108.961.02-79, Обод по ГОСТ 977-88",
+          "property_subsource": "12",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              400.0,
+              70.0
+            ],
+            [
+              500.0,
+              36.0
+            ]
+          ],
+          "property_name": "Ползучесть при скорости деформации 1%/100 тыс.ч",
+          "property_unit": "МПа",
+          "property_last_updated": "2025-09-10T15:51:20.879022"
+        }
+      }
+    ]
+  },
+  "chemical_properties": {
+    "composition": []
+  }
+}
