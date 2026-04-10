@@ -1,5 +1,3 @@
-
-
 coefficient_B_const = 0.974
 temperature_cooling_water_average_heating_const = 25.0
 speed_cooling_water_const = 2.0

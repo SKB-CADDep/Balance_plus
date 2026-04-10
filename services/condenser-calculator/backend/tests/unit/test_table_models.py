@@ -5,7 +5,6 @@ import pytest
 
 from app.utils.table_models import Table1D, Table2D, interpolate_trilinear
 
-
 logging.disable(logging.CRITICAL)
 
 

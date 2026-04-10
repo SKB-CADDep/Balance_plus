@@ -6,7 +6,6 @@ from dataclasses import dataclass, field
 import numpy as np
 from scipy.interpolate import RegularGridInterpolator, interp1d
 
-
 logging.basicConfig(level=logging.INFO, format='%(levelname)s:%(name)s:%(message)s')
 logger = logging.getLogger(__name__)
 
