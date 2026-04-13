@@ -1,6 +1,5 @@
 from _common import setup_path
 
-
 setup_path()
 
 import matplotlib.pyplot as plt
