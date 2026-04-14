@@ -5,6 +5,7 @@ import pytest
 import numpy as np
 from unittest.mock import patch
 from app.core.material_lambda import build_lambda_interpolator, get_lambda
+from app.core.exceptions import MaterialPropertyError
 
 # --- Вспомогательные классы для тестов ---
 class MockPoint:
@@ -17,10 +18,8 @@ class MockMaterial:
         self.name = name
         self.thermal_conductivity_points = points
 
-# Фейковый Table1D для имитации корректной интерполяции без вызова реального движка
 class FakeTable1D:
     def __init__(self, x, y):
-        # Table1D умеет сортировать точки
         idx = np.argsort(x)
         self.x = x[idx]
         self.y = y[idx]
@@ -28,85 +27,84 @@ class FakeTable1D:
     def __call__(self, val):
         return np.interp(val, self.x, self.y)
 
-
-# --- Фикстуры (тестовые данные) ---
+# --- Фикстуры ---
 @pytest.fixture
 def valid_material():
-    points = [
+    return MockMaterial("МНЖ 5-1", [
         MockPoint(20.0, 15.0),
         MockPoint(100.0, 35.0),
         MockPoint(150.0, 45.0)
-    ]
-    return MockMaterial("МНЖ 5-1", points)
+    ])
 
 @pytest.fixture
 def unordered_material():
-    points = [
+    return MockMaterial("Латунь Л68", [
         MockPoint(100.0, 35.0),
         MockPoint(20.0, 15.0),
         MockPoint(150.0, 45.0)
-    ]
-    return MockMaterial("Латунь Л68", points)
-
-@pytest.fixture
-def empty_material():
-    return MockMaterial("Unknown", [])
-
-@pytest.fixture
-def single_point_material():
-    return MockMaterial("Titanium", [MockPoint(50.0, 20.0)])
+    ])
 
 
-# --- Тестовые сценарии (Test cases) ---
+# --- Тестовые сценарии ---
 
 @patch("app.core.material_lambda.Table1D", side_effect=FakeTable1D)
 def test_get_lambda_exact_point(mock_table, valid_material):
-    """Проверка возврата точного значения, если температура совпадает с узловой точкой"""
-    result = get_lambda(valid_material, 100.0)
-    assert result == 35.0
+    interp = build_lambda_interpolator(valid_material)
+    assert get_lambda(interp, 100.0) == 35.0
 
 @patch("app.core.material_lambda.Table1D", side_effect=FakeTable1D)
 def test_get_lambda_interpolation(mock_table, valid_material):
-    """Проверка корректной интерполяции между двумя известными точками"""
-    result = get_lambda(valid_material, 60.0)
-    assert result == 25.0
+    interp = build_lambda_interpolator(valid_material)
+    assert get_lambda(interp, 60.0) == 25.0
 
 @patch("app.core.material_lambda.Table1D", side_effect=FakeTable1D)
 def test_get_lambda_unordered_points(mock_table, unordered_material):
-    """Проверка, что функция корректно справляется с неотсортированными точками"""
-    result = get_lambda(unordered_material, 60.0)
-    assert result == 25.0
+    interp = build_lambda_interpolator(unordered_material)
+    assert get_lambda(interp, 60.0) == 25.0
 
-def test_get_lambda_empty_points(empty_material):
-    """Проверка генерации ошибки при пустом массиве точек теплопроводности"""
-    with pytest.raises(ValueError, match="Недостаточно данных теплопроводности"):
-        get_lambda(empty_material, 50.0)
+def test_get_lambda_empty_points():
+    material = MockMaterial("Unknown", [])
+    with pytest.raises(MaterialPropertyError, match="требуется минимум 2 точки"):
+        build_lambda_interpolator(material)
 
-def test_get_lambda_single_point(single_point_material):
-    """Проверка генерации ошибки, если у материала всего 1 точка теплопроводности"""
-    with pytest.raises(ValueError, match="Недостаточно данных теплопроводности"):
-        get_lambda(single_point_material, 50.0)
-
-def test_get_lambda_below_range(valid_material):
-    """Запрет экстраполяции: температура ниже доступного диапазона"""
-    with pytest.raises(ValueError, match=r"вне диапазона таблицы.*\[20.0; 150.0\]"):
-        get_lambda(valid_material, 10.0)
-
-def test_get_lambda_above_range(valid_material):
-    """Запрет экстраполяции: температура выше доступного диапазона"""
-    with pytest.raises(ValueError, match=r"вне диапазона таблицы.*\[20.0; 150.0\]"):
-        get_lambda(valid_material, 200.0)
+def test_get_lambda_single_point():
+    material = MockMaterial("Titanium", [MockPoint(50.0, 20.0)])
+    with pytest.raises(MaterialPropertyError, match="требуется минимум 2 точки"):
+        build_lambda_interpolator(material)
 
 @patch("app.core.material_lambda.Table1D", side_effect=FakeTable1D)
-def test_build_lambda_interpolator_returns_table1d(mock_table, valid_material):
-    """Проверка, что в конструктор Table1D передаются правильные массивы numpy.ndarray"""
-    build_lambda_interpolator(valid_material)
+def test_get_lambda_below_range(mock_table, valid_material):
+    interp = build_lambda_interpolator(valid_material)
+    with pytest.raises(MaterialPropertyError, match=r"вне диапазона таблицы.*\[20.0; 150.0\]"):
+        get_lambda(interp, 10.0)
+
+@patch("app.core.material_lambda.Table1D", side_effect=FakeTable1D)
+def test_get_lambda_above_range(mock_table, valid_material):
+    interp = build_lambda_interpolator(valid_material)
+    with pytest.raises(MaterialPropertyError, match=r"вне диапазона таблицы.*\[20.0; 150.0\]"):
+        get_lambda(interp, 200.0)
+
+@patch("app.core.material_lambda.Table1D", side_effect=FakeTable1D)
+def test_lambda_list_format(mock_table):
+    """Тест обработки формата JSON: списка списков [[t, λ], ...]"""
+    material = MockMaterial("TestList", [[20, 10], [100, 30]])
+    interp = build_lambda_interpolator(material)
     
-    assert mock_table.called
-    args, _ = mock_table.call_args
-    x_arr, y_arr = args
+    assert interp.min_t == 20.0
+    assert interp.max_t == 100.0
     
-    assert isinstance(x_arr, np.ndarray)
-    assert isinstance(y_arr, np.ndarray)
-    assert list(x_arr) == [20.0, 100.0, 150.0]
-    assert list(y_arr) == [15.0, 35.0, 45.0]
+    result = get_lambda(interp, 60.0)
+    assert result == 20.0
+
+@patch("app.core.material_lambda.Table1D", side_effect=FakeTable1D)
+def test_lambda_dict_format(mock_table):
+    """Тест обработки формата JSON: словари (когда material - тоже словарь)"""
+    material_dict = {
+        "name": "TestDict",
+        "thermal_conductivity_points": [
+            {"temperature": 20, "value": 10},
+            {"temperature": 100, "value": 30}
+        ]
+    }
+    interp = build_lambda_interpolator(material_dict)
+    assert get_lambda(interp, 60.0) == 20.0

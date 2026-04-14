@@ -1,75 +1,91 @@
+import logging
 import numpy as np
+from dataclasses import dataclass
 from app.utils.table_models import Table1D
+from app.core.exceptions import MaterialPropertyError
 
-def build_lambda_interpolator(material) -> Table1D:
+logger = logging.getLogger(__name__)
+
+@dataclass
+class MaterialLambdaInterpolator:
     """
-    Создает интерполятор Table1D для зависимости теплопроводности (λ) от температуры.
-    
-    :param material: Объект материала (ORM-модель или Pydantic-схема)
-    :return: Объект Table1D
+    Контейнер, хранящий инициализированный объект Table1D и метаданные 
+    материала для предотвращения повторных аллокаций памяти и быстрых проверок.
     """
-    points = getattr(material, "thermal_conductivity_points", None)
-    material_name = getattr(material, "name", "Unknown")
+    table: Table1D
+    min_t: float
+    max_t: float
+    material_name: str
+
+
+def build_lambda_interpolator(material) -> MaterialLambdaInterpolator:
+    """
+    Создает и кэширует интерполятор Table1D для зависимости теплопроводности.
+    Должен вызываться один раз перед циклом расчетов.
+    """
+    if isinstance(material, dict):
+        points = material.get("thermal_conductivity_points", [])
+        material_name = material.get("name", "Unknown")
+    else:
+        points = getattr(material, "thermal_conductivity_points", [])
+        material_name = getattr(material, "name", "Unknown")
 
     if not points or len(points) < 2:
-        raise ValueError(
-            f"Для материала '{material_name}' требуется минимум 2 точки теплопроводности."
-        )
+        msg = f"Для материала '{material_name}' требуется минимум 2 точки теплопроводности."
+        logger.error(msg, extra={"material_name": material_name})
+        raise MaterialPropertyError(msg)
 
-    try:
-        x_vals = [float(p.temperature) for p in points]
-        y_vals = [float(p.value) for p in points]
-    except AttributeError:
-        x_vals = [float(p["temperature"]) for p in points]
-        y_vals = [float(p["value"]) for p in points]
+    x_vals, y_vals = [], []
+    for p in points:
+        if isinstance(p, (list, tuple)) and len(p) >= 2:
+            x_vals.append(float(p[0]))
+            y_vals.append(float(p[1]))
+        elif isinstance(p, dict):
+            x_vals.append(float(p.get("temperature", 0)))
+            y_vals.append(float(p.get("value", 0)))
+        else:
+            x_vals.append(float(getattr(p, "temperature", 0)))
+            y_vals.append(float(getattr(p, "value", 0)))
 
     x = np.array(x_vals, dtype=np.float64)
     y = np.array(y_vals, dtype=np.float64)
 
-    return Table1D(x, y)
+    return MaterialLambdaInterpolator(
+        table=Table1D(x, y),
+        min_t=float(np.min(x)),
+        max_t=float(np.max(x)),
+        material_name=material_name
+    )
 
 
-def get_lambda(material, t_avg: float) -> float:
+def get_lambda(interp: MaterialLambdaInterpolator, t_avg: float) -> float:
     """
     Возвращает коэффициент теплопроводности λ при заданной температуре t_avg.
-    Экстраполяция запрещена! Если t_avg выходит за пределы известных точек,
-    выбрасывается исключение ValueError.
-    
-    :param material: Объект материала
-    :param t_avg: Средняя температура материала/воды (°C)
-    :return: Коэффициент теплопроводности λ
+    Экстраполяция запрещена!
     """
-    points = getattr(material, "thermal_conductivity_points", None)
-    material_name = getattr(material, "name", "Unknown")
-
-    if not points or len(points) < 2:
-        raise ValueError(
-            f"Недостаточно данных теплопроводности для материала '{material_name}'."
+    if not (interp.min_t <= t_avg <= interp.max_t):
+        msg = (
+            f"Температура {t_avg}°C вне диапазона таблицы λ(T) "
+            f"для материала '{interp.material_name}': [{interp.min_t}; {interp.max_t}]"
         )
+        logger.error(
+            msg, 
+            extra={
+                "material_name": interp.material_name,
+                "t_avg": t_avg,
+                "min_t": interp.min_t,
+                "max_t": interp.max_t
+            }
+        )
+        raise MaterialPropertyError(msg)
 
     try:
-        temps = [float(p.temperature) for p in points]
-    except AttributeError:
-        temps = [float(p["temperature"]) for p in points]
-
-    min_t = min(temps)
-    max_t = max(temps)
-
-    if not (min_t <= t_avg <= max_t):
-        raise ValueError(
-            f"Температура {t_avg}°C вне диапазона таблицы λ(T) для материала '{material_name}': "
-            f"[{min_t}; {max_t}]"
-        )
-
-    interpolator = build_lambda_interpolator(material)
-
-    try:
-        result = interpolator(t_avg)
+        result = interp.table(t_avg)
     except TypeError:
-        if hasattr(interpolator, 'evaluate'):
-            result = interpolator.evaluate(t_avg)
-        elif hasattr(interpolator, 'get_value'):
-            result = interpolator.get_value(t_avg)
+        if hasattr(interp.table, 'evaluate'):
+            result = interp.table.evaluate(t_avg)
+        elif hasattr(interp.table, 'get_value'):
+            result = interp.table.get_value(t_avg)
         else:
             raise NotImplementedError("Класс Table1D не поддерживает стандартный вызов.")
 
