@@ -1,0 +1,183 @@
+{
+  "material_id": "35979d73-f44c-4038-965f-ebd4df259731",
+  "metadata": {
+    "name_material_standard": "Л68",
+    "name_material_alternative": [],
+    "application_area": [
+      "Трубки конденсатора"
+    ],
+    "comment": "",
+    "classification": {
+      "classification_category": "",
+      "classification_class": "",
+      "classification_subclass": ""
+    }
+  },
+  "physical_properties": {
+    "modulus_elasticity": {
+      "property_source": "ГОСТ 1019-47",
+      "property_subsource": "2",
+      "comment": "",
+      "temperature_value_pairs": [
+        [
+          20.0,
+          7000.0
+        ]
+      ],
+      "property_name": "Модуль упругости",
+      "property_unit": "МПа",
+      "property_last_updated": "2025-08-19T08:46:38.516150"
+    },
+    "coefficient_linear_expansion": {
+      "property_source": "ГОСТ 1019-47",
+      "property_subsource": "2",
+      "comment": "",
+      "temperature_value_pairs": [
+        [
+          300.0,
+          19.9
+        ]
+      ],
+      "property_name": "Коэффициент линейного расширения",
+      "property_unit": "1/°С",
+      "property_last_updated": "2025-08-19T08:46:38.516150"
+    },
+    "coefficient_thermal_conductivity": {
+      "property_source": "ГОСТ 1019-47",
+      "property_subsource": "2",
+      "comment": "",
+      "temperature_value_pairs": [
+        [
+          20.0,
+          0.28
+        ]
+      ],
+      "property_name": "Коэффициент теплопроводности",
+      "property_unit": "Вт/(м·°С)",
+      "property_last_updated": "2025-08-19T08:46:38.516150"
+    },
+    "density": {
+      "property_source": "ГОСТ 1019-47",
+      "property_subsource": "2",
+      "comment": "",
+      "temperature_value_pairs": [
+        [
+          20.0,
+          8500.0
+        ]
+      ],
+      "property_name": "Плотность",
+      "property_unit": "кг/м³",
+      "property_last_updated": "2025-08-19T08:46:38.516150"
+    }
+  },
+  "mechanical_properties": {
+    "strength_category": [
+      {
+        "value_strength_category": "-",
+        "hardness": [],
+        "yield_strength": {
+          "property_source": "ГОСТ 1019-47",
+          "property_subsource": "2",
+          "comment": "мягкое состояние",
+          "temperature_value_pairs": [
+            [
+              20.0,
+              10.0
+            ]
+          ],
+          "property_name": "Предел текучести",
+          "property_unit": "МПа",
+          "property_last_updated": "2025-08-19T08:46:38.516150"
+        },
+        "tensile_strength": {
+          "property_source": "ГОСТ 1019-47",
+          "property_subsource": "2",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              20.0,
+              270.6
+            ]
+          ],
+          "property_name": "Предел прочности",
+          "property_unit": "МПа",
+          "property_last_updated": "2025-08-19T08:46:38.516150"
+        },
+        "impact_strength": {
+          "property_source": "ГОСТ 1019-47",
+          "property_subsource": "2",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              20.0,
+              69.7
+            ]
+          ],
+          "property_name": "Ударная вязкость",
+          "property_unit": "Дж/см²",
+          "property_last_updated": "2025-08-19T08:46:38.516150"
+        }
+      }
+    ]
+  },
+  "chemical_properties": {
+    "composition": [
+      {
+        "composition_source": "ГОСТ 15527-2004",
+        "other_elements": [
+          {
+            "element": "Cu",
+            "unit_value": "%",
+            "min_value": 67.0,
+            "max_value": 70.0
+          },
+          {
+            "element": "Pb",
+            "unit_value": "%",
+            "min_value": 0.0,
+            "max_value": 0.03
+          },
+          {
+            "element": "Fe",
+            "unit_value": "%",
+            "min_value": 0.0,
+            "max_value": 0.1
+          },
+          {
+            "element": "Sb",
+            "unit_value": "%",
+            "min_value": 0.0,
+            "max_value": 0.005
+          },
+          {
+            "element": "Bi",
+            "unit_value": "%",
+            "min_value": 0.0,
+            "max_value": 0.002
+          },
+          {
+            "element": "P",
+            "unit_value": "%",
+            "min_value": 0.0,
+            "max_value": 0.01
+          },
+          {
+            "element": "Zn",
+            "unit_value": "%",
+            "min_value": 32.853
+          },
+          {
+            "element": "Ni",
+            "unit_value": "%",
+            "min_value": 0.0,
+            "max_value": 0.3
+          }
+        ],
+        "composition_subsource": "1",
+        "comment": "Внести цинк; для изделий специального назначения см.хим.состав по ГОСТ 15527-2004 примечание 1. Содержание примесей по ГОСТ 2004 года указано некорректно",
+        "base_element": "Cu"
+      }
+    ]
+  }
+}
