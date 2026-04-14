@@ -5,7 +5,6 @@ from sqlalchemy import pool
 from alembic import context
 from os.path import dirname, abspath
 
-sys.path.insert(0, dirname(dirname(abspath(__file__))))
 
 from app.core.database import SQLALCHEMY_DATABASE_URL
 

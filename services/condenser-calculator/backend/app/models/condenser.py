@@ -8,8 +8,9 @@ class Condenser(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
 
-    # Основная информация
+    # 2.1 Основная информация
     name_condenser = Column(String, nullable=False, unique=True, index=True)
+    project_id = Column(String)  # ID проекта (String для гибкости)
     doc_num_thermo_calc = Column(String)
     doc_num_assembly = Column(String)
     doc_num_passport = Column(String)
