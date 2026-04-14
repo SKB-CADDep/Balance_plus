@@ -30,4 +30,9 @@ def save_calculation_result(
     db.commit()
     db.refresh(result)
     
+    logger.info(
+        "DB: calculation result saved successfully", 
+        extra={"calculation_id": result.id, "condenser_id": condenser_id}
+    )
+    
     return result

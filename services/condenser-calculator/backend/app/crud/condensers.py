@@ -21,8 +21,13 @@ def get_condenser_by_id(db: Session, condenser_id: int) -> Condenser:
     return condenser
 
 
-def search_condensers(db: Session, search: str | None = None) -> list[Condenser]:
-    """Ищет конденсаторы по имени или проекту (case-insensitive)."""
+def search_condensers(
+    db: Session, 
+    search: str | None = None, 
+    skip: int = 0, 
+    limit: int = 100
+) -> list[Condenser]:
+    """Ищет конденсаторы по имени или проекту (case-insensitive) с пагинацией."""
     query = db.query(Condenser)
     
     if search:
@@ -34,9 +39,9 @@ def search_condensers(db: Session, search: str | None = None) -> list[Condenser]
             )
         )
         
-    return query.all()
+    return query.order_by(Condenser.name_condenser).offset(skip).limit(limit).all()
 
 
-def get_condensers(db: Session) -> list[Condenser]:
-    """Возвращает список всех конденсаторов."""
-    return db.query(Condenser).all()
+def get_condensers(db: Session, skip: int = 0, limit: int = 100) -> list[Condenser]:
+    """Возвращает список всех конденсаторов с пагинацией."""
+    return db.query(Condenser).offset(skip).limit(limit).all()
