@@ -23,7 +23,8 @@ def upgrade() -> None:
     # 1. Update Materials
     op.add_column('materials', sa.Column('material_uuid', sa.String(), nullable=False))
     op.create_index(op.f('ix_materials_material_uuid'), 'materials', ['material_uuid'], unique=True)
-    op.alter_column('materials', 'thermal_properties', new_column_name='thermal_conductivity_points')
+    op.alter_column('materials', 'thermal_properties', new_column_name='thermal_conductivity_points', nullable=False)
+    op.add_column('materials', sa.Column('full_properties', sa.JSON(), nullable=True))
 
     # 2. Update Condensers
     op.add_column('condensers', sa.Column('project_id', sa.String(), nullable=True))
@@ -35,6 +36,7 @@ def downgrade() -> None:
     op.drop_column('condensers', 'project_id')
 
     # 2. Revert Materials
-    op.alter_column('materials', 'thermal_conductivity_points', new_column_name='thermal_properties')
+    op.drop_column('materials', 'full_properties')
+    op.alter_column('materials', 'thermal_conductivity_points', new_column_name='thermal_properties', nullable=True)
     op.drop_index(op.f('ix_materials_material_uuid'), table_name='materials')
     op.drop_column('materials', 'material_uuid')

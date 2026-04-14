@@ -11,8 +11,11 @@ class Material(Base):
     material_uuid = Column(String, unique=True, index=True, nullable=False)
     name = Column(String, nullable=False, unique=True)
 
-    # BR-12: [[t, λ], [t, λ], ...]
-    thermal_conductivity_points = Column(JSON, nullable=True)
+    # λ = f(t): массив точек [[t1, λ1], [t2, λ2], ...]
+    thermal_conductivity_points = Column(JSON, nullable=False)
+
+    # Полный JSON материала (для будущих расчётов)
+    full_properties = Column(JSON)
 
     # Обратная связь
     condensers = relationship("Condenser", back_populates="material")
