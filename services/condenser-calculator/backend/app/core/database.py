@@ -1,19 +1,19 @@
+import os
 from sqlalchemy import create_engine
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.orm import sessionmaker
 
-from app.core.config import settings
-
-engine = create_engine(
-    settings.SQLALCHEMY_DATABASE_URI.replace("postgresql://", "postgresql+psycopg://"),
-    pool_pre_ping=True,
-    pool_size=10,
-    max_overflow=20,
+SQLALCHEMY_DATABASE_URL = os.environ.get(
+    "DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/balance_db"
 )
 
-SessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=engine,
-)
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
 
-Base = declarative_base()
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
