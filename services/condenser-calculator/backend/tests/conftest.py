@@ -48,6 +48,7 @@ def pytest_configure(config):
     # Удобно видеть корень данных в отчёте (и отлаживать пути)
     config._condenser_validation_data_path = str(VALIDATION_DATA_PATH)
 
+
 # --- 1. PYDANTIC МОДЕЛИ ДЛЯ ВАЛИДАЦИИ YAML ---
 class DBTestStep(BaseModel):
     id: str
@@ -57,9 +58,11 @@ class DBTestStep(BaseModel):
     expected_count: int | None = None
     expected_rows: list[dict[str, Any]] | None = None
 
+
 class DBTestSuite(BaseModel):
     description: str
     tests: list[DBTestStep]
+
 
 # --- 2. ИСПОЛНИТЕЛЬ КОНКРЕТНОГО ТЕСТА ---
 class DBYamlItem(pytest.Item):
@@ -69,7 +72,8 @@ class DBYamlItem(pytest.Item):
 
     def runtest(self):
         # Берем URL базы из переменных окружения (по умолчанию - тестовая БД)
-        db_url = os.getenv("TEST_DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/test_db")
+        db_url = os.getenv(
+            "TEST_DATABASE_URL", "postgresql+psycopg://postgres:postgres@localhost:5432/test_db")
         engine = create_engine(db_url)
 
         with engine.connect() as conn:
@@ -104,6 +108,7 @@ class DBYamlItem(pytest.Item):
     def reportinfo(self):
         return self.path, 0, f"DB Test: {self.name} ({self.spec.description})"
 
+
 # --- 3. СБОРЩИК ФАЙЛОВ .db.yaml ---
 class DBYamlFile(pytest.File):
     def collect(self):
@@ -112,11 +117,13 @@ class DBYamlFile(pytest.File):
 
         # Валидируем через Pydantic (выдаст красивую ошибку, если YAML кривой)
         # Для Pydantic v2: model_validate. Для v1: parse_obj
-        suite = DBTestSuite.model_validate(raw_data) if hasattr(DBTestSuite, 'model_validate') else DBTestSuite.parse_obj(raw_data)
+        suite = DBTestSuite.model_validate(raw_data) if hasattr(
+            DBTestSuite, 'model_validate') else DBTestSuite.parse_obj(raw_data)
 
         # Генерируем тесты
         for test_spec in suite.tests:
             yield DBYamlItem.from_parent(self, name=test_spec.id, spec=test_spec)
+
 
 # --- ПЛАГИН ДЛЯ ТЕСТИРОВАНИЯ МАТЕМАТИКИ И СТРАТЕГИЙ (*.calc.py) ---
 class CalcItem(pytest.Item):
@@ -138,7 +145,8 @@ class CalcItem(pytest.Item):
                     assert k in act, f"Ключ '{path}{k}' отсутствует в результате"
                     assert_dicts_approx(v, act[k], path + f"{k}.")
             elif isinstance(exp, list) and isinstance(act, list):
-                assert len(exp) == len(act), f"Массив '{path}': ожидалась длина {len(exp)}, получено {len(act)}"
+                assert len(exp) == len(
+                    act), f"Массив '{path}': ожидалась длина {len(exp)}, получено {len(act)}"
                 for i, (e_val, a_val) in enumerate(zip(exp, act)):
                     assert_dicts_approx(e_val, a_val, path + f"[{i}].")
             elif isinstance(exp, (float, int)) and isinstance(act, (float, int)):
@@ -154,6 +162,7 @@ class CalcItem(pytest.Item):
     def reportinfo(self):
         return self.path, 0, f"Math Test: {self.name}"
 
+
 class CalcFile(pytest.File):
     def collect(self):
         # Динамически импортируем python-файл как модуль
@@ -163,14 +172,16 @@ class CalcFile(pytest.File):
 
         # Ищем целевую функцию и массив с тестами
         target_func = getattr(module, "target_function", None)
-        tests = getattr(module, "tests",[])
+        tests = getattr(module, "tests", [])
 
         if not target_func:
-            raise ValueError(f"В файле {self.path.name} не указана переменная 'target_function'!")
+            raise ValueError(
+                f"В файле {self.path.name} не указана переменная 'target_function'!")
 
         for i, test_spec in enumerate(tests):
             test_name = test_spec.get("id", f"calc_test_{i}")
             yield CalcItem.from_parent(self, name=test_name, spec=test_spec, target_func=target_func)
+
 
 def pytest_collect_file(file_path: Path, parent):
     # Перехват DB-файлов
@@ -179,6 +190,7 @@ def pytest_collect_file(file_path: Path, parent):
     # Перехват файлов с математикой (ЗАМЕНИЛИ .calc.py НА _calc.py)
     elif file_path.name.endswith("_calc.py"):
         return CalcFile.from_parent(parent, path=file_path)
+
 
 # --- АВТОМАТИЧЕСКОЕ СОХРАНЕНИЕ ЛОГОВ ПРИ ОШИБКАХ ---
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
