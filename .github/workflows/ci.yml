@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - develop
+      - feat/406-add-continuous-integration
   pull_request:
     branches:
       - main
