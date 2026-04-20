@@ -20,6 +20,7 @@ jobs:
     name: Lint the backend ${{ matrix.service.name }}
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         service:
           - name: balance
@@ -51,6 +52,7 @@ jobs:
     name: Test the backend ${{ matrix.service.name }}
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         service:
           - name: balance
