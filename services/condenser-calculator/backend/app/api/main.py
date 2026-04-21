@@ -1,7 +1,9 @@
 from fastapi import APIRouter
 
-from app.api.routes import health
+from app.api.routes import calculations, condensers, materials, health
 
 api_router = APIRouter()
-# Подключаем роутеры (condensers, materials, calculations добавим в следующих задачах)
-api_router.include_router(health.router)
+
+api_router.include_router(calculations.router)
+api_router.include_router(condensers.router)
+api_router.include_router(materials.router)
