@@ -6,7 +6,8 @@ from alembic import context
 from os.path import dirname, abspath
 
 
-from app.core.database import SQLALCHEMY_DATABASE_URL
+from app.core.config import settings
+
 
 from app.models.base import Base
 from app.models.material import Material
@@ -14,7 +15,8 @@ from app.models.condenser import Condenser
 
 config = context.config
 
-config.set_main_option("sqlalchemy.url", SQLALCHEMY_DATABASE_URL)
+config.set_main_option("sqlalchemy.url", settings.SQLALCHEMY_DATABASE_URI)
+
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
