@@ -1,11 +1,13 @@
 import logging
 
+from fastapi import APIRouter
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.main import api_router
 from app.api.routes import calculations, condensers, materials, health
 from app.core.config import settings
+
+api_router = APIRouter()
 
 logging.basicConfig(
     level=logging.INFO,
