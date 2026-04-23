@@ -1,5 +1,4 @@
-# app/schemas/condenser.py
-
+from pydantic import ConfigDict
 from pydantic import BaseModel, Field
 from typing import Optional
 
@@ -33,4 +32,6 @@ class CondenserDetail(CondenserBase):
     water_flow_limits: Optional[dict]
 
     class Config:
-        from_attributes = True
+        model_config = ConfigDict(from_attributes=True)
+
+CondenserShort = CondenserListItem

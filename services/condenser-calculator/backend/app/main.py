@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.main import api_router
-from app.api.routes.health import router as health_router
+from app.api.routes import calculations, condensers, materials, health
 from app.core.config import settings
 
 logging.basicConfig(
@@ -28,7 +28,10 @@ app.add_middleware(
 )
 
 # Healthcheck на корневом уровне
-app.include_router(health_router)
+api_router.include_router(health.router, prefix="/health", tags=["health"])
+api_router.include_router(calculations.router, prefix="/calculations", tags=["calculations"])
+api_router.include_router(condensers.router, prefix="/condensers", tags=["condensers"])
+api_router.include_router(materials.router, prefix="/materials", tags=["materials"])
 
 # Все бизнес-роуты под /api/v1
 app.include_router(api_router, prefix=settings.API_V1_STR)

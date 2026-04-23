@@ -19,3 +19,5 @@ class MaterialDetail(BaseModel):
 
     class Config:
         from_attributes = True
+
+MaterialShort = MaterialListItem
