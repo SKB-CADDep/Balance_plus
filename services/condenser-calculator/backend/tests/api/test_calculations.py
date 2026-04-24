@@ -5,6 +5,46 @@ import pytest
 from fastapi.testclient import TestClient
 from app.main import app
 
+from sqlalchemy import create_engine
+
+def check_db_connection():
+    print("\n[*] Проверка конфигурации...")
+    from app.core.config import settings
+    
+    # 1. Пытаемся найти URL под разными именами
+    db_url = None
+    possible_names = ["SQLALCHEMY_DATABASE_URI", "SQLALCHEMY_DATABASE_URL", "DATABASE_URL"]
+    
+    for name in possible_names:
+        if hasattr(settings, name):
+            db_url = getattr(settings, name)
+            print(f"[*] Найдено поле: {name}")
+            break
+            
+    if not db_url:
+        # Если не нашли, выведем все доступные поля для отладки
+        attrs = [a for a in dir(settings) if not a.startswith("_")]
+        print(f"[!] ОШИБКА: URL базы данных не найден в настройках.")
+        print(f"[*] Доступные поля в settings: {attrs}")
+        pytest.exit("Завершение: не удалось определить URL базы данных")
+
+    print(f"[*] Пытаюсь подключиться к: {db_url}")
+    
+    try:
+        from sqlalchemy import create_engine
+        engine = create_engine(str(db_url), connect_args={'connect_timeout': 3})
+        with engine.connect() as conn:
+            print("[+] БД доступна!")
+    except Exception as e:
+        print(f"[!] ОШИБКА ПОДКЛЮЧЕНИЯ К БД: {e}")
+        print("[*] УБЕДИТЕСЬ, ЧТО:")
+        print("    1. PostgreSQL запущен.")
+        print("    2. В .env файле POSTGRES_SERVER=localhost (не 'db').")
+        print("    3. Логин/пароль верны.")
+        pytest.exit("Завершение: база данных недоступна")
+
+check_db_connection()
+
 client = TestClient(app)
 ENDPOINT = "/api/v1/calculations/calculate"
 

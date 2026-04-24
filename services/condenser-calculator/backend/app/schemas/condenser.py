@@ -11,8 +11,7 @@ class CondenserBase(BaseModel):
 class CondenserListItem(CondenserBase):
     id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CondenserDetail(CondenserBase):
@@ -31,7 +30,6 @@ class CondenserDetail(CondenserBase):
     mass_flow_air: float
     water_flow_limits: Optional[dict]
 
-    class Config:
-        model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True)
 
 CondenserShort = CondenserListItem
