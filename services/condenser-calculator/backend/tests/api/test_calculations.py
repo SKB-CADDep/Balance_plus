@@ -52,69 +52,69 @@ ENDPOINT = "/api/v1/calculations/calculate"
 # 🟢 УСПЕШНЫЕ СЦЕНАРИИ (Happy Paths)
 # ==========================================
 
-# def test_1_berman_success():
-#     payload = {
-#         "method": "berman",
-#         "condenser_id": 1,
-#         "material_id": 1,
-#         "G_steam": [120000.0],
-#         "H_steam": 2400.0,
-#         "t1_main": [20.0],
-#         "coefficient_b": [0.8],
-#         "W_main": [8000.0]
-#     }
-#     response = client.post(ENDPOINT, json=payload)
-#     # Если база доступна локально по localhost, вернет 200 или 404.
-#     assert response.status_code in [200, 404], f"Unexpected error: {response.text}"
+def test_1_berman_success():
+    payload = {
+        "method": "berman",
+        "condenser_id": 1,
+        "material_id": 1,
+        "G_steam": [120000.0],
+        "H_steam": 2400.0,
+        "t1_main": [20.0],
+        "coefficient_b": [0.8],
+        "W_main": [8000.0]
+    }
+    response = client.post(ENDPOINT, json=payload)
+    # Если база доступна локально по localhost, вернет 200 или 404.
+    assert response.status_code in [200, 404], f"Unexpected error: {response.text}"
 
 def test_2_metro_vikkers_success():
     payload = {"method": "metro-vickers", "condenser_id": 1, "coefficient_b": [0.9], "W_main": [9000.0]}
     response = client.post(ENDPOINT, json=payload)
     assert response.status_code in [200, 404, 422] # 422 если метод все еще не тот
 
-# def test_3_full_payload_success():
-#     payload = {
-#         "method": "berman",
-#         "condenser_id": 1,
-#         "material_id": 1,
-#         "G_steam": [150000.0, 160000.0],
-#         "H_steam": 2500.0, 
-#         "t1_main": [15.5],
-#         "coefficient_b": [0.7, 0.85],
-#         "W_main": [5000.0, 10000.0],
-#         "Z_builtin": 2,
-#         "W_builtin": [1000.0] # Добавлено для консистентности с Z_builtin
-#     }
-#     response = client.post(ENDPOINT, json=payload)
-#     assert response.status_code in [200, 404], f"Unexpected error: {response.text}"
+def test_3_full_payload_success():
+    payload = {
+        "method": "berman",
+        "condenser_id": 1,
+        "material_id": 1,
+        "G_steam": [150000.0, 160000.0],
+        "H_steam": 2500.0, 
+        "t1_main": [15.5],
+        "coefficient_b": [0.7, 0.85],
+        "W_main": [5000.0, 10000.0],
+        "Z_builtin": 2,
+        "W_builtin": [1000.0] # Добавлено для консистентности с Z_builtin
+    }
+    response = client.post(ENDPOINT, json=payload)
+    assert response.status_code in [200, 404], f"Unexpected error: {response.text}"
 
-# def test_4_multiple_points_success():
-#     payload = {
-#         "method": "berman",
-#         "condenser_id": 1,
-#         "material_id": 1,
-#         "G_steam": [100000.0],
-#         "H_steam": 2350.0,
-#         "t1_main": [22.0],
-#         "coefficient_b": [0.55, 0.65, 0.75, 0.85],
-#         "W_main": [4000.0, 6000.0, 8000.0]
-#     }
-#     response = client.post(ENDPOINT, json=payload)
-#     assert response.status_code in [200, 404], f"Unexpected error: {response.text}"
+def test_4_multiple_points_success():
+    payload = {
+        "method": "berman",
+        "condenser_id": 1,
+        "material_id": 1,
+        "G_steam": [100000.0],
+        "H_steam": 2350.0,
+        "t1_main": [22.0],
+        "coefficient_b": [0.55, 0.65, 0.75, 0.85],
+        "W_main": [4000.0, 6000.0, 8000.0]
+    }
+    response = client.post(ENDPOINT, json=payload)
+    assert response.status_code in [200, 404], f"Unexpected error: {response.text}"
 
-# def test_5_multiple_coefficients_success():
-#     payload = {
-#         "method": "berman", 
-#         "condenser_id": 1, 
-#         "material_id": 1,
-#         "G_steam": [120000.0],
-#         "H_steam": 2400.0,
-#         "t1_main": [20.0],
-#         "coefficient_b": [0.5, 0.6, 0.7], 
-#         "W_main": [5000.0]
-#     }
-#     response = client.post(ENDPOINT, json=payload)
-#     assert response.status_code in [200, 404], f"Unexpected error: {response.text}"
+def test_5_multiple_coefficients_success():
+    payload = {
+        "method": "berman", 
+        "condenser_id": 1, 
+        "material_id": 1,
+        "G_steam": [120000.0],
+        "H_steam": 2400.0,
+        "t1_main": [20.0],
+        "coefficient_b": [0.5, 0.6, 0.7], 
+        "W_main": [5000.0]
+    }
+    response = client.post(ENDPOINT, json=payload)
+    assert response.status_code in [200, 404], f"Unexpected error: {response.text}"
 
 
 # ==========================================

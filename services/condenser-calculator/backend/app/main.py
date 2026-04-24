@@ -7,12 +7,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes import calculations, condensers, materials, health
 from app.core.config import settings
 
+#Если вы хотите, чтобы таблицы создались мгновенно без настройки Alembic
+# from app.core.database import engine
+# from app.models.base import Base
+
 api_router = APIRouter()
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
+
+# Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
