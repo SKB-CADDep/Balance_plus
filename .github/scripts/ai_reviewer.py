@@ -9,8 +9,8 @@ from pathlib import Path
 # КОНФИГУРАЦИЯ
 # ═══════════════════════════════════════════════════════════════
 
-OPENROUTER_MODEL = "arcee-ai/trinity-large-preview:free"
-MAX_DIFF_CHARS = 100000
+OPENROUTER_MODEL = "nvidia/nemotron-3-super-120b-a12b:free"
+MAX_DIFF_CHARS = 150000
 
 
 # ═══════════════════════════════════════════════════════════════
