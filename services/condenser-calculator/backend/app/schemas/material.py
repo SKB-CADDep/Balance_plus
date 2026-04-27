@@ -1,13 +1,13 @@
 from pydantic import BaseModel, Field
-from typing import Optional, List
+from pydantic import ConfigDict
+from typing import List
 
 
 class MaterialListItem(BaseModel):
     id: int
     name: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MaterialDetail(BaseModel):
@@ -17,5 +17,6 @@ class MaterialDetail(BaseModel):
         description="Список точек [[t, λ], ...]"
     )
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
+MaterialShort = MaterialListItem

@@ -39,3 +39,5 @@ class Condenser(Base):
 
     # Relationship
     material = relationship("Material", back_populates="condensers")
+
+    calculations = relationship("CalculationResult", back_populates="condenser", cascade="all, delete-orphan")

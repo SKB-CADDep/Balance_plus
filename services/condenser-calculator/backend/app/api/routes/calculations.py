@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.adapters.calculation_adapter import CondenserCalculationAdapter
-from app.core.exceptions import EntityNotFoundError, ValidationError
+from app.core.exceptions import EntityNotFoundError, ValidationError, UnitConversionError, CalculationEngineError
 from app.crud.condensers import get_condenser_by_id
 from app.crud.materials import get_material_by_id
 from app.dependencies import get_db
