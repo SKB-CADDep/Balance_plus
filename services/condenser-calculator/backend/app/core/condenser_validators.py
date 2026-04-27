@@ -80,3 +80,28 @@ def validate_water_flow_limits(
                     f"Расход ВП ({w_builtin}) выше максимума ({builtin_limits['max']}) (BR-06).")
 
     return warnings
+
+
+def validate_temperature_ranges(method: str, t1_values: List[float]) -> List[str]:
+    """
+    BR-10: Валидация температурных диапазонов для t1.
+    Берман: 0..45
+    Метро-Виккерс: 45..150
+    """
+    warnings = []
+    if not t1_values:
+        return warnings
+
+    min_t = min(t1_values)
+    max_t = max(t1_values)
+
+    if method == "berman":
+        if min_t < 0 or max_t > 45:
+            warnings.append(
+                "t1 содержит значения вне оптимального диапазона 0...45°С (Берман).")
+    elif method == "metro-vickers":
+        if min_t < 45 or max_t > 150:
+            warnings.append(
+                "t1 содержит значения вне оптимального диапазона 45...150°С (Метро-Виккерс).")
+
+    return warnings

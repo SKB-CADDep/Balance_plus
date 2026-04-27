@@ -13,7 +13,10 @@ from app.core.exceptions import (
 from app.utils.berman_strategy import BermanStrategy
 from app.utils.metrovickers_strategy import MetroVickersStrategy
 from app.utils.table_models import Table1D
-from app.core.condenser_validators import validate_water_flow_limits
+from app.core.condenser_validators import (
+    validate_water_flow_limits,
+    validate_temperature_ranges
+)
 
 
 from app.schemas.calculation import (
@@ -247,7 +250,12 @@ class CondenserCalculationAdapter:
                 warnings = validate_water_flow_limits(
                     w_main, w_builtin, condenser.water_flow_limits)
 
+                t1_warnings = validate_temperature_ranges(
+                    "berman", input_data.t1_main)
+                warnings.extend(t1_warnings)
+
                 tables.append(MatrixResult(
+
                     meta={
                         "coefficient_b": input_data.coefficient_b[b_i],
                         "W_main": w_main,
@@ -286,7 +294,9 @@ class CondenserCalculationAdapter:
                     input_data.W_main) else 0.0
 
                 matrix = []
+                is_extrapolated_matrix = False
                 for t1 in input_data.t1_main:
+
                     t_avg_est = t1 + 3.0
                     lam = self._get_lambda_iterative(
                         lambda_interp, t_avg_est,
@@ -301,6 +311,8 @@ class CondenserCalculationAdapter:
                         )
                         result = engine.calculate(params)
                         row.append(result['pressure_flow_path_1'])
+                        if result.get('is_extrapolated'):
+                            is_extrapolated_matrix = True
 
                     matrix.append(row)
 
@@ -312,7 +324,15 @@ class CondenserCalculationAdapter:
                 warnings = validate_water_flow_limits(
                     w_main, w_builtin, condenser.water_flow_limits)
 
+                t1_warnings = validate_temperature_ranges(
+                    "metro-vickers", input_data.t1_main)
+                warnings.extend(t1_warnings)
+
+                if is_extrapolated_matrix:
+                    warnings.append("Данные не подтверждены экспериментально")
+
                 tables.append(MatrixResult(
+
                     meta={
                         "coefficient_b": b,
                         "W_main": w_main,

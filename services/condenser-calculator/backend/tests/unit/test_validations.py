@@ -71,3 +71,33 @@ def test_water_flow_limits_empty():
     assert len(warnings) == 0
     warnings = validate_water_flow_limits(8000.0, 1000.0, {})
     assert len(warnings) == 0
+
+
+def test_temperature_ranges_br10_berman():
+    from app.core.condenser_validators import validate_temperature_ranges
+    # Normal
+    warnings = validate_temperature_ranges("berman", [10.0, 20.0, 30.0])
+    assert len(warnings) == 0
+
+    # Outside bounds
+    warnings = validate_temperature_ranges("berman", [-5.0, 20.0])
+    assert len(warnings) == 1
+    assert "Берман" in warnings[0]
+
+    warnings = validate_temperature_ranges("berman", [20.0, 50.0])
+    assert len(warnings) == 1
+
+
+def test_temperature_ranges_br10_metrovickers():
+    from app.core.condenser_validators import validate_temperature_ranges
+    # Normal
+    warnings = validate_temperature_ranges("metro-vickers", [50.0, 100.0])
+    assert len(warnings) == 0
+
+    # Outside bounds
+    warnings = validate_temperature_ranges("metro-vickers", [30.0, 60.0])
+    assert len(warnings) == 1
+    assert "Метро-Виккерс" in warnings[0]
+
+    warnings = validate_temperature_ranges("metro-vickers", [100.0, 160.0])
+    assert len(warnings) == 1
