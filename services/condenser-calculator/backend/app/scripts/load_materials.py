@@ -2,6 +2,7 @@
 import json
 from pathlib import Path
 from sqlalchemy.orm import Session
+from app.models.material import Material
 
 def load_materials(db: Session, materials_dir: Path):
     for json_file in materials_dir.glob("*.json"):
