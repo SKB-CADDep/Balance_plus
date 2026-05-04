@@ -11,25 +11,24 @@ from pathlib import Path
 # КОНФИГУРАЦИЯ
 # ═══════════════════════════════════════════════════════════════
 
-# Лучшая бесплатная coding-модель на май 2026.
-# Запасные варианты (раскомментируй если нужно):
-# Запасные варианты (раскомментируй если нужно):
-# "qwen/qwen3.6-plus-preview:free"  — 1M контекст, reasoning, май 2026
-# "moonshotai/kimi-k2:free"         — сильна в агентном коде
-# "deepseek/deepseek-r1:free"       — если нужен reasoning
-# "openrouter/free"                 — авто-роутер, выберет сам
+# Список моделей в порядке приоритета.
+# При 429/524 скрипт автоматически переключится на следующую.
+OPENROUTER_MODELS = [
+    os.environ.get("OPENROUTER_MODEL", "qwen/qwen3-coder:free"),
+    "moonshotai/kimi-k2:free",
+    "deepseek/deepseek-r1:free",
+    "openrouter/free",  # последний резерв - авто-роутер
+]
 
-OPENROUTER_MODEL = os.environ.get("OPENROUTER_MODEL", "qwen/qwen3-coder:free")
+MAX_DIFF_CHARS  = int(os.environ.get("MAX_DIFF_CHARS", 60_000))
+MAX_RETRIES     = 2   # попыток на каждую модель
+RETRY_STATUSES  = {524, 529, 500, 502, 503}
+FALLBACK_STATUSES = {429, 524, 529}  # при этих кодах - меняем модель
 
-MAX_DIFF_CHARS   = int(os.environ.get("MAX_DIFF_CHARS", 60_000))
-MAX_RETRIES      = 3
-RETRY_STATUSES   = {524, 529, 500, 502, 503}
-
-# Reasoning лучше держать выключенным на :free — бесплатные инстансы
-# медленнее и легко уходят в Cloudflare 524 при долгом TTFT.
-# Включи через env: REASONING_ENABLED=true
 REASONING_ENABLED = os.environ.get("REASONING_ENABLED", "false").lower() == "true"
 
+# Оставь для обратной совместимости (используется в футере комментария)
+OPENROUTER_MODEL = OPENROUTER_MODELS[0]
 
 # ═══════════════════════════════════════════════════════════════
 # ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
@@ -119,27 +118,11 @@ def clean_thinking_tags(text: str) -> str:
 def call_openrouter(system_prompt: str, user_prompt: str) -> str:
     """
     Вызывает OpenRouter через streaming (SSE).
-    Streaming критически важен для избежания 524-таймаутов:
-    OpenRouter шлёт SSE keep-alive комментарии пока думает,
-    и Cloudflare не рвёт соединение.
+    При 429 автоматически переключается на следующую модель из списка.
     """
     api_key = os.environ.get("OPENROUTER_API_KEY", "").strip()
     if not api_key:
         raise ValueError("OPENROUTER_API_KEY не задан")
-
-    payload: dict = {
-        "model": OPENROUTER_MODEL,
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user",   "content": user_prompt},
-        ],
-        "temperature": 0.3,
-        "max_tokens": 4096,
-        "stream": True,  # ← ключевое изменение: стримим чтобы избежать 524
-    }
-
-    if REASONING_ENABLED:
-        payload["reasoning"] = {"enabled": True}
 
     headers = {
         "Authorization": f"Bearer {api_key}",
@@ -150,23 +133,51 @@ def call_openrouter(system_prompt: str, user_prompt: str) -> str:
 
     last_error: Exception | None = None
 
-    for attempt in range(1, MAX_RETRIES + 1):
-        print(f"Попытка {attempt}/{MAX_RETRIES} | модель: {OPENROUTER_MODEL}")
-        try:
-            result = _stream_request(headers, payload)
-            return result
-        except RetryableError as e:
-            last_error = e
-            wait = 2 ** attempt  # 2, 4, 8 секунд
-            print(f"  ↳ Ошибка {e}, жду {wait}с перед повтором...")
-            time.sleep(wait)
-        except Exception as e:
-            raise  # не-ретраябельные ошибки пробрасываем сразу
+    for model in OPENROUTER_MODELS:
+        print(f"\n>>> Пробуем модель: {model}")
 
-    raise Exception(f"Все {MAX_RETRIES} попытки исчерпаны. Последняя ошибка: {last_error}")
+        payload: dict = {
+            "model": model,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user",   "content": user_prompt},
+            ],
+            "temperature": 0.3,
+            "max_tokens": 4096,
+            "stream": True,
+        }
+
+        if REASONING_ENABLED:
+            payload["reasoning"] = {"enabled": True}
+
+        for attempt in range(1, MAX_RETRIES + 1):
+            print(f"  Попытка {attempt}/{MAX_RETRIES}")
+            try:
+                result = _stream_request(headers, payload)
+                print(f"  Успех с моделью: {model}")
+                return result
+            except FallbackError as e:
+                # 429 / перегрузка — смысла повторять нет, меняем модель
+                last_error = e
+                print(f"  ↳ {e} — переключаемся на следующую модель")
+                break
+            except RetryableError as e:
+                last_error = e
+                wait = 2 ** attempt
+                print(f"  ↳ {e} — жду {wait}с и повторяю...")
+                time.sleep(wait)
+            except Exception as e:
+                raise  # не-ретраябельные ошибки пробрасываем сразу
+
+    raise Exception(f"Все модели исчерпаны. Последняя ошибка: {last_error}")
 
 
 class RetryableError(Exception):
+    """Временная ошибка — стоит повторить с той же моделью."""
+    pass
+
+class FallbackError(Exception):
+    """Модель недоступна/перегружена — нужна другая модель."""
     pass
 
 
@@ -177,10 +188,13 @@ def _stream_request(headers: dict, payload: dict) -> str:
         headers=headers,
         json=payload,
         stream=True,
-        timeout=(10, 300),  # (connect_timeout, read_timeout)
+        timeout=(10, 300),
     ) as response:
 
-        print(f"  HTTP статус: {response.status_code}")
+        print(f"    HTTP статус: {response.status_code}")
+
+        if response.status_code == 429:
+            raise FallbackError(f"HTTP 429 (rate limit) для {payload['model']}")
 
         if response.status_code in RETRY_STATUSES:
             raise RetryableError(f"HTTP {response.status_code}")
@@ -201,7 +215,6 @@ def _parse_sse_stream(response: requests.Response) -> str:
         if not raw_line:
             continue
 
-        # SSE keep-alive комментарии (начинаются с ':') — игнорируем
         if raw_line.startswith(":"):
             continue
 
@@ -216,11 +229,12 @@ def _parse_sse_stream(response: requests.Response) -> str:
             except json.JSONDecodeError:
                 continue
 
-            # Проверяем ошибки внутри стрима
             if "error" in chunk:
-                err = chunk["error"]
+                err  = chunk["error"]
                 code = err.get("code", 0)
                 msg  = err.get("message", str(err))
+                if code == 429:
+                    raise FallbackError(f"Stream 429: {msg}")
                 if code in RETRY_STATUSES:
                     raise RetryableError(f"Stream error {code}: {msg}")
                 raise Exception(f"Stream API error {code}: {msg}")
@@ -232,12 +246,10 @@ def _parse_sse_stream(response: requests.Response) -> str:
             choice = choices[0]
             delta  = choice.get("delta", {})
 
-            # Собираем контент
             content_piece = delta.get("content")
             if content_piece:
                 full_content.append(content_piece)
 
-            # Запоминаем причину остановки
             finish_reason = choice.get("finish_reason")
             if finish_reason:
                 last_finish_reason = finish_reason
@@ -248,7 +260,7 @@ def _parse_sse_stream(response: requests.Response) -> str:
     if not result.strip():
         raise RetryableError("Пустой ответ от модели")
 
-    print(f"  Стрим завершён. finish_reason={last_finish_reason}, символов={len(result)}")
+    print(f"    Стрим завершён. finish_reason={last_finish_reason}, символов={len(result)}")
     return result
 
 
