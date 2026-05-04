@@ -11,12 +11,10 @@ from pathlib import Path
 # КОНФИГУРАЦИЯ
 # ═══════════════════════════════════════════════════════════════
 
-# Список моделей в порядке приоритета.
-# При 429/524 скрипт автоматически переключится на следующую.
 OPENROUTER_MODELS = [
     os.environ.get("OPENROUTER_MODEL", "qwen/qwen3-coder:free"),
-    "moonshotai/kimi-k2:free",
     "deepseek/deepseek-r1:free",
+    "arcee-ai/trinity-large-preview:free",
     "openrouter/free",  # последний резерв - авто-роутер
 ]
 
