@@ -12,10 +12,10 @@ from pathlib import Path
 # ═══════════════════════════════════════════════════════════════
 
 OPENROUTER_MODELS = [
-    os.environ.get("OPENROUTER_MODEL", "qwen/qwen3-coder:free"),
-    "deepseek/deepseek-r1:free",
-    "arcee-ai/trinity-large-preview:free",
-    "openrouter/free",  # последний резерв - авто-роутер
+    os.environ.get("OPENROUTER_MODEL", "poolside/laguna-m.1:free"),
+    "z-ai/glm-4.5-air:free",
+    "openai/gpt-oss-120b:free",
+    "openrouter/free",  # последний резерв: роутер случайно выберет доступную free-модель
 ]
 
 MAX_DIFF_CHARS  = int(os.environ.get("MAX_DIFF_CHARS", 60_000))
