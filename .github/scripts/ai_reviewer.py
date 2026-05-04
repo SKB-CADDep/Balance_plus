@@ -14,10 +14,10 @@ from pathlib import Path
 # Лучшая бесплатная coding-модель на май 2026.
 # Запасные варианты (раскомментируй если нужно):
 # Запасные варианты (раскомментируй если нужно):
-"qwen/qwen3.6-plus-preview:free"  — 1M контекст, reasoning, май 2026
-"moonshotai/kimi-k2:free"         — сильна в агентном коде
-"deepseek/deepseek-r1:free"       — если нужен reasoning
-"openrouter/free"                 — авто-роутер, выберет сам
+# "qwen/qwen3.6-plus-preview:free"  — 1M контекст, reasoning, май 2026
+# "moonshotai/kimi-k2:free"         — сильна в агентном коде
+# "deepseek/deepseek-r1:free"       — если нужен reasoning
+# "openrouter/free"                 — авто-роутер, выберет сам
 
 OPENROUTER_MODEL = os.environ.get("OPENROUTER_MODEL", "qwen/qwen3-coder:free")
 
