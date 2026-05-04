@@ -6,7 +6,6 @@ from scipy.interpolate import RegularGridInterpolator
 
 from .uniconv import UnitConverter
 
-
 coefficient_B_const = 1.0
 
 k_interpolation_data = {

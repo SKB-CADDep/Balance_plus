@@ -1,0 +1,281 @@
+{
+  "material_id": "7d7b0490-09dc-4fa2-9de4-35ac50848076",
+  "metadata": {
+    "name_material_standard": "ВТ5",
+    "name_material_alternative": [],
+    "application_area": [
+      "Конструкционные материалы"
+    ],
+    "comment": "",
+    "classification": {
+      "classification_category": "",
+      "classification_class": "",
+      "classification_subclass": ""
+    }
+  },
+  "physical_properties": {
+    "modulus_elasticity": {
+      "property_name": "Модуль упругости",
+      "property_unit": "МПа",
+      "property_source": "ОСТ 1 90173-75",
+      "property_subsource": "12",
+      "comment": "",
+      "temperature_value_pairs": [
+        [
+          20.0,
+          104000.0
+        ],
+        [
+          100.0,
+          100000.0
+        ],
+        [
+          200.0,
+          93000.0
+        ],
+        [
+          300.0,
+          87000.0
+        ],
+        [
+          400.0,
+          78000.0
+        ],
+        [
+          500.0,
+          65000.0
+        ]
+      ],
+      "property_last_updated": "2025-07-10T15:41:18.436361"
+    },
+    "coefficient_linear_expansion": {
+      "property_name": "Коэффициент линейного расширения",
+      "property_unit": "1/°С",
+      "property_source": "ОСТ 1 90173-75",
+      "property_subsource": "12",
+      "comment": "",
+      "temperature_value_pairs": [
+        [
+          100.0,
+          8.3
+        ],
+        [
+          200.0,
+          8.6
+        ],
+        [
+          300.0,
+          8.9
+        ],
+        [
+          400.0,
+          9.3
+        ],
+        [
+          500.0,
+          9.5
+        ],
+        [
+          600.0,
+          9.9
+        ]
+      ],
+      "property_last_updated": "2025-07-10T15:41:18.436361"
+    },
+    "coefficient_thermal_conductivity": {
+      "property_name": "Коэффициент теплопроводности",
+      "property_unit": "Вт/(м·°С)",
+      "property_source": "ОСТ 1 90173-75",
+      "property_subsource": "12",
+      "comment": "",
+      "temperature_value_pairs": [
+        [
+          20.0,
+          8.8
+        ],
+        [
+          100.0,
+          9.6
+        ],
+        [
+          200.0,
+          10.5
+        ],
+        [
+          300.0,
+          11.3
+        ],
+        [
+          400.0,
+          12.6
+        ],
+        [
+          500.0,
+          14.2
+        ],
+        [
+          600.0,
+          15.5
+        ],
+        [
+          700.0,
+          16.8
+        ]
+      ],
+      "property_last_updated": "2025-07-10T15:41:18.436361"
+    },
+    "density": {
+      "property_name": "Плотность",
+      "property_unit": "кг/м³",
+      "property_source": "ОСТ 1 90173-75",
+      "property_subsource": "12",
+      "comment": "",
+      "temperature_value_pairs": [
+        [
+          20.0,
+          4400.0
+        ]
+      ],
+      "property_last_updated": "2025-07-10T15:41:18.436361"
+    },
+    "specific_heat": {
+      "property_name": "Удельная теплоемкость",
+      "property_unit": "Дж/(кг·°С)",
+      "property_source": "ОСТ 1 90173-75",
+      "property_subsource": "12",
+      "comment": "",
+      "temperature_value_pairs": [
+        [
+          100.0,
+          545.0
+        ],
+        [
+          200.0,
+          587.0
+        ],
+        [
+          300.0,
+          628.0
+        ],
+        [
+          400.0,
+          670.0
+        ],
+        [
+          500.0,
+          712.0
+        ],
+        [
+          600.0,
+          755.0
+        ]
+      ],
+      "property_last_updated": "2025-07-10T15:41:18.436361"
+    }
+  },
+  "mechanical_properties": {
+    "strength_category": [
+      {
+        "value_strength_category": "-",
+        "hardness": [],
+        "yield_strength": {
+          "property_name": "Предел текучести",
+          "property_unit": "МПа",
+          "property_source": "ОСТ 1 90173-75",
+          "property_subsource": "12",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              -196.0,
+              981.0
+            ],
+            [
+              -70.0,
+              686.0
+            ],
+            [
+              20.0,
+              637.0
+            ],
+            [
+              200.0,
+              461.0
+            ],
+            [
+              300.0,
+              441.0
+            ],
+            [
+              400.0,
+              392.0
+            ],
+            [
+              500.0,
+              363.0
+            ]
+          ],
+          "property_last_updated": "2025-07-10T15:41:18.436361"
+        },
+        "tensile_strength": {
+          "property_name": "Предел прочности",
+          "property_unit": "МПа",
+          "property_source": "ОСТ 1 90173-75",
+          "property_subsource": "12",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              -196.0,
+              1226.0
+            ],
+            [
+              -70.0,
+              883.0
+            ],
+            [
+              20.0,
+              735.0
+            ],
+            [
+              200.0,
+              539.0
+            ],
+            [
+              300.0,
+              490.0
+            ],
+            [
+              400.0,
+              461.0
+            ],
+            [
+              500.0,
+              431.0
+            ],
+            [
+              600.0,
+              373.0
+            ]
+          ],
+          "property_last_updated": "2025-07-10T15:41:18.436361"
+        },
+        "tensile_strength_limit_10_thousands_hours": {
+          "property_name": "Предел длит. прочности за 10 тыс.ч",
+          "property_unit": "МПа",
+          "property_source": "ОСТ 1 90173-75",
+          "property_subsource": "13",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              250.0,
+              686.0
+            ]
+          ],
+          "property_last_updated": "2025-07-10T15:41:18.436361"
+        }
+      }
+    ]
+  },
+  "chemical_properties": {
+    "composition": []
+  }
+}
