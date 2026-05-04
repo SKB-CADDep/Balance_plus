@@ -205,22 +205,26 @@ def _stream_request(headers: dict, payload: dict) -> str:
 
 
 def _parse_sse_stream(response: requests.Response) -> str:
-    """Парсит Server-Sent Events и собирает контент из дельта-чанков."""
+    """Парсит SSE и собирает контент из delta-чанков. Декодим UTF-8 вручную."""
     full_content = []
     last_finish_reason = None
 
-    for raw_line in response.iter_lines(decode_unicode=True):
+    for raw_line in response.iter_lines(decode_unicode=False):
         if not raw_line:
             continue
 
-        if raw_line.startswith(":"):
+        # keep-alive комментарии
+        if raw_line.startswith(b":"):
             continue
 
-        if raw_line.startswith("data: "):
-            data_str = raw_line[6:].strip()
+        if raw_line.startswith(b"data: "):
+            data_bytes = raw_line[6:].strip()
 
-            if data_str == "[DONE]":
+            if data_bytes == b"[DONE]":
                 break
+
+            # SSE по стандарту UTF-8
+            data_str = data_bytes.decode("utf-8", errors="replace")
 
             try:
                 chunk = json.loads(data_str)
@@ -252,8 +256,7 @@ def _parse_sse_stream(response: requests.Response) -> str:
             if finish_reason:
                 last_finish_reason = finish_reason
 
-    result = "".join(full_content)
-    result = clean_thinking_tags(result)
+    result = clean_thinking_tags("".join(full_content))
 
     if not result.strip():
         raise RetryableError("Пустой ответ от модели")
@@ -330,7 +333,7 @@ def main() -> int:
         model_label = OPENROUTER_MODEL.split("/")[-1]  # "qwen3-coder-480b:free"
 
         comment = (
-            "## 🤖 AI Code Review\n\n"
+            "## AI Code Review\n\n"
             f"{review_text}\n\n"
             "---\n"
             f"<sub>Model: `{model_label}` via OpenRouter · "
