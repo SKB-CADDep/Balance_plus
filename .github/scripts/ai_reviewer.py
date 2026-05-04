@@ -13,11 +13,13 @@ from pathlib import Path
 
 # Лучшая бесплатная coding-модель на май 2026.
 # Запасные варианты (раскомментируй если нужно):
-#   "qwen/qwen3-coder:free"          — меньше, но быстрее
-#   "openrouter/free"                — авто-роутер, выберет сам
-#   "moonshotai/kimi-k2:free"        — сильна в коде
-#   "deepseek/deepseek-r1:free"      — если нужен reasoning
-OPENROUTER_MODEL = os.environ.get("OPENROUTER_MODEL", "qwen/qwen3-coder-480b:free")
+# Запасные варианты (раскомментируй если нужно):
+"qwen/qwen3.6-plus-preview:free"  — 1M контекст, reasoning, май 2026
+"moonshotai/kimi-k2:free"         — сильна в агентном коде
+"deepseek/deepseek-r1:free"       — если нужен reasoning
+"openrouter/free"                 — авто-роутер, выберет сам
+
+OPENROUTER_MODEL = os.environ.get("OPENROUTER_MODEL", "qwen/qwen3-coder:free")
 
 MAX_DIFF_CHARS   = int(os.environ.get("MAX_DIFF_CHARS", 60_000))
 MAX_RETRIES      = 3
