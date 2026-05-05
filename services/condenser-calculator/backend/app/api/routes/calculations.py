@@ -10,6 +10,7 @@ from app.crud.condensers import get_condenser_by_id
 from app.crud.materials import get_material_by_id
 from app.dependencies import get_db
 from app.schemas.calculation import CalculationInput, CalculationOutput
+from app.core.condenser_validators import validate_condenser_for_method
 
 from app.services.excel_exporter import ExcelExporter
 
@@ -58,7 +59,10 @@ async def calculate(
         material_id = input_data.material_id or condenser.material_id
         material = get_material_by_id(db, material_id)
 
-        # 3. Выполняем расчёт через адаптер
+        # 3. Валидация BR-02 (Полнота геометрии)
+        validate_condenser_for_method(condenser, input_data.method)
+
+        # 4. Выполняем расчёт через адаптер
         result = adapter.calculate(input_data, condenser, material)
 
         logger.info(
@@ -86,7 +90,7 @@ async def calculate(
             status_code=500,
             detail="Внутренняя ошибка сервера при выполнении расчёта.",
         )
-    
+
 
 @router.post(
     "/calculate/excel",
@@ -108,13 +112,17 @@ async def calculate_excel(
     """
     logger.info(
         "Received calculation EXCEL export request",
-        extra={"condenser_id": input_data.condenser_id, "method": input_data.method},
+        extra={"condenser_id": input_data.condenser_id,
+               "method": input_data.method},
     )
 
     try:
         condenser = get_condenser_by_id(db, input_data.condenser_id)
         material_id = input_data.material_id or condenser.material_id
         material = get_material_by_id(db, material_id)
+
+        # Валидация BR-02
+        validate_condenser_for_method(condenser, input_data.method)
 
         # Выполняем расчёт через адаптер
         result = adapter.calculate(input_data, condenser, material)
