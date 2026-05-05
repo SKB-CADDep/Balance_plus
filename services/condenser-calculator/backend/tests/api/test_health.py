@@ -1,3 +1,6 @@
+"""
+Тестирование работоспособности API и подключения к базе данных (Health Check)
+"""
 import pytest
 from httpx import AsyncClient
 from app.main import app

@@ -21,8 +21,9 @@ def create_mock_matrix(warnings=None, meta=None):
         meta=meta or {"coefficient_b": 1.0},
         headers=[],
         data=[],
-        warnings=warnings or[]
+        warnings=warnings or []
     )
+
 
 def create_mock_ejector():
     return EjectorResult.model_construct(
@@ -63,7 +64,8 @@ def mock_material():
     m = MagicMock()
     m.id = 7
     m.name = "12МХЛ"
-    m.thermal_conductivity_points = [[20.0, 110.0],[100.0, 105.0],[300.0, 98.0]]
+    m.thermal_conductivity_points = [
+        [20.0, 110.0], [100.0, 105.0], [300.0, 98.0]]
     return m
 
 
@@ -97,7 +99,7 @@ def input_metrovickers(input_berman):
 # ПАРАМЕТРИЗОВАННЫЕ БАЗОВЫЕ ТЕСТЫ
 # ===================================================================
 
-@pytest.mark.parametrize("method, h_steam, x_steam, engine_mock_name",[
+@pytest.mark.parametrize("method, h_steam, x_steam, engine_mock_name", [
     ("berman", 560.5, 0.95, "_run_berman"),
     ("metro-vickers", None, 0.95, "_run_metrovickers"),
 ])
@@ -120,7 +122,8 @@ def test_calculate_different_methods(
     with patch.object(adapter, engine_mock_name) as mock_run:
         # ИСПРАВЛЕНИЕ: Методы возвращают разные типы данных
         if method == "berman":
-            mock_run.return_value = ([create_mock_matrix()],[create_mock_ejector()])
+            mock_run.return_value = ([create_mock_matrix()], [
+                                     create_mock_ejector()])
         else:
             mock_run.return_value = [create_mock_matrix()]
 
@@ -140,7 +143,8 @@ def test_berman_warning_water_flow_limits(adapter, mock_condenser, mock_material
     input_berman.W_main = [30000.0]  # Выше лимита (20000.0)
 
     with patch.object(adapter, '_run_berman') as mock_run:
-        mock_run.return_value = ([create_mock_matrix(warnings=["Расход охлаждающей воды превышает максимальный паспортный"])],[])
+        mock_run.return_value = ([create_mock_matrix(
+            warnings=["Расход охлаждающей воды превышает максимальный паспортный"])], [])
 
         result = adapter.calculate(input_berman, mock_condenser, mock_material)
         assert any("расход" in w.lower() for w in result.tables[0].warnings)
@@ -151,7 +155,8 @@ def test_berman_warning_temperature_range_high(adapter, mock_condenser, mock_mat
     input_berman.t1_main = [50.0]
 
     with patch.object(adapter, '_run_berman') as mock_run:
-        mock_run.return_value = ([create_mock_matrix(warnings=["Температура 50.0°C выходит за оптимальный диапазон Бермана"])],[])
+        mock_run.return_value = ([create_mock_matrix(
+            warnings=["Температура 50.0°C выходит за оптимальный диапазон Бермана"])], [])
 
         result = adapter.calculate(input_berman, mock_condenser, mock_material)
         assert any("50.0" in w for w in result.tables[0].warnings)
@@ -162,10 +167,13 @@ def test_metrovickers_warning_extrapolation(adapter, mock_condenser, mock_materi
     input_metrovickers.t1_main = [160.0]
 
     with patch.object(adapter, '_run_metrovickers') as mock_run:
-        mock_run.return_value = [create_mock_matrix(warnings=["Данные находятся в области экстраполяции кривой K (Метро-Виккерс)"])]
+        mock_run.return_value = [create_mock_matrix(
+            warnings=["Данные находятся в области экстраполяции кривой K (Метро-Виккерс)"])]
 
-        result = adapter.calculate(input_metrovickers, mock_condenser, mock_material)
-        assert any("экстраполяц" in w.lower() for w in result.tables[0].warnings)
+        result = adapter.calculate(
+            input_metrovickers, mock_condenser, mock_material)
+        assert any("экстраполяц" in w.lower()
+                   for w in result.tables[0].warnings)
 
 
 # ===================================================================
@@ -176,40 +184,41 @@ def test_w_builtin_none(adapter, mock_condenser, mock_material, input_berman):
     """Один пучок: W_builtin = None должно корректно обрабатываться"""
     input_berman.W_builtin = None
     input_berman.Z_builtin = None
-    
+
     with patch.object(adapter, '_run_berman') as mock_run:
-        mock_run.return_value = ([create_mock_matrix()],[])
+        mock_run.return_value = ([create_mock_matrix()], [])
         result = adapter.calculate(input_berman, mock_condenser, mock_material)
         assert result.total_tables == 1
 
 
 def test_w_builtin_empty_array(adapter, mock_condenser, mock_material, input_berman):
     """Один пучок: W_builtin =[] должно приравниваться к отсутствию встроенного пучка"""
-    input_berman.W_builtin =[]
+    input_berman.W_builtin = []
     input_berman.Z_builtin = None
-    
+
     with patch.object(adapter, '_run_berman') as mock_run:
-        mock_run.return_value = ([create_mock_matrix()],[])
+        mock_run.return_value = ([create_mock_matrix()], [])
         result = adapter.calculate(input_berman, mock_condenser, mock_material)
         assert result.total_tables == 1
 
 
 def test_different_lengths_w_main_w_builtin(adapter, mock_condenser, mock_material, input_berman):
     """Разные длины массивов W_main и W_builtin должны рассчитываться"""
-    input_berman.W_main =[4000.0, 5000.0, 6000.0]
+    input_berman.W_main = [4000.0, 5000.0, 6000.0]
     input_berman.W_builtin = [2000.0]
-    
+
     with patch.object(adapter, '_run_berman') as mock_run:
-        mock_run.return_value = ([create_mock_matrix()],[])
+        mock_run.return_value = ([create_mock_matrix()], [])
         adapter.calculate(input_berman, mock_condenser, mock_material)
         assert mock_run.called
 
 
 def test_empty_coefficient_b_uses_default(adapter, mock_condenser, mock_material, input_berman):
     """Пустой coefficient_b -> система должна использовать значение по умолчанию [1.0]"""
-    input_berman.coefficient_b =[]
+    input_berman.coefficient_b = []
     with patch.object(adapter, '_run_berman') as mock_run:
-        mock_run.return_value = ([create_mock_matrix(meta={"coefficient_b": 1.0})],[])
+        mock_run.return_value = (
+            [create_mock_matrix(meta={"coefficient_b": 1.0})], [])
         result = adapter.calculate(input_berman, mock_condenser, mock_material)
         assert result.tables[0].meta["coefficient_b"] == 1.0
 
@@ -218,19 +227,19 @@ def test_empty_coefficient_b_uses_default(adapter, mock_condenser, mock_material
 # EDGE CASES: ГРАНИЧНЫЕ ЗНАЧЕНИЯ ПАРАМЕТРОВ
 # ===================================================================
 
-@pytest.mark.parametrize("b_val",[0.0, 0.75, 0.999, 1.0])
+@pytest.mark.parametrize("b_val", [0.0, 0.75, 0.999, 1.0])
 def test_boundary_b_values(adapter, mock_condenser, mock_material, input_berman, b_val):
     """Граничные значения коэффициента загрязнения b (от абсолютного загрязнения до чистого)"""
     input_berman.coefficient_b = [b_val]
     with patch.object(adapter, '_run_berman') as mock_run:
-        mock_run.return_value = ([create_mock_matrix()],[])
+        mock_run.return_value = ([create_mock_matrix()], [])
         try:
             adapter.calculate(input_berman, mock_condenser, mock_material)
         except CalculationEngineError:
             pytest.fail(f"Брошено исключение при валидном граничном b={b_val}")
 
 
-@pytest.mark.parametrize("temp, expected_warning",[
+@pytest.mark.parametrize("temp, expected_warning", [
     (0.0, False),    # Нижняя граница Бермана, норм
     (45.0, False),   # Верхняя граница Бермана, норм
     (150.0, True),   # Экстремально высокая температура
@@ -238,10 +247,11 @@ def test_boundary_b_values(adapter, mock_condenser, mock_material, input_berman,
 def test_temperature_edge_cases(adapter, mock_condenser, mock_material, input_berman, temp, expected_warning):
     """Температурные граничные случаи (0°C, 45°C, 150°C)"""
     input_berman.t1_main = [temp]
-    
+
     with patch.object(adapter, '_run_berman') as mock_run:
-        mock_run.return_value = ([create_mock_matrix(warnings=["Выход за диапазон"] if expected_warning else [])],[])
-        
+        mock_run.return_value = ([create_mock_matrix(
+            warnings=["Выход за диапазон"] if expected_warning else [])], [])
+
         result = adapter.calculate(input_berman, mock_condenser, mock_material)
         if expected_warning:
             assert len(result.tables[0].warnings) > 0
@@ -275,7 +285,7 @@ def test_performance_under_500ms(adapter, mock_condenser, mock_material, input_b
     """Расчёт должен укладываться в 500 мс (неблокирующий event-loop)"""
     MAX_ALLOWED_MS = 500
     with patch.object(adapter, '_run_berman') as mock_run:
-        mock_run.return_value = ([create_mock_matrix()],[])
+        mock_run.return_value = ([create_mock_matrix()], [])
 
         start = time.perf_counter()
         adapter.calculate(input_berman, mock_condenser, mock_material)
