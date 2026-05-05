@@ -2,13 +2,13 @@ from .calculation import (
     CalculationGlobals,
     CalculationResultDB,
     CalculationSummary,
-    ErrorResponse,
     GroupCalculationDetails,
     MultiCalculationParams,
     MultiCalculationResult,
     TypeSummary,
     ValveGroupInput,
 )
+from .errors import ErrorResponse
 from .turbine import TurbineInfo, TurbineValves, TurbineWithValvesInfo
 from .valve import SimpleValveInfo, ValveCreate, ValveInfo
 

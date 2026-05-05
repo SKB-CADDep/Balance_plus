@@ -1,0 +1,175 @@
+{
+  "material_id": "99cc4b8e-b89f-4430-b5e3-e93400b2c598",
+  "metadata": {
+    "name_material_standard": "25Х2Н4МФА",
+    "name_material_alternative": [],
+    "application_area": [
+      "Материалы дисков и роторов"
+    ],
+    "comment": "",
+    "classification": {
+      "classification_category": "",
+      "classification_class": "",
+      "classification_subclass": ""
+    }
+  },
+  "physical_properties": {},
+  "mechanical_properties": {
+    "strength_category": [
+      {
+        "value_strength_category": "КП68",
+        "hardness": []
+      }
+    ]
+  },
+  "chemical_properties": {
+    "composition": [
+      {
+        "composition_source": "ТУ 108.1029-81",
+        "composition_subsource": "",
+        "comment": "",
+        "base_element": "Fe",
+        "other_elements": [
+          {
+            "element": "C",
+            "unit_value": "%",
+            "min_value": 0.21,
+            "max_value": 0.29,
+            "min_value_tolerance": "0.2",
+            "max_value_tolerance": "0.3"
+          },
+          {
+            "element": "Si",
+            "unit_value": "%",
+            "min_value": 0.0,
+            "max_value": 0.37,
+            "max_value_tolerance": "0.4"
+          },
+          {
+            "element": "Mn",
+            "unit_value": "%",
+            "min_value": 0.25,
+            "max_value": 0.55
+          },
+          {
+            "element": "S",
+            "unit_value": "%",
+            "min_value": 0.0,
+            "max_value": 0.015,
+            "max_value_tolerance": "0.016"
+          },
+          {
+            "element": "P",
+            "unit_value": "%",
+            "min_value": 0.0,
+            "max_value": 0.015,
+            "max_value_tolerance": "0.016"
+          },
+          {
+            "element": "Cr",
+            "unit_value": "%",
+            "min_value": 1.6,
+            "max_value": 1.9
+          },
+          {
+            "element": "Ni",
+            "unit_value": "%",
+            "min_value": 3.4,
+            "max_value": 3.7
+          },
+          {
+            "element": "Mo",
+            "unit_value": "%",
+            "min_value": 0.35,
+            "max_value": 0.55
+          },
+          {
+            "element": "V",
+            "unit_value": "%",
+            "min_value": 0.08,
+            "max_value": 0.15
+          },
+          {
+            "element": "Cu",
+            "unit_value": "%",
+            "min_value": 0.0,
+            "max_value": 0.25
+          }
+        ]
+      },
+      {
+        "composition_source": "ТУ 108.1028-81",
+        "composition_subsource": "",
+        "comment": "",
+        "base_element": "Fe",
+        "other_elements": [
+          {
+            "element": "C",
+            "min_value": 0.21,
+            "max_value": 0.29,
+            "unit_value": "%",
+            "min_value_tolerance": 0.2,
+            "max_value_tolerance": 0.3
+          },
+          {
+            "element": "Si",
+            "min_value": 0.0,
+            "max_value": 0.37,
+            "unit_value": "%",
+            "max_value_tolerance": 0.4
+          },
+          {
+            "element": "Mn",
+            "min_value": 0.25,
+            "max_value": 0.55,
+            "unit_value": "%"
+          },
+          {
+            "element": "S",
+            "min_value": 0.0,
+            "max_value": 0.015,
+            "unit_value": "%",
+            "max_value_tolerance": 0.016
+          },
+          {
+            "element": "P",
+            "min_value": 0.0,
+            "max_value": 0.015,
+            "unit_value": "%",
+            "max_value_tolerance": 0.016
+          },
+          {
+            "element": "Cr",
+            "min_value": 1.6,
+            "max_value": 1.9,
+            "unit_value": "%"
+          },
+          {
+            "element": "Ni",
+            "min_value": 3.4,
+            "max_value": 3.7,
+            "unit_value": "%"
+          },
+          {
+            "element": "Mo",
+            "min_value": 0.35,
+            "max_value": 0.6,
+            "unit_value": "%"
+          },
+          {
+            "element": "V",
+            "min_value": 0.08,
+            "max_value": 0.15,
+            "unit_value": "%"
+          },
+          {
+            "element": "Cu",
+            "min_value": 0.0,
+            "max_value": 0.25,
+            "unit_value": "%"
+          }
+        ]
+      }
+    ]
+  }
+}

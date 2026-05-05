@@ -1,0 +1,79 @@
+name: Continuous Integration for Balanse Plus
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  lint-backend:
+    name: Lint the backend ${{ matrix.service.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - name: balance
+            path: services/balance-orchestrator/backend
+          - name: condenser
+            path: services/condenser-calculator/backend
+          - name: valve
+            path: services/valve-stems/backend
+
+    steps:
+    - uses: actions/checkout@v6
+    - uses: actions/setup-python@v6
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install poetry
+      run: pip install poetry
+
+    - name: Install backend dependencies
+      working-directory: ${{ matrix.service.path }}
+      run: poetry install
+
+    - name: Run backend lints
+      working-directory: ${{ matrix.service.path }}
+      run: poetry run ruff check . --config ../../../ruff.toml
+      continue-on-error: true
+
+  test-backend:
+    name: Test the backend ${{ matrix.service.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - name: balance
+            path: services/balance-orchestrator/backend
+          - name: condenser
+            path: services/condenser-calculator/backend
+          - name: valve
+            path: services/valve-stems/backend
+
+    steps:
+    - uses: actions/checkout@v6
+    - uses: actions/setup-python@v6
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install poetry
+      run: pip install poetry
+
+    - name: Install backend dependencies
+      working-directory: ${{ matrix.service.path }}
+      run: poetry install
+
+    - name: Run backend tests
+      working-directory: ${{ matrix.service.path }}
+      run: poetry run pytest
