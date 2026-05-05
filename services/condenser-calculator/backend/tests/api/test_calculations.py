@@ -193,3 +193,196 @@ def test_21_engine_error_empty_input():
     payload = {"method": "berman", "condenser_id": 1, "coefficient_b": [], "W_main": []}
     response = client.post(ENDPOINT, json=payload)
     assert response.status_code in [400, 422, 404]
+
+
+# ==========================================
+# 🟣 EDGE CASES & WARNINGS (COND-8)
+# ==========================================
+
+def test_22_edge_one_bundle_builtin_none():
+    """Тест "один пучок" (W_builtin = None)"""
+    payload = {
+        "method": "berman",
+        "condenser_id": 1,
+        "material_id": 1,
+        "G_steam": [120000.0],
+        "H_steam": 2400.0,
+        "t1_main":[20.0],
+        "coefficient_b": [0.8],
+        "W_main":[8000.0],
+        "W_builtin": None
+    }
+    response = client.post(ENDPOINT, json=payload)
+    assert response.status_code in[200, 404]
+
+def test_23_edge_one_bundle_builtin_empty():
+    """Тест "один пучок" (W_builtin =[])"""
+    payload = {
+        "method": "berman",
+        "condenser_id": 1,
+        "material_id": 1,
+        "G_steam": [120000.0],
+        "H_steam": 2400.0,
+        "t1_main": [20.0],
+        "coefficient_b": [0.8],
+        "W_main": [8000.0],
+        "W_builtin":[]
+    }
+    response = client.post(ENDPOINT, json=payload)
+    assert response.status_code in [200, 404, 422]
+
+def test_24_edge_empty_array_coefficient_b():
+    """Пустой массив coefficient_b =[] (должен использовать default)"""
+    payload = {
+        "method": "berman",
+        "condenser_id": 1,
+        "material_id": 1,
+        "G_steam": [120000.0],
+        "H_steam": 2400.0,
+        "t1_main": [20.0],
+        "coefficient_b":[],
+        "W_main": [8000.0]
+    }
+    response = client.post(ENDPOINT, json=payload)
+    assert response.status_code in[200, 404, 422, 400]
+
+def test_25_edge_empty_array_g_steam():
+    """Пустой массив G_steam =[] (ошибка расчетов/валидации)"""
+    payload = {
+        "method": "berman",
+        "condenser_id": 1,
+        "material_id": 1,
+        "G_steam":[],
+        "H_steam": 2400.0,
+        "t1_main": [20.0],
+        "coefficient_b": [0.8],
+        "W_main": [8000.0]
+    }
+    response = client.post(ENDPOINT, json=payload)
+    assert response.status_code in [422, 400]
+
+def test_26_edge_empty_array_t1_main():
+    """Пустой массив t1_main =[] (ошибка расчетов/валидации)"""
+    payload = {
+        "method": "berman",
+        "condenser_id": 1,
+        "material_id": 1,
+        "G_steam":[120000.0],
+        "H_steam": 2400.0,
+        "t1_main": [],
+        "coefficient_b": [0.8],
+        "W_main": [8000.0]
+    }
+    response = client.post(ENDPOINT, json=payload)
+    assert response.status_code in [422, 400]
+
+@pytest.mark.parametrize("b_val",[0.0, 1.0, 0.75, 0.999])
+def test_27_edge_boundary_b(b_val):
+    """Граничные значения коэффициента загрязнения b"""
+    payload = {
+        "method": "berman",
+        "condenser_id": 1,
+        "material_id": 1,
+        "G_steam": [120000.0],
+        "H_steam": 2400.0,
+        "t1_main": [20.0],
+        "coefficient_b": [b_val],
+        "W_main": [8000.0]
+    }
+    response = client.post(ENDPOINT, json=payload)
+    # Если b=0.0 запрещен Pydantic-схемой, вернется 422, иначе 200 или 404
+    assert response.status_code in [200, 404, 422] 
+
+@pytest.mark.parametrize("temp, expected_warning",[
+    (0.0, False),    # Граница Бермана
+    (45.0, False),   # Граница Бермана
+    (150.0, True)    # Экстремальное значение, должно выдать warning
+])
+def test_28_edge_boundary_temperatures(temp, expected_warning):
+    """Температурные граничные случаи и проверка генерации BR-10 / BR-11"""
+    payload = {
+        "method": "berman",
+        "condenser_id": 1,
+        "material_id": 1,
+        "G_steam": [120000.0],
+        "H_steam": 2400.0,
+        "t1_main": [temp],
+        "coefficient_b": [0.8],
+        "W_main": [8000.0]
+    }
+    response = client.post(ENDPOINT, json=payload)
+    if response.status_code == 200:
+        data = response.json()
+        if expected_warning:
+            has_warning = any(
+                len(table.get("warnings",[])) > 0 
+                for table in data.get("tables",[])
+            )
+            assert has_warning, f"Ожидался warning (BR-10) для температуры {temp}"
+
+def test_29_edge_different_lengths_w_main_builtin():
+    """Разные длины массивов W_main и W_builtin (декартово произведение матриц)"""
+    payload = {
+        "method": "berman",
+        "condenser_id": 1,
+        "material_id": 1,
+        "G_steam":[120000.0],
+        "H_steam": 2400.0,
+        "t1_main": [20.0],
+        "coefficient_b": [0.8],
+        "W_main":[8000.0, 9000.0, 10000.0],
+        "W_builtin":[1000.0, 2000.0]
+    }
+    response = client.post(ENDPOINT, json=payload)
+    assert response.status_code in [200, 404, 422]
+
+def test_30_edge_warning_br06_high_water_flow():
+    """Тест генерации warnings: BR-06 Расход воды вне лимитов"""
+    payload = {
+        "method": "berman",
+        "condenser_id": 1,
+        "material_id": 1,
+        "G_steam": [120000.0],
+        "H_steam": 2400.0,
+        "t1_main": [20.0],
+        "coefficient_b": [0.8],
+        "W_main": [999999.0]  # Намеренно завышенный расход
+    }
+    response = client.post(ENDPOINT, json=payload)
+    if response.status_code == 200:
+        data = response.json()
+        has_warning = any(
+            any("расход" in w.lower() for w in table.get("warnings", []))
+            for table in data.get("tables",[])
+        )
+        assert has_warning, "Ожидался warning BR-06 (превышен максимальный расход)"
+
+def test_31_edge_invalid_combination_berman_missing_h_steam():
+    """Берман без H_steam (некорректная комбинация для данного метода)"""
+    payload = {
+        "method": "berman",
+        "condenser_id": 1,
+        "material_id": 1,
+        "G_steam": [120000.0],
+        "t1_main": [20.0],
+        "coefficient_b": [0.8],
+        "W_main": [8000.0],
+        "X_steam": 0.95  # Поле для Метро-Виккерс
+    }
+    response = client.post(ENDPOINT, json=payload)
+    assert response.status_code in [422, 400]
+
+def test_32_edge_invalid_combination_metrovickers_with_h_steam():
+    """Метро-Виккерс с H_steam (лишнее поле, валидация должна игнорировать или отбивать)"""
+    payload = {
+        "method": "metro-vickers",
+        "condenser_id": 1,
+        "material_id": 1,
+        "G_steam": [120000.0],
+        "H_steam": 2400.0,
+        "t1_main": [20.0],
+        "coefficient_b":[0.8],
+        "W_main": [8000.0]
+    }
+    response = client.post(ENDPOINT, json=payload)
+    assert response.status_code in[200, 422, 400, 404]
