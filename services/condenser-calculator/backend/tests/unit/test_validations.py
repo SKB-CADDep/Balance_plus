@@ -67,6 +67,13 @@ def test_water_flow_limits_br07():
     assert "ВП" in warnings[0]
 
 
+def test_water_flow_limits_zero():
+    # Both zero
+    warnings = validate_water_flow_limits(0.0, 0.0, {"main_bundle": {"min": 100}})
+    assert len(warnings) == 1
+    assert "Оба расхода воды равны нулю" in warnings[0]
+
+
 def test_water_flow_limits_empty():
     warnings = validate_water_flow_limits(8000.0, 1000.0, None)
     assert len(warnings) == 0
