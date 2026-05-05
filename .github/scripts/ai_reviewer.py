@@ -1,6 +1,8 @@
 # .github/scripts/ai_reviewer.py
 import os
 import re
+import time
+import json
 import requests
 from github import Github, Auth
 from pathlib import Path
@@ -9,22 +11,72 @@ from pathlib import Path
 # КОНФИГУРАЦИЯ
 # ═══════════════════════════════════════════════════════════════
 
-OPENROUTER_MODEL = "arcee-ai/trinity-large-preview:free"
-MAX_DIFF_CHARS = 100000
+OPENROUTER_MODELS = [
+    os.environ.get("OPENROUTER_MODEL", "poolside/laguna-m.1:free"),
+    "z-ai/glm-4.5-air:free",
+    "openai/gpt-oss-120b:free",
+    "openrouter/free",  # последний резерв: роутер случайно выберет доступную free-модель
+]
 
+MAX_DIFF_CHARS  = int(os.environ.get("MAX_DIFF_CHARS", 60_000))
+MAX_RETRIES     = 2   # попыток на каждую модель
+RETRY_STATUSES  = {524, 529, 500, 502, 503}
+FALLBACK_STATUSES = {429, 524, 529}  # при этих кодах - меняем модель
+
+REASONING_ENABLED = os.environ.get("REASONING_ENABLED", "false").lower() == "true"
+
+# Оставь для обратной совместимости (используется в футере комментария)
+OPENROUTER_MODEL = OPENROUTER_MODELS[0]
 
 # ═══════════════════════════════════════════════════════════════
-# ФУНКЦИИ
+# ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
 # ═══════════════════════════════════════════════════════════════
 
-def load_system_prompt():
+def load_system_prompt() -> str:
     prompt_path = Path(__file__).parent.parent / "prompts" / "system_prompt.md"
     if prompt_path.exists():
-        return prompt_path.read_text(encoding="utf-8")
-    return "Ты — Senior Software Engineer. Проведи код-ревью на русском языке."
+        text = prompt_path.read_text(encoding="utf-8").strip()
+        if text:
+            return text
+    # Дефолтный встроенный промт (см. ниже отдельный файл)
+    return _default_system_prompt()
 
 
-def read_file_safe(path):
+def _default_system_prompt() -> str:
+    return """\
+Ты — Senior Software Engineer с 15+ годами опыта. Проводишь код-ревью на русском языке.
+
+## Твоя задача
+Проанализируй предоставленный diff и дай структурированный отзыв.
+
+## Структура ответа (строго соблюдай)
+
+### 🔴 Критические проблемы
+Баги, уязвимости безопасности, утечки памяти, гонки данных.
+Если нет — напиши «Не обнаружено».
+
+### 🟡 Улучшения
+Производительность, читаемость, нарушения принципов SOLID/DRY/KISS.
+Если нет — напиши «Не обнаружено».
+
+### 🟢 Хорошие решения
+Что сделано хорошо — обязательно отметь.
+
+### 💡 Рекомендации
+Конкретные предложения с примерами кода (если применимо).
+
+### ✅ Итог
+Одна строка: можно мёрджить / нужны правки / блокирую мёрдж.
+
+## Правила
+- Будь конкретным: указывай файл и строку где возможно.
+- Не придирайся к стилю если есть линтер (eslint/flake8/etc).
+- Игнорируй изменения в lock-файлах (package-lock.json, poetry.lock и т.п.).
+- Если diff слишком большой — сфокусируйся на логике, а не форматировании.
+"""
+
+
+def read_file_safe(path: str) -> str:
     try:
         with open(path, "r", encoding="utf-8", errors="replace") as f:
             return f.read()
@@ -32,87 +84,219 @@ def read_file_safe(path):
         return ""
 
 
-def truncate_diff(diff, max_chars=MAX_DIFF_CHARS):
+def truncate_diff(diff: str, max_chars: int = MAX_DIFF_CHARS) -> str:
+    """
+    Обрезает diff умно: сначала убирает lock-файлы,
+    потом обрезает по символам если всё ещё большой.
+    """
+    # Удаляем блоки для lock-файлов (они бесполезны для ревью)
+    lock_pattern = re.compile(
+        r'diff --git a/.*?(package-lock\.json|poetry\.lock|yarn\.lock|Pipfile\.lock|composer\.lock).*?(?=diff --git|$)',
+        re.DOTALL
+    )
+    diff = lock_pattern.sub('', diff)
+
     if len(diff) <= max_chars:
         return diff
-    return diff[:max_chars] + "\n\n... [TRUNCATED] ..."
+
+    return diff[:max_chars] + "\n\n... [DIFF TRUNCATED — слишком большой] ..."
 
 
-def clean_thinking_tags(text):
-    """Удаляет <think>...</think> теги из ответа"""
-    cleaned = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL)
-    cleaned = re.sub(r'<think>.*', '', cleaned, flags=re.DOTALL)
-    return cleaned.strip()
+def clean_thinking_tags(text: str) -> str:
+    """Удаляет <think>...</think> теги из ответа модели."""
+    text = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL)
+    text = re.sub(r'<think>.*', '', text, flags=re.DOTALL)
+    return text.strip()
 
 
-def call_openrouter(system_prompt, user_prompt):
+# ═══════════════════════════════════════════════════════════════
+# STREAMING-ВЫЗОВ OPENROUTER
+# ═══════════════════════════════════════════════════════════════
+
+def call_openrouter(system_prompt: str, user_prompt: str) -> str:
+    """
+    Вызывает OpenRouter через streaming (SSE).
+    При 429 автоматически переключается на следующую модель из списка.
+    """
     api_key = os.environ.get("OPENROUTER_API_KEY", "").strip()
     if not api_key:
-        raise ValueError("OPENROUTER_API_KEY not set")
+        raise ValueError("OPENROUTER_API_KEY не задан")
 
-    response = requests.post(
-        "https://openrouter.ai/api/v1/chat/completions",
-        headers={
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-            "HTTP-Referer": "https://github.com",
-            "X-Title": "GitHub AI Code Reviewer",
-        },
-        json={
-            "model": OPENROUTER_MODEL,
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://github.com",
+        "X-Title": "GitHub AI Code Reviewer",
+    }
+
+    last_error: Exception | None = None
+
+    for model in OPENROUTER_MODELS:
+        print(f"\n>>> Пробуем модель: {model}")
+
+        payload: dict = {
+            "model": model,
             "messages": [
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
+                {"role": "user",   "content": user_prompt},
             ],
-            "temperature": 0.2,
-            "max_tokens": 8192,
-            # Включаем reasoning для более глубокого анализа
-            "reasoning": {
-                "enabled": True,
-            },
-        },
-        timeout=300,
-    )
+            "temperature": 0.3,
+            "max_tokens": 4096,
+            "stream": True,
+        }
 
-    print(f"OpenRouter status: {response.status_code}")
+        if REASONING_ENABLED:
+            payload["reasoning"] = {"enabled": True}
 
-    if response.status_code != 200:
-        raise Exception(f"API Error {response.status_code}: {response.text[:500]}")
+        for attempt in range(1, MAX_RETRIES + 1):
+            print(f"  Попытка {attempt}/{MAX_RETRIES}")
+            try:
+                result = _stream_request(headers, payload)
+                print(f"  Успех с моделью: {model}")
+                return result
+            except FallbackError as e:
+                # 429 / перегрузка — смысла повторять нет, меняем модель
+                last_error = e
+                print(f"  ↳ {e} — переключаемся на следующую модель")
+                break
+            except RetryableError as e:
+                last_error = e
+                wait = 2 ** attempt
+                print(f"  ↳ {e} — жду {wait}с и повторяю...")
+                time.sleep(wait)
+            except Exception as e:
+                raise  # не-ретраябельные ошибки пробрасываем сразу
 
-    data = response.json()
-
-    if "error" in data:
-        raise Exception(f"API error: {data['error']}")
-
-    content = data["choices"][0]["message"]["content"]
-
-    # Очищаем от thinking tags (на случай если модель вернёт их в content)
-    return clean_thinking_tags(content)
+    raise Exception(f"Все модели исчерпаны. Последняя ошибка: {last_error}")
 
 
-def main():
-    print("Starting AI Code Review...")
-    print(f"Model: {OPENROUTER_MODEL}")
+class RetryableError(Exception):
+    """Временная ошибка — стоит повторить с той же моделью."""
+    pass
+
+class FallbackError(Exception):
+    """Модель недоступна/перегружена — нужна другая модель."""
+    pass
+
+
+def _stream_request(headers: dict, payload: dict) -> str:
+    """Делает streaming-запрос и собирает полный текст из чанков."""
+    with requests.post(
+        "https://openrouter.ai/api/v1/chat/completions",
+        headers=headers,
+        json=payload,
+        stream=True,
+        timeout=(10, 300),
+    ) as response:
+
+        print(f"    HTTP статус: {response.status_code}")
+
+        if response.status_code == 429:
+            raise FallbackError(f"HTTP 429 (rate limit) для {payload['model']}")
+
+        if response.status_code in RETRY_STATUSES:
+            raise RetryableError(f"HTTP {response.status_code}")
+
+        if response.status_code != 200:
+            body = response.text[:500]
+            raise Exception(f"API Error {response.status_code}: {body}")
+
+        return _parse_sse_stream(response)
+
+
+def _parse_sse_stream(response: requests.Response) -> str:
+    """Парсит SSE и собирает контент из delta-чанков. Декодим UTF-8 вручную."""
+    full_content = []
+    last_finish_reason = None
+
+    for raw_line in response.iter_lines(decode_unicode=False):
+        if not raw_line:
+            continue
+
+        # keep-alive комментарии
+        if raw_line.startswith(b":"):
+            continue
+
+        if raw_line.startswith(b"data: "):
+            data_bytes = raw_line[6:].strip()
+
+            if data_bytes == b"[DONE]":
+                break
+
+            # SSE по стандарту UTF-8
+            data_str = data_bytes.decode("utf-8", errors="replace")
+
+            try:
+                chunk = json.loads(data_str)
+            except json.JSONDecodeError:
+                continue
+
+            if "error" in chunk:
+                err  = chunk["error"]
+                code = err.get("code", 0)
+                msg  = err.get("message", str(err))
+                if code == 429:
+                    raise FallbackError(f"Stream 429: {msg}")
+                if code in RETRY_STATUSES:
+                    raise RetryableError(f"Stream error {code}: {msg}")
+                raise Exception(f"Stream API error {code}: {msg}")
+
+            choices = chunk.get("choices", [])
+            if not choices:
+                continue
+
+            choice = choices[0]
+            delta  = choice.get("delta", {})
+
+            content_piece = delta.get("content")
+            if content_piece:
+                full_content.append(content_piece)
+
+            finish_reason = choice.get("finish_reason")
+            if finish_reason:
+                last_finish_reason = finish_reason
+
+    result = clean_thinking_tags("".join(full_content))
+
+    if not result.strip():
+        raise RetryableError("Пустой ответ от модели")
+
+    print(f"    Стрим завершён. finish_reason={last_finish_reason}, символов={len(result)}")
+    return result
+
+
+# ═══════════════════════════════════════════════════════════════
+# MAIN
+# ═══════════════════════════════════════════════════════════════
+
+def main() -> int:
+    print("=" * 60)
+    print("Starting AI Code Review")
+    print(f"Model            : {OPENROUTER_MODEL}")
+    print(f"Max diff chars   : {MAX_DIFF_CHARS}")
+    print(f"Reasoning enabled: {REASONING_ENABLED}")
+    print("=" * 60)
 
     github_token = os.environ.get("GITHUB_TOKEN")
-    pr_number = int(os.environ.get("PR_NUMBER", 0))
-    repo_name = os.environ.get("REPO_NAME", "")
-    pr_title = os.environ.get("PR_TITLE", "Untitled")
-    pr_body = os.environ.get("PR_BODY") or "No description"
-    pr_author = os.environ.get("PR_AUTHOR", "unknown")
+    pr_number    = int(os.environ.get("PR_NUMBER", 0))
+    repo_name    = os.environ.get("REPO_NAME", "")
+    pr_title     = os.environ.get("PR_TITLE", "Untitled")
+    pr_body      = os.environ.get("PR_BODY") or "No description"
+    pr_author    = os.environ.get("PR_AUTHOR", "unknown")
 
     if not all([github_token, pr_number, repo_name]):
-        print("Missing environment variables!")
+        print("❌ Отсутствуют обязательные env-переменные (GITHUB_TOKEN / PR_NUMBER / REPO_NAME)")
         return 1
 
-    diff = read_file_safe("pr_diff.txt")
+    diff          = read_file_safe("pr_diff.txt")
     changed_files = read_file_safe("changed_files.txt")
 
     if not diff.strip():
-        print("Empty diff, skipping")
+        print("Diff пустой — пропускаем ревью.")
         return 0
 
-    print(f"Diff size: {len(diff)} chars")
+    diff_for_review = truncate_diff(diff)
+    print(f"Diff: {len(diff)} → {len(diff_for_review)} символов после обрезки")
 
     system_prompt = load_system_prompt()
 
@@ -123,38 +307,44 @@ def main():
         f"**Описание:**\n{pr_body}\n\n"
         "---\n\n"
         f"**Изменённые файлы:**\n```\n{changed_files}\n```\n\n"
-        f"**Diff:**\n```diff\n{truncate_diff(diff)}\n```\n\n"
+        f"**Diff:**\n```diff\n{diff_for_review}\n```\n\n"
         "---\n\nПроведи код-ревью этого PR."
     )
 
-    print("Calling Trinity Large Preview...")
+    print("Вызываем модель...")
 
     try:
         review_text = call_openrouter(system_prompt, user_prompt)
-        print(f"Got review ({len(review_text)} chars)")
+        print(f"✅ Ревью получено ({len(review_text)} символов)")
     except Exception as e:
-        review_text = f"**Ошибка:** {e}"
-        print(f"Error: {e}")
+        review_text = (
+            f"**⚠️ Ошибка AI-ревьюера:** `{e}`\n\n"
+            f"Попробуй перезапустить workflow или проверь логи."
+        )
+        print(f"❌ Ошибка: {e}")
 
-    print("Posting comment...")
+    print("Постим комментарий в PR...")
 
     try:
-        gh = Github(auth=Auth.Token(github_token))
+        gh   = Github(auth=Auth.Token(github_token))
         repo = gh.get_repo(repo_name)
-        pr = repo.get_pull(pr_number)
+        pr   = repo.get_pull(pr_number)
+
+        model_label = OPENROUTER_MODEL.split("/")[-1]  # "qwen3-coder-480b:free"
 
         comment = (
-            "## 🤖 AI Code Review\n\n"
+            "## AI Code Review\n\n"
             f"{review_text}\n\n"
             "---\n"
-            "<sub>Trinity Large Preview via OpenRouter</sub>"
+            f"<sub>Model: `{model_label}` via OpenRouter · "
+            f"Diff: {len(diff_for_review):,} chars</sub>"
         )
 
         pr.create_issue_comment(comment)
-        print("Comment posted!")
+        print("✅ Комментарий опубликован!")
 
     except Exception as e:
-        print(f"Failed to post: {e}")
+        print(f"❌ Не удалось опубликовать комментарий: {e}")
         return 1
 
     return 0

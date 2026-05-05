@@ -1,6 +1,6 @@
 import pytest
 from app.core.condenser_validators import validate_condenser_for_method, validate_water_flow_limits
-from app.models.condenser import Condenser
+from app.models import Condenser
 from app.core.exceptions import ValidationError
 
 

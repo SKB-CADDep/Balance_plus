@@ -1,31 +1,35 @@
-class AppBaseError(Exception):
-    """Базовый класс всех ошибок приложения."""
+class CondenserBaseError(Exception):
+    """Базовое доменное исключение."""
+
+
+class EntityNotFoundError(CondenserBaseError):
+    def __init__(self, message: str):
+        super().__init__(message)
+        self.message = message
+
+
+class MaterialPropertyError(CondenserBaseError):
     def __init__(self, message: str, details: str | None = None):
+        super().__init__(message)
         self.message = message
         self.details = details
+
+
+class UnitConversionError(CondenserBaseError):
+    def __init__(self, message: str, details: str | None = None):
         super().__init__(message)
+        self.message = message
+        self.details = details
 
 
-class EntityNotFoundError(AppBaseError):
-    """Сущность не найдена в БД."""
-    pass
+class CalculationEngineError(CondenserBaseError):
+    def __init__(self, message: str, details: str | None = None):
+        super().__init__(message)
+        self.message = message
+        self.details = details
 
-
-class ValidationError(AppBaseError):
-    """Ошибка бизнес-валидации."""
-    pass
-
-
-class UnitConversionError(AppBaseError):
-    """Ошибка конвертации единиц."""
-    pass
-
-
-class MaterialPropertyError(AppBaseError):
-    """Ошибка работы с свойствами материала (λ(t) и т.д.)."""
-    pass
-
-
-class CalculationEngineError(AppBaseError):
-    """Ошибка в математическом ядре."""
-    pass
+class ValidationError(CondenserBaseError):
+    def __init__(self, message: str, details: str | None = None):
+        super().__init__(message)
+        self.message = message
+        self.details = details
