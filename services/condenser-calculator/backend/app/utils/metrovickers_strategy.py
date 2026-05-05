@@ -123,18 +123,9 @@ class MetroVickersStrategy:
                 method="nearest"
             )
 
-            try:
-                query_point = np.array(
-                    [[speed_cooling_water, temperature_cooling_water_average_heating]])
-                k_temp_new = _get_k_from_table(query_point).item()
-            except ValueError as e:
-                error_message = (
-                    f"Ошибка интерполяции: расчетные параметры вышли за пределы таблицы.\n"
-                    f"  - Расчетная скорость воды: {speed_cooling_water:.2f} м/с (допустимый диапазон: {k_interpolation_data['speed_points'][0]} - {k_interpolation_data['speed_points'][-1]})\n"
-                    f"  - Расчетная средняя температура: {temperature_cooling_water_average_heating:.2f} °C (допустимый диапазон: {k_interpolation_data['temperature_points'][0]} - {k_interpolation_data['temperature_points'][-1]})\n"
-                    f"Проверьте входные данные, особенно `diameter_inside_of_pipes` (должен быть в мм)."
-                )
-                raise ValueError(error_message) from e
+            query_point = np.array(
+                [[speed_cooling_water, temperature_cooling_water_average_heating]])
+            k_temp_new = _get_k_from_table(query_point).item()
 
             '''
                 Сравниваем K_new и K_old. Если разница велика,
@@ -193,7 +184,10 @@ class MetroVickersStrategy:
             'temperature_relative_underheating': temperature_relative_underheating,
             'temperature_saturation_steam': temperature_saturation_steam,
             'pressure_flow_path_1': pressure_flow_path_1_kgf_cm2,
-            'is_extrapolated': temperature_cooling_water_average_heating > 100.0
+            'is_extrapolated': temperature_cooling_water_average_heating > 100.0 or
+            speed_cooling_water > max(k_interpolation_data['speed_points']) or
+            temperature_cooling_water_average_heating > max(
+                k_interpolation_data['temperature_points'])
         })
 
         return results

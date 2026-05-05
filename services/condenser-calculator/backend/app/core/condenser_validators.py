@@ -1,5 +1,6 @@
 from typing import Optional, List, Dict, Any
 from app.models.condenser import Condenser
+from app.core.exceptions import ValidationError
 
 
 def validate_condenser_for_method(condenser: Condenser, method: str) -> None:
@@ -23,7 +24,10 @@ def validate_condenser_for_method(condenser: Condenser, method: str) -> None:
                 "Для методики Метро-Виккерса обязательно наличие числа трубок воздухоохладителя (aircooler_count).")
 
     if errors:
-        raise ValueError(f"Ошибка валидации БД (BR-02): {', '.join(errors)}")
+        raise ValidationError(
+            message="Ошибка валидации БД (BR-02)",
+            details=", ".join(errors)
+        )
 
 
 def validate_water_flow_limits(

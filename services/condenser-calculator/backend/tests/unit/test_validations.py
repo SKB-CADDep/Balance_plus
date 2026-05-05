@@ -1,17 +1,18 @@
 import pytest
 from app.core.condenser_validators import validate_condenser_for_method, validate_water_flow_limits
 from app.models.condenser import Condenser
+from app.core.exceptions import ValidationError
 
 
 def test_validate_condenser_br02_berman_missing_aircooler():
     condenser = Condenser(aircooler_count=None)
-    with pytest.raises(ValueError, match="обязательно наличие числа трубок воздухоохладителя"):
+    with pytest.raises(ValidationError, match=r"Ошибка валидации БД \(BR-02\)"):
         validate_condenser_for_method(condenser, "berman")
 
 
 def test_validate_condenser_br02_metrovickers_missing_aircooler():
     condenser = Condenser(aircooler_count=None)
-    with pytest.raises(ValueError, match="обязательно наличие числа трубок воздухоохладителя"):
+    with pytest.raises(ValidationError, match=r"Ошибка валидации БД \(BR-02\)"):
         validate_condenser_for_method(condenser, "metro-vickers")
 
 
