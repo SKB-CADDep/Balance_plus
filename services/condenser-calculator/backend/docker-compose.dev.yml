@@ -38,8 +38,7 @@ services:
     build: .
     container_name: condenser_worker
     restart: always
-    # Запуск Celery воркера
-    command: poetry run celery -A app.core.celery_app.celery_app worker --loglevel=info
+    entrypoint: ["celery", "-A", "app.core.celery_app.celery_app", "worker", "--loglevel=info"]
     environment:
       - DATABASE_URL=postgresql+psycopg://postgres:postgres@db:5432/balance_db
       - CELERY_BROKER_URL=redis://redis:6379/0

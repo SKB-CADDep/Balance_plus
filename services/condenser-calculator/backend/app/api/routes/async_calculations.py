@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from celery.result import AsyncResult
+from app.core.celery_app import celery_app
 from app.worker import calculate_async_task
 
 router = APIRouter(tags=["Async Calculations"])
@@ -9,7 +9,6 @@ def trigger_calculation(input_data: dict):
     """
     Отправляет задачу на расчет в очередь (Redis) через Celery.
     """
-    # .delay() ставит задачу в очередь
     task = calculate_async_task.delay(input_data)
     
     return {"task_id": task.id, "status": "Processing"}
@@ -19,7 +18,7 @@ def get_task_status(task_id: str):
     """
     Проверяет статус асинхронной задачи по её ID.
     """
-    task_result = AsyncResult(task_id)
+    task_result = celery_app.AsyncResult(task_id)
     
     response = {
         "task_id": task_id,
