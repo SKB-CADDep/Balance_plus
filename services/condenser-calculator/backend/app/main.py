@@ -4,7 +4,7 @@ from fastapi import APIRouter
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import calculations, condensers, materials, health
+from app.api.routes import calculations, condensers, materials, health, async_calculations
 from app.core.config import settings
 
 #Если вы хотите, чтобы таблицы создались мгновенно без настройки Alembic
@@ -40,6 +40,7 @@ api_router.include_router(health.router, prefix="/health", tags=["health"])
 api_router.include_router(calculations.router, prefix="/calculations", tags=["calculations"])
 api_router.include_router(condensers.router, prefix="/condensers", tags=["condensers"])
 api_router.include_router(materials.router, prefix="/materials", tags=["materials"])
+api_router.include_router(async_calculations.router, prefix="/async_calculations", tags=["async_calculations"])
 
 # Все бизнес-роуты под /api/v1
 app.include_router(api_router, prefix=settings.API_V1_STR)
