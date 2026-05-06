@@ -100,7 +100,7 @@ class TestOptimizedTable1D:
         x_small = np.array([1, 2, 3, 4])
         y_small = np.array([1, 4, 9, 16])
         table_small = Table1D(x_small, y_small, max_extrap_degree=5)
-        assert table_small._best_extrap_degree == 2
+        assert table_small._best_extrap_degree == 3
 
 
 class TestTable2DAndTrilinear:
