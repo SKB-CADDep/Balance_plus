@@ -1,3 +1,6 @@
+"""
+Тестирование математических решателей (Ньютон, Дихотомия, Аналитический)
+"""
 import pytest
 
 from app.utils.base_for_selection import ProblemDefinition
@@ -33,7 +36,8 @@ class TestSolvers:
         """Тест: Метод дихотомии сходится к правильному значению."""
         solver = BisectionSolver(self.problem, tol=1e-7)
         result = solver.solve(self.target_delta, a=1.0, b=3.0)
-        assert result == pytest.approx(self.expected_x, abs=1e-6)  # Точность ниже
+        assert result == pytest.approx(
+            self.expected_x, abs=1e-6)  # Точность ниже
         assert solver.iterations > 10  # Требует больше итераций
 
     def test_newton_fails_to_converge(self):
