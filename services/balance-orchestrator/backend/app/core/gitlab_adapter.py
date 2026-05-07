@@ -48,21 +48,22 @@ class GitLabAdapter:
         return self._project
 
     def get_project_by_id(self, project_id: int):
-        """Получает проект по ID с кешированием и TTL"""
+        """Получает проект по ID с кешированием и безопасной обработкой ошибок"""
         now = time.time()
 
-        # Если есть в кеше и не протух
         if project_id in self._projects_cache:
             project, timestamp = self._projects_cache[project_id]
             if now - timestamp < self.CACHE_TTL:
                 return project
 
-        # Иначе запрашиваем свежий
-        print(f"🔄 Обновляю кеш для проекта ID {project_id}...")
-        project = self.gl.projects.get(project_id)
-        self._projects_cache[project_id] = (project, now)
-        return project
-
+        try:
+            print(f"🔄 Запрос проекта ID {project_id} из GitLab...")
+            project = self.gl.projects.get(project_id)
+            self._projects_cache[project_id] = (project, now)
+            return project
+        except (gitlab.exceptions.GitlabGetError, Exception):
+            print(f"❌ Проект ID {project_id} не найден в GitLab")
+            return None
     @property
     def default_branch(self) -> str:
         """Возвращает дефолтную ветку проекта"""
