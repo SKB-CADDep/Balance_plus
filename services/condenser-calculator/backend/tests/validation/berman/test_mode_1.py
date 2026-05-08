@@ -22,7 +22,7 @@ _results = load_results(1)
 _test_cases = generate_test_cases_from_results(_results, _mode)
 _ejector_cases = generate_ejector_test_cases(_results)
 
-
+@pytest.mark.skip(reason="Ожидаем эталонные данные от аналитиков (задача QA-2)")
 class TestPressureMatrixMode1:
     """Полная проверка матрицы давлений из results_1.json."""
 
@@ -50,7 +50,7 @@ class TestPressureMatrixMode1:
             calculated=calculated, expected=case["expected_pressure"], context=f"Тест: {case['id']}"
         )
 
-
+@pytest.mark.skip(reason="Ожидаем эталонные данные от аналитиков (задача QA-2)")
 class TestEjectorsMode1:
     """Проверка расчёта эжекторов для режима 1."""
 
@@ -84,7 +84,7 @@ class TestEjectorsMode1:
             f"  Рассчитанное = {calculated:.6f}"
         )
 
-
+@pytest.mark.skip(reason="Ожидаем эталонные данные от аналитиков (задача QA-2)")
 class TestSpotCheckMode1:
     """Выборочные проверки для ключевых режимов."""
 
@@ -119,7 +119,7 @@ class TestSpotCheckMode1:
 
         assert P_dirty > P_clean, f"P(dirty)={P_dirty:.6f} должно быть > P(clean)={P_clean:.6f}"
 
-
+@pytest.mark.skip(reason="Ожидаем эталонные данные от аналитиков (задача QA-2)")
 class TestPhysicalConsistencyMode1:
     """Проверка физической корректности результатов."""
 

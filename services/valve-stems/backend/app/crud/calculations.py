@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 
 from app.models import CalculationResultDB
@@ -26,7 +26,7 @@ def create_calculation_result(
             user_name="Engineer",
             stock_name=stock_name,
             turbine_name=turbine_name,
-            calc_timestamp=datetime.utcnow(),
+            calc_timestamp=datetime.now(timezone.utc),
             input_data=parameters.model_dump(),
             output_data=results.model_dump(),
         )
@@ -36,7 +36,8 @@ def create_calculation_result(
         return db_result
     except Exception as e:
         db.rollback()
-        logger.error("DB: integrity error", extra={"error": str(e)}, exc_info=True)
+        logger.error("DB: integrity error", extra={
+                     "error": str(e)}, exc_info=True)
         raise
 
 
@@ -72,5 +73,6 @@ def get_calculation_result_by_id(db: Session, result_id: int) -> CalculationResu
         .first()
     )
     if not result:
-        raise EntityNotFoundError(entity_name="Результат расчёта", entity_id=result_id)
+        raise EntityNotFoundError(
+            entity_name="Результат расчёта", entity_id=result_id)
     return result
