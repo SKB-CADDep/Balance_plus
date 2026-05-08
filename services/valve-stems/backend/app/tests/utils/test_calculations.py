@@ -1,74 +1,224 @@
 import logging
 import unittest
 
-from app.domain.valve_physics_engine import ValvePhysicsEngine
-from app.domain.models import ValveGeometry, ThermoConditions
+from app.schemas import CalculationParams, ValveInfo
+from app.services.calculator import ValveCalculator
+
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+
 class TestValveCalculator(unittest.TestCase):
     def setUp(self):
-        # 1. Создаем геометрию в новых моделях (перевод в метры)
-        self.geo = ValveGeometry(
-            count_parts=3,
-            diameter_m=40.0 / 1000.0,
-            clearance_m=0.215 / 1000.0,
-            radius_rounding_m=2.0 / 1000.0,
-            len_parts_m=[313.5 / 1000.0, 50.0 / 1000.0, 97.5 / 1000.0]
-        )
-        
-        # 2. Создаем термоввод в новых моделях (перевод в МПа и кДж)
-        self.thermo = ThermoConditions(
+        params = CalculationParams(
+            temperature_start=555,
+            t_air=40,
             count_valves=2,
-            p_in_mpa=[12.748, 0.9806, 0.1013],
-            t_start_c=555.0,
-            h_start_kj_kg=3487.0,
-            t_air_c=40.0,
-            p_suctions_mpa=[0.0951, 0.0951] # p_ejector
+            p_ejector=[0.97, 0.97],
+            p_values=[130, 10, 1.03]
         )
-        self.engine = ValvePhysicsEngine(self.geo, self.thermo)
+        valve_info = ValveInfo(
+            id=1,
+            name="Test Valve 1",
+            round_radius=2,
+            clearance=0.215,
+            diameter=40,
+            len_part1=313.5,
+            len_part2=50,
+            len_part3=97.5
+        )
+        self.calculator = ValveCalculator(params, valve_info)
 
     def test_perform_calculations(self):
-        # Выполняем расчет
-        raw_res = self.engine.execute()
+        result = self.calculator.perform_calculations()
 
-        expected_Gi = [0.536, 0.074, 0.003]
-        
-        # Проверяем расходы (Gi)
+        expected_Gi = [0.5365648691, 0.07402597315, 0.003495929025]
+        expected_Pi_in = [130, 10, 1.03]
+        expected_Ti = [555, 503.6, 40]
+        expected_Hi = [3487.026558, 3487.026558, 40.24]
+
         for i in range(len(expected_Gi)):
-            self.assertAlmostEqual(raw_res.gi_t_h[i], expected_Gi[i], places=2)
+            self.assertAlmostEqual(result.Gi[i], expected_Gi[i], places=3)
+        for i in range(len(expected_Pi_in)):
+            self.assertAlmostEqual(result.Pi_in[i], expected_Pi_in[i], places=2)
+        for i in range(len(expected_Ti)):
+            self.assertAlmostEqual(result.Ti[i], expected_Ti[i], places=1)
+        for i in range(len(expected_Hi)):
+            self.assertAlmostEqual(result.Hi[i], expected_Hi[i], places=0)
 
-        # Проверяем температуры
-        self.assertAlmostEqual(raw_res.ti_c[0], 555.0, places=1)
-        
-        # Проверка деаэратора (dea_g, dea_t, dea_h, dea_p_mpa)
-        self.assertGreater(raw_res.dea_g, 0)
-        self.assertEqual(raw_res.dea_p_mpa, self.thermo.p_in_mpa[1])
+        expected_deaerator_props = [0.9250777918, 503.6, 832.8619847*4.1868, 10]
+        for i, expected_value in enumerate(expected_deaerator_props):
+            self.assertAlmostEqual(result.deaerator_props[i], expected_value, places=1)
+
+        expected_ejector_props = [{"g": 0.1550438044, "t": 426.4662, "h": 3333.60, "p": 0.97}]
+        self.assertEqual(len(result.ejector_props), len(expected_ejector_props))
+        for i, expected in enumerate(expected_ejector_props):
+            actual = result.ejector_props[i]
+            self.assertAlmostEqual(actual['g'], expected['g'], places=2)
+            self.assertAlmostEqual(actual['t'], expected['t'], places=1)
+            self.assertAlmostEqual(actual['h'], expected['h'], places=0)
+            self.assertAlmostEqual(actual['p'], expected['p'], places=2)
+
 
 class TestValveCalculatorTwo(unittest.TestCase):
     def setUp(self):
-        self.geo = ValveGeometry(
-            count_parts=2,
-            diameter_m=50.0 / 1000.0,
-            clearance_m=0.23 / 1000.0,
-            radius_rounding_m=2.0 / 1000.0,
-            len_parts_m=[190.0 / 1000.0, 110.0 / 1000.0]
-        )
-        self.thermo = ThermoConditions(
+        params = CalculationParams(
+            temperature_start=555,
+            t_air=40,
             count_valves=2,
-            p_in_mpa=[12.748, 0.1013],
-            t_start_c=555.0,
-            h_start_kj_kg=3487.0,
-            t_air_c=40.0,
-            p_suctions_mpa=[0.0951]
+            p_ejector=[0.97],
+            p_values=[130, 1.03]
         )
-        self.engine = ValvePhysicsEngine(self.geo, self.thermo)
+        valve_info = ValveInfo(
+            id=2,
+            name="Test Valve 2",
+            round_radius=2,
+            clearance=0.23,
+            diameter=50,
+            len_part1=190,
+            len_part2=110
+        )
+        self.calculator = ValveCalculator(params, valve_info)
 
     def test_perform_calculations_two(self):
-        raw_res = self.engine.execute()
-        self.assertGreater(raw_res.gi_t_h[0], 0.9)
-        self.assertEqual(len(raw_res.gi_t_h), 2)
+        result = self.calculator.perform_calculations()
+
+        expected_Gi = [0.9634638651, 0.004586641266]
+        expected_Pi_in = [130, 1.03]
+        expected_Ti = [555.005, 39.980]
+        expected_Hi = [832.8619847*4.1868, 40.24]
+
+        for i in range(len(expected_Gi)):
+            self.assertAlmostEqual(result.Gi[i], expected_Gi[i], places=3)
+        for i in range(len(expected_Pi_in)):
+            self.assertAlmostEqual(result.Pi_in[i], expected_Pi_in[i], places=2)
+        for i in range(len(expected_Ti)):
+            self.assertAlmostEqual(result.Ti[i], expected_Ti[i], places=0)
+        for i in range(len(expected_Hi)):
+            self.assertAlmostEqual(result.Hi[i], expected_Hi[i], places=0)
+
+        expected_ejector_props = [
+            {"g": 1.936529, "t": 491.322, "h": 3470.265, "p": 0.97}
+        ]
+
+        self.assertEqual(len(result.ejector_props), len(expected_ejector_props))
+        for i, expected in enumerate(expected_ejector_props):
+            actual = result.ejector_props[i]
+            self.assertAlmostEqual(actual['g'], expected['g'], places=2)
+            self.assertAlmostEqual(actual['t'], expected['t'], places=0)
+            self.assertAlmostEqual(actual['h'], expected['h'], places=0)
+            self.assertAlmostEqual(actual['p'], expected['p'], places=2)
+
+# class TestValveCalculatorThree(unittest.TestCase):
+#     def setUp(self):
+#         params = CalculationParams(
+#             temperature_start=555,
+#             t_air=40,
+#             count_valves=4,
+#             p_ejector=[0.97, 0.97, 0.97],
+#             p_values=[130, 7, 0.97, 1.03]
+#         )
+#         valve_info = ValveInfo(
+#             id=3,
+#             name="Test Valve 3",
+#             round_radius=2,
+#             clearance=0.205,
+#             diameter=36,
+#             len_part1=438.5,
+#             len_part2=50,
+#             len_part3=25,
+#             len_part4=37.5
+#         )
+#         self.calculator = ValveCalculator(params, valve_info)
+#
+#     def test_perform_calculations_three(self):
+#         result = self.calculator.perform_calculations()
+#
+#         expected_Gi = [0.3857, 0.0426, 0.0005, 0.0038]
+#         expected_Pi_in = [13.0, 0.7, 0.097, 0.103]
+#         expected_Ti = [555.0, 501.0, 498.0, 40.0]
+#         expected_Hi = [3484.5, 3484.5, 3484.5, 40.24]
+#
+#         for i in range(len(expected_Gi)):
+#             self.assertAlmostEqual(result.Gi[i], expected_Gi[i], places=3)
+#         for i in range(len(expected_Pi_in)):
+#             self.assertAlmostEqual(result.Pi_in[i], expected_Pi_in[i], places=2)
+#         for i in range(len(expected_Ti)):
+#             self.assertAlmostEqual(result.Ti[i], expected_Ti[i], places=0)
+#         for i in range(len(expected_Hi)):
+#             self.assertAlmostEqual(result.Hi[i], expected_Hi[i], places=0)
+#
+#         expected_deaerator_props = [1.370, 501.0, 3484.5, 0.7]
+#         for i, expected_value in enumerate(expected_deaerator_props):
+#             self.assertAlmostEqual(result.deaerator_props[i], expected_value, places=1)
+#
+#         expected_ejector_props = [
+#             {"g": 0.157, "t": 498.0, "h": 3484.5, "p": 0.097},
+#             {"g": 0.013, "t": 98.8, "h": 447.2, "p": 0.097}
+#         ]
+#
+#         self.assertEqual(len(result.ejector_props), len(expected_ejector_props))
+#         for i, expected in enumerate(expected_ejector_props):
+#             actual = result.ejector_props[i]
+#             self.assertAlmostEqual(actual['g'], expected['g'], places=2)
+#             self.assertAlmostEqual(actual['t'], expected['t'], places=0)
+#             self.assertAlmostEqual(actual['h'], expected['h'], places=0)
+#             self.assertAlmostEqual(actual['p'], expected['p'], places=2)
+#
+#
+# class TestValveCalculatorFour(unittest.TestCase):
+#     def setUp(self):
+#         params = CalculationParams(
+#             temperature_start=555,
+#             t_air=40,
+#             count_valves=2,
+#             p_ejector=[0.97, 0.97],
+#             p_values=[130, 8.35, 1.03]
+#         )
+#         valve_info = ValveInfo(
+#             id=4,
+#             name="Test Valve 4",
+#             round_radius=2,
+#             clearance=0.28,
+#             diameter=38,
+#             len_part1=161.5,
+#             len_part2=102.5,
+#             len_part3=50.5
+#         )
+#         self.calculator = ValveCalculator(params, valve_info)
+#
+#     def test_perform_calculations_four(self):
+#         result = self.calculator.perform_calculations()
+#
+#         expected_Gi = [1.0857, 0.0640, 0.0058]
+#         expected_Pi_in = [13.0, 0.835, 0.103]
+#         expected_Ti = [555.0, 501.7, 40.0]
+#         expected_Hi = [3484.5, 3484.5, 40.24]
+#
+#         for i in range(len(expected_Gi)):
+#             self.assertAlmostEqual(result.Gi[i], expected_Gi[i], places=3)
+#         for i in range(len(expected_Pi_in)):
+#             self.assertAlmostEqual(result.Pi_in[i], expected_Pi_in[i], places=2)
+#         for i in range(len(expected_Ti)):
+#             self.assertAlmostEqual(result.Ti[i], expected_Ti[i], places=0)
+#         for i in range(len(expected_Hi)):
+#             self.assertAlmostEqual(result.Hi[i], expected_Hi[i], places=0)
+#
+#         expected_deaerator_props = [2.043, 501.7, 3484.5, 0.835]
+#         for i, expected_value in enumerate(expected_deaerator_props):
+#             self.assertAlmostEqual(result.deaerator_props[i], expected_value, places=1)
+#
+#         expected_ejector_props = [{"g": 0.139, "t": 360.9, "h": 3198.2, "p": 0.097}]
+#
+#         self.assertEqual(len(result.ejector_props), len(expected_ejector_props))
+#         for i, expected in enumerate(expected_ejector_props):
+#             actual = result.ejector_props[i]
+#             self.assertAlmostEqual(actual['g'], expected['g'], places=2)
+#             self.assertAlmostEqual(actual['t'], expected['t'], places=0)
+#             self.assertAlmostEqual(actual['h'], expected['h'], places=0)
+#             self.assertAlmostEqual(actual['p'], expected['p'], places=2)
+
 
 if __name__ == '__main__':
     unittest.main()

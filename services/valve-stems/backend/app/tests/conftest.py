@@ -120,7 +120,7 @@ class CalcItem(pytest.Item):
                     assert_dicts_approx(e_val, a_val, path + f"[{i}].")
             elif isinstance(exp, (float, int)) and isinstance(act, (float, int)):
                 # Сравниваем числа с погрешностью 1e-5 (0.00001)
-                assert act == pytest.approx(exp, rel=0.35, abs=0.1), \
+                assert act == pytest.approx(exp, rel=1e-5), \
                     f"Значение '{path}': ожидалось {exp}, получено {act}"
             else:
                 assert act == exp, f"Значение '{path}': ожидалось {exp}, получено {act}"
