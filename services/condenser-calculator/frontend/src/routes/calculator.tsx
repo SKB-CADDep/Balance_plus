@@ -224,6 +224,19 @@ function CalculatorPage() {
                             <FormLabel>Сухость пара (X_steam)</FormLabel>
                             <Input placeholder="0.950" value={xSteam} onChange={e => setXSteam(e.target.value)} />
                         </FormControl>
+
+                        <FormControl isRequired>
+                            <FormLabel>Кол-во эжекторов (Z_ejectors)</FormLabel>
+                            <Input placeholder="1" value={zEjectors} onChange={e => setZEjectors(e.target.value)} />
+                        </FormControl>
+                        <FormControl isRequired>
+                            <FormLabel>Ходы воды осн. (Z_main)</FormLabel>
+                            <Input placeholder="2" value={zMain} onChange={e => setZMain(e.target.value)} />
+                        </FormControl>
+                        <FormControl isDisabled={method === 'metro-vickers'}>
+                            <FormLabel>Ходы воды встр. (Z_builtin)</FormLabel>
+                            <Input placeholder="" value={zBuiltin} onChange={e => setZBuiltin(e.target.value)} />
+                        </FormControl>
                     </SimpleGrid>
 
                     <Button mt={8} colorScheme="teal" size="lg" onClick={handleCalculate} isLoading={mutation.isPending}>

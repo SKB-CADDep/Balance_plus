@@ -78,8 +78,8 @@ function SearchPage() {
                                     {condensers.map((condenser) => (
                                         <Tr key={condenser.id} _hover={{ bg: useColorModeValue("gray.50", "gray.700") }}>
                                             <Td>{condenser.id}</Td>
-                                            <Td fontWeight="medium">{condenser.marking}</Td>
-                                            <Td>{condenser.project}</Td>
+                                            <Td fontWeight="medium">{condenser.name_condenser}</Td>
+                                            <Td>{condenser.project_name}</Td>
                                             <Td textAlign="right">
                                                 <Button
                                                     size="sm"

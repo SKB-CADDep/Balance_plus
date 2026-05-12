@@ -3,18 +3,14 @@ import {
     Flex,
     Image,
     Text,
-    Link as ChakraLink,
     Icon,
     HStack,
-    useColorModeValue,
-    useDisclosure,
-    IconButton,
     Stack,
+    useColorModeValue,
+    Link as ChakraLink,
 } from '@chakra-ui/react';
 import {Outlet, Link as RouterLink} from '@tanstack/react-router';
-import {FiGrid, FiCode, FiHelpCircle, FiInfo, FiClock} from 'react-icons/fi';
-
-import SidebarComponent from './Sidebar';
+import {FiGrid, FiCode} from 'react-icons/fi';
 import {ThemeToggleButton} from './ThemeToggleButton';
 
 export default function MainLayout() {
@@ -30,7 +26,7 @@ export default function MainLayout() {
         {to: "/calculator", label: "Расчет", icon: FiCode},
     ];
 
-    const {isOpen: isSidebarOpen, onOpen: onSidebarOpen, onClose: onSidebarClose} = useDisclosure();
+
     const headerHeight = "65px";
 
     return (
@@ -63,13 +59,6 @@ export default function MainLayout() {
                 </Flex>
 
                 <Stack direction="row" spacing={{base: 1, md: 3}} align="center" ml="auto">
-                    <IconButton
-                        aria-label="Открыть историю расчетов"
-                        icon={<Icon as={FiClock} boxSize={5}/>}
-                        variant="ghost"
-                        onClick={onSidebarOpen}
-                        display={{base: 'flex'}}
-                    />
                     <HStack as="nav" spacing={{base: 1, md: 3}}>
                         {navLinks.map(link => (
                             <ChakraLink
@@ -109,7 +98,6 @@ export default function MainLayout() {
                 flex="1"
                 pt={headerHeight}
             >
-                <SidebarComponent isOpen={isSidebarOpen} onClose={onSidebarClose}/>
 
                 <Box
                     flex="1"
