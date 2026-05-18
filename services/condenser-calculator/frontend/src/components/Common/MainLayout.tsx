@@ -10,7 +10,7 @@ import {
     Link as ChakraLink,
 } from '@chakra-ui/react';
 import {Outlet, Link as RouterLink} from '@tanstack/react-router';
-import {FiGrid, FiCode} from 'react-icons/fi';
+import {FiGrid, FiCode, FiHelpCircle, FiInfo, FiClock} from 'react-icons/fi';
 import {ThemeToggleButton} from './ThemeToggleButton';
 
 export default function MainLayout() {
@@ -22,8 +22,9 @@ export default function MainLayout() {
     const activeLinkBg = useColorModeValue('teal.50', 'gray.700');
 
     const navLinks = [
-        {to: "/", label: "Поиск оборудования", icon: FiGrid},
-        {to: "/calculator", label: "Расчет", icon: FiCode},
+        {to: "/", label: "Главная", icon: FiGrid},
+        {to: "/about", label: "О программе", icon: FiInfo},
+        {to: "/help", label: "Помощь", icon: FiHelpCircle},
     ];
 
 

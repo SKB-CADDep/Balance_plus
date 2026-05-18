@@ -35,7 +35,7 @@ def search_condensers(
         query = query.filter(
             or_(
                 Condenser.name_condenser.ilike(search_term),
-                Condenser.project_name.ilike(search_term)
+                Condenser.project_id.ilike(search_term)
             )
         )
         
