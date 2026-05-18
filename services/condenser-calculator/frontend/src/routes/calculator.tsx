@@ -288,6 +288,32 @@ function CalculatorPage() {
                                 ))}
                             </TabPanels>
                         </Tabs>
+
+                        {results.ejector_results && results.ejector_results.length > 0 && (
+                            <Box mt={8}>
+                                <Heading size="sm" mb={4}>Параметры отсосов (Эжекторы)</Heading>
+                                <Box overflowX="auto">
+                                    <Table variant="simple" size="sm">
+                                        <Thead>
+                                            <Tr>
+                                                <Th>Количество эжекторов</Th>
+                                                <Th>Давление (кПа)</Th>
+                                                <Th>Давление (атм)</Th>
+                                            </Tr>
+                                        </Thead>
+                                        <Tbody>
+                                            {results.ejector_results.map((ej, i) => (
+                                                <Tr key={i}>
+                                                    <Td>{ej.number_of_ejectors}</Td>
+                                                    <Td>{ej.P_ejector_kPa.toFixed(4)}</Td>
+                                                    <Td>{ej.P_ejector_atm.toFixed(4)}</Td>
+                                                </Tr>
+                                            ))}
+                                        </Tbody>
+                                    </Table>
+                                </Box>
+                            </Box>
+                        )}
                     </Box>
                 )}
             </VStack>
