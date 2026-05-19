@@ -24,7 +24,7 @@ async def list_tasks(
     try:
         # Передаем project_id в адаптер (если адаптер поддерживает фильтрацию)
         # Если нет, просто оставляем для валидации запроса
-        issues = gitlab_client.get_all_assigned_issues(state=state)
+        issues = gitlab_client.get_all_assigned_issues(state=state, project_id=project_id)
         return issues
     except gitlab.exceptions.GitlabAuthenticationError:
         raise HTTPException(status_code=401, detail="Ошибка авторизации в GitLab")

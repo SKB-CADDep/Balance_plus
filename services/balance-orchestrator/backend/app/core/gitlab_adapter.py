@@ -1,6 +1,7 @@
 # gitlab_adapter.py — ДОПОЛНЯЕМ существующий файл
 import os
 import time
+import logging
 from typing import ClassVar
 
 import gitlab
@@ -10,6 +11,7 @@ from gitlab.exceptions import GitlabGetError
 
 load_dotenv()
 
+logger = logging.getLogger(__name__)
 
 class GitLabAdapter:
     # КЕШ ДЛЯ ПРОЕКТОВ (Чтобы не бомбить API)
@@ -248,7 +250,7 @@ class GitLabAdapter:
                 })
             return result
         except Exception as e:
-            print(f"Ошибка получения задач: {e}")
+            logger.error(f"Ошибка получения задач: {e}")
             return []
 
     def get_issue(self, issue_iid: int, project_id: int) -> dict:
