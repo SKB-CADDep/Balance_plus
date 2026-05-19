@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import {
@@ -41,7 +41,7 @@ function CalculatorPage() {
     });
 
     const [method, setMethod] = useState<'berman' | 'metro-vickers'>('berman');
-    const [materialId, setMaterialId] = useState<number>(0);
+    const [materialId, setMaterialId] = useState<number | null>(null);
 
     const [coefficientB, setCoefficientB] = useState('1');
     const [gSteam, setGSteam] = useState('');
@@ -68,12 +68,14 @@ function CalculatorPage() {
     const [lastPayload, setLastPayload] = useState<CalculationInput | null>(null);
     const [isExporting, setIsExporting] = useState(false);
 
+    const resultsRef = useRef<HTMLDivElement>(null);
+
     // Default material when loaded
-    useMemo(() => {
-        if (materials && materials.length > 0 && !materialId) {
+    useEffect(() => {
+        if (materials && materials.length > 0 && materialId === null) {
             setMaterialId(materials[0].id);
         }
-    }, [materials, materialId]);
+    }, [materials]);
 
     // BR-04: Sync t1_main with t1_builtin if not manually changed
     useEffect(() => {
@@ -87,21 +89,44 @@ function CalculatorPage() {
         onSuccess: (data) => {
             setResults(data);
             toast({ title: "Расчет выполнен успешно!", status: "success" });
+            setTimeout(() => {
+                resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
         },
         onError: (err: any) => {
-            toast({ title: "Ошибка расчета", description: err?.body?.detail || err.message, status: "error" });
+            const detail = err?.body?.detail;
+            let description: string;
+            if (Array.isArray(detail)) {
+                // FastAPI validation errors: array of {loc, msg, type}
+                description = detail.map((e: any) => {
+                    const field = Array.isArray(e.loc) ? e.loc.join(' → ') : String(e.loc ?? '');
+                    return field ? `[${field}]: ${e.msg}` : e.msg;
+                }).join('\n');
+            } else if (typeof detail === 'string') {
+                description = detail;
+            } else {
+                description = err?.message ?? 'Неизвестная ошибка';
+            }
+            toast({ title: "Ошибка расчета", description, status: "error", isClosable: true, duration: 8000 });
         }
     });
 
     const handleCalculate = () => {
-        if (!condenserId || !materialId) return;
+        if (!condenserId) {
+            toast({ title: "Ошибка", description: "Конденсатор не выбран.", status: "error" });
+            return;
+        }
+        if (materialId === null) {
+            toast({ title: "Ошибка", description: "Материал трубок не загружен.", status: "error" });
+            return;
+        }
 
         const gSteamArr = parseRange(gSteam);
         const wMainArr = parseRange(wMain);
         const t1MainArr = parseRange(t1Main);
 
         if (!gSteamArr.length || !wMainArr.length || !t1MainArr.length) {
-            toast({ title: "Ошибка валидации", description: "Заполните обязательные поля (G_steam, W_main, t1_main) корректно.", status: "warning" });
+            toast({ title: "Ошибка валидации", description: "Заполните обязательные поля: G_steam, W_main, t1_main (пример: '10 20 30' или '10-50-5').", status: "warning" });
             return;
         }
 
@@ -210,7 +235,7 @@ function CalculatorPage() {
 
                         <FormControl>
                             <FormLabel>Материал трубок</FormLabel>
-                            <Select value={materialId} onChange={(e) => setMaterialId(Number(e.target.value))}>
+                            <Select value={materialId ?? ''} onChange={(e) => setMaterialId(Number(e.target.value))}>
                                 {materials?.map(m => (
                                     <option key={m.id} value={m.id}>{m.name}</option>
                                 ))}
@@ -325,7 +350,7 @@ function CalculatorPage() {
                 </Box>
 
                 {results && (
-                    <Box p={6} borderWidth={1} borderRadius="lg" bg="white" shadow="sm">
+                    <Box ref={resultsRef} p={6} borderWidth={1} borderColor={cardBorder} borderRadius="lg" bg={cardBg} shadow="sm">
                         <Flex justify="space-between" align="center" mb={4}>
                             <Heading size="md">Результаты ({results.total_tables} матриц)</Heading>
                             <Button
