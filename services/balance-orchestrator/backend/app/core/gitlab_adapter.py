@@ -222,27 +222,34 @@ class GitLabAdapter:
     # ==================== РАБОТА С ЗАДАЧАМИ (ISSUES) ====================
 
     def get_all_assigned_issues(self, state: str = "opened") -> list[dict]:
-        """Получает ВСЕ задачи из ВСЕХ проектов, назначенные на текущего пользователя."""
-        self.gl.auth()
-        issues = self.gl.issues.list(assignee_id=self.gl.user.id, state=state, scope='all', all=True)
-
-        result = []
-        for issue in issues:
-            proj = self.get_project_by_id(issue.project_id)
-            result.append({
-                "iid": issue.iid,
-                "project_id": issue.project_id,
-                "project_name": proj.name,  # без namespace
-                "title": issue.title,
-                "description": issue.description,
-                "state": issue.state,
-                "labels": issue.labels,
-                "assignee": issue.assignee["username"] if issue.assignee else None,
-                "created_at": issue.created_at,
-                "due_date": issue.due_date,
-                "web_url": issue.web_url,
-            })
-        return result
+        """Получает ВСЕ задачи. Пропускает те, к проектам которых нет доступа."""
+        try:
+            self.gl.auth()
+            issues = self.gl.issues.list(assignee_id=self.gl.user.id, state=state, scope='all', all=True)
+            
+            result = []
+            for issue in issues:
+                proj = self.get_project_by_id(issue.project_id)
+                if not proj:
+                    continue # Пропускаем задачу, если проект не найден
+                
+                result.append({
+                    "iid": issue.iid,
+                    "project_id": issue.project_id,
+                    "project_name": proj.name,
+                    "title": issue.title,
+                    "description": issue.description,
+                    "state": issue.state,
+                    "labels": issue.labels,
+                    "assignee": issue.assignee["username"] if issue.assignee else None,
+                    "created_at": issue.created_at,
+                    "due_date": issue.due_date,
+                    "web_url": issue.web_url,
+                })
+            return result
+        except Exception as e:
+            print(f"Ошибка получения задач: {e}")
+            return []
 
     def get_issue(self, issue_iid: int, project_id: int) -> dict:
         project = self.get_project_by_id(project_id)
