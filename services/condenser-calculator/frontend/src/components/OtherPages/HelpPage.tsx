@@ -13,7 +13,7 @@ import {
     Icon,
     Divider,
 } from "@chakra-ui/react";
-import {MdHelpOutline, MdQuestionAnswer, MdContactSupport} from "react-icons/md";
+import { MdHelpOutline, MdQuestionAnswer, MdContactSupport } from "react-icons/md";
 
 const faqData = [
     {
@@ -50,10 +50,10 @@ function HelpPage() {
     const accordionItemBorderColor = useColorModeValue("gray.200", "gray.600");
 
     return (
-        <Container maxW="container.lg" py={{base: 8, md: 12}}>
+        <Container maxW="container.lg" py={{ base: 8, md: 12 }}>
             <VStack spacing={8} align="stretch">
                 <Box textAlign="center">
-                    <Icon as={MdHelpOutline} w={16} h={16} color="teal.500" mb={4}/>
+                    <Icon as={MdHelpOutline} w={16} h={16} color="teal.500" mb={4} />
                     <Heading as="h1" size="2xl" color={headingColor} mb={2}>
                         Помощь и Ответы на Вопросы
                     </Heading>
@@ -74,14 +74,14 @@ function HelpPage() {
                         >
                             <h2>
                                 <AccordionButton
-                                    _expanded={{bg: "teal.500", color: "white"}}
+                                    _expanded={{ bg: "teal.500", color: "white" }}
                                     py={3}
                                     px={4}
                                 >
                                     <Box flex="1" textAlign="left" fontWeight="semibold" fontSize="lg">
-                                        <Icon as={MdQuestionAnswer} mr={2} verticalAlign="middle"/> {faq.question}
+                                        <Icon as={MdQuestionAnswer} mr={2} verticalAlign="middle" /> {faq.question}
                                     </Box>
-                                    <AccordionIcon/>
+                                    <AccordionIcon />
                                 </AccordionButton>
                             </h2>
                             <AccordionPanel
@@ -98,11 +98,11 @@ function HelpPage() {
                     ))}
                 </Accordion>
 
-                <Divider my={6}/>
+                <Divider my={6} />
 
                 <Box textAlign="center">
                     <Heading as="h2" size="lg" color={headingColor} mb={3}>
-                        <Icon as={MdContactSupport} mr={2} verticalAlign="middle"/> Не нашли ответ?
+                        <Icon as={MdContactSupport} mr={2} verticalAlign="middle" /> Не нашли ответ?
                     </Heading>
                     <Text fontSize="md" color={textColor}>
                         Если у вас остались вопросы или возникли проблемы, пожалуйста, обратитесь

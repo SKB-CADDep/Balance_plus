@@ -196,7 +196,7 @@ function CalculatorPage() {
 
                 <Box p={6} borderWidth={1} borderColor={cardBorder} borderRadius="lg" bg={cardBg} shadow="sm">
                     <Heading size="md" mb={6}>Настройки расчета</Heading>
-                    
+
                     <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6} mb={8}>
                         <FormControl>
                             <FormLabel>Методика расчета</FormLabel>
@@ -328,10 +328,10 @@ function CalculatorPage() {
                     <Box p={6} borderWidth={1} borderRadius="lg" bg="white" shadow="sm">
                         <Flex justify="space-between" align="center" mb={4}>
                             <Heading size="md">Результаты ({results.total_tables} матриц)</Heading>
-                            <Button 
-                                colorScheme="green" 
-                                size="sm" 
-                                onClick={handleExportExcel} 
+                            <Button
+                                colorScheme="green"
+                                size="sm"
+                                onClick={handleExportExcel}
                                 isLoading={isExporting}
                             >
                                 В Excel

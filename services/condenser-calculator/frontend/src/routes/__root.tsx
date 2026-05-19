@@ -1,5 +1,5 @@
-import {createRootRoute} from "@tanstack/react-router"
-import React, {Suspense} from "react"
+import { createRootRoute } from "@tanstack/react-router"
+import React, { Suspense } from "react"
 import MainLayout from "../components/Common/MainLayout"
 import NotFound from "../components/Common/NotFound"
 
@@ -11,8 +11,8 @@ const loadDevtools = () =>
         return {
             default: () => (
                 <>
-                    <routerDevtools.TanStackRouterDevtools/>
-                    <reactQueryDevtools.ReactQueryDevtools/>
+                    <routerDevtools.TanStackRouterDevtools />
+                    <reactQueryDevtools.ReactQueryDevtools />
                 </>
             ),
         }
@@ -24,11 +24,11 @@ const TanStackDevtools =
 export const Route = createRootRoute({
     component: () => (
         <>
-            <MainLayout/>
+            <MainLayout />
             <Suspense>
-                <TanStackDevtools/>
+                <TanStackDevtools />
             </Suspense>
         </>
     ),
-    notFoundComponent: () => <NotFound/>,
+    notFoundComponent: () => <NotFound />,
 })

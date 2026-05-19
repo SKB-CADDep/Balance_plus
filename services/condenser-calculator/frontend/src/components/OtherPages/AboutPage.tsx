@@ -12,7 +12,7 @@ import {
     WrapItem,
     Icon,
 } from "@chakra-ui/react";
-import {MdInfoOutline, MdCode, MdBusiness, MdPeople } from "react-icons/md"; // Иконки
+import { MdInfoOutline, MdCode, MdBusiness, MdPeople } from "react-icons/md"; // Иконки
 
 function AboutPage() {
     const headingColor = useColorModeValue("gray.700", "whiteAlpha.900");
