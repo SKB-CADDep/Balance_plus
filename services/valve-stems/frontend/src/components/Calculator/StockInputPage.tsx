@@ -60,7 +60,6 @@ const parseLocaleNumberStrict = (val: unknown): number => {
     return Number.isFinite(n) ? n : NaN;
 };
 
-// Надежный fetch, который сам найдет правильный базовый URL
 const fetchUnits = async () => {
     try {
         const baseUrl = OpenAPI.BASE || '';
@@ -93,7 +92,6 @@ const StockInputPage: React.FC<Props> = ({ selectedStocks, turbine, onSubmit, on
         queryFn: fetchUnits,
     });
 
-    // Инициализация дефолтных значений для групп
     const defaultGroups = useMemo(() => {
         return selectedStocks.map(s => {
             const intermediateCount = Math.max(0, (s.valve.count_parts || 3) - 2);
@@ -110,13 +108,13 @@ const StockInputPage: React.FC<Props> = ({ selectedStocks, turbine, onSubmit, on
                 p_fresh: '130',
                 p_fresh_unit: 'кгс/см²', 
                 th_mode: 'temperature',
-                t_fresh: '540',
+                t_fresh: '555', // Изменено по ТЗ
                 t_fresh_unit: '°C',
-                h_fresh: '',
+                h_fresh: '832.9', // Изменено по ТЗ
                 h_fresh_unit: 'ккал/кг',
                 p_air: '1.033',
                 p_air_unit: 'кгс/см²',
-                t_air: '27',
+                t_air: '20', // Изменено по ТЗ
                 t_air_unit: '°C',
                 p_lst_leak_off: '0.97',
                 p_lst_leak_off_unit: 'кгс/см²',
@@ -133,7 +131,7 @@ const StockInputPage: React.FC<Props> = ({ selectedStocks, turbine, onSubmit, on
         const globalsData: CalculationGlobals = {
             P_fresh: parseLocaleNumberStrict(data.globals.p_fresh),
             P_fresh_unit: data.globals.p_fresh_unit,
-            T_fresh: data.globals.th_mode === 'temperature' ? parseLocaleNumberStrict(data.globals.t_fresh) : null as any, // Type coercion for API
+            T_fresh: data.globals.th_mode === 'temperature' ? parseLocaleNumberStrict(data.globals.t_fresh) : null as any,
             T_fresh_unit: data.globals.t_fresh_unit,
             H_fresh: data.globals.th_mode === 'enthalpy' ? parseLocaleNumberStrict(data.globals.h_fresh) : null as any,
             H_fresh_unit: data.globals.h_fresh_unit,
@@ -181,7 +179,6 @@ const StockInputPage: React.FC<Props> = ({ selectedStocks, turbine, onSubmit, on
         )
     }
 
-    // Безопасный парсинг массивов
     const getSafeArray = (key: string, defaultArray: string[]) => {
         if (!unitsDict) return defaultArray;
         if (unitsDict.parameters && Array.isArray(unitsDict.parameters[key])) return unitsDict.parameters[key];
@@ -210,10 +207,10 @@ const StockInputPage: React.FC<Props> = ({ selectedStocks, turbine, onSubmit, on
                 </Box>
             )}
 
-            {/* ГЛОБАЛЬНЫЕ ПАРАМЕТРЫ */}
             <Box borderWidth="1px" borderRadius="lg" p={5} bg={boxBg} shadow="sm">
                 <HStack mb={4} align="center">
-                    <Heading as="h3" size="md">Глобальные параметры (Свежий пар и Воздух)</Heading>
+                    {/* Изменено по ТЗ */}
+                    <Heading as="h3" size="md">Глобальные параметры (свежий пар и воздух)</Heading>
                     <Icon as={FiInfo} color="teal.500" />
                 </HStack>
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
@@ -230,8 +227,9 @@ const StockInputPage: React.FC<Props> = ({ selectedStocks, turbine, onSubmit, on
                     <Box borderWidth="1px" p={3} borderRadius="md" borderColor="teal.200">
                         <RadioGroup onChange={(val: 'temperature' | 'enthalpy') => setValue('globals.th_mode', val)} value={thMode} mb={3}>
                             <Stack direction="row" spacing={5}>
-                                <Radio value="temperature" colorScheme="teal">Задать Температуру</Radio>
-                                <Radio value="enthalpy" colorScheme="teal">Задать Энтальпию</Radio>
+                                {/* Изменено по ТЗ */}
+                                <Radio value="temperature" colorScheme="teal">Температура</Radio>
+                                <Radio value="enthalpy" colorScheme="teal">Энтальпия</Radio>
                             </Stack>
                         </RadioGroup>
 
@@ -257,7 +255,8 @@ const StockInputPage: React.FC<Props> = ({ selectedStocks, turbine, onSubmit, on
                     </Box>
 
                     <FormControl isRequired isInvalid={!!errors.globals?.p_air}>
-                        <FormLabel>Давление воздуха (Барометрическое)</FormLabel>
+                        {/* Изменено по ТЗ */}
+                        <FormLabel>Давление воздуха (барометрическое)</FormLabel>
                         <Controller name="globals.p_air" control={control} rules={{ required: "Обязательно", validate: (v: any) => isValidDecimal(v) || "Неверный формат" }}
                             render={({ field }) => (
                                 <InputWithUnit value={field.value} unit={watch("globals.p_air_unit")} availableUnits={pressureUnits} onValueChange={field.onChange} onUnitChange={(u) => setValue("globals.p_air_unit", u)} />
@@ -267,7 +266,8 @@ const StockInputPage: React.FC<Props> = ({ selectedStocks, turbine, onSubmit, on
                     </FormControl>
 
                     <FormControl isRequired isInvalid={!!errors.globals?.t_air}>
-                        <FormLabel>Температура воздуха (Цех)</FormLabel>
+                        {/* Изменено по ТЗ */}
+                        <FormLabel>Температура воздуха (машзал)</FormLabel>
                         <Controller name="globals.t_air" control={control} rules={{ required: "Обязательно", validate: (v: any) => isValidDecimal(v) || "Неверный формат" }}
                             render={({ field }) => (
                                 <InputWithUnit value={field.value} unit={watch("globals.t_air_unit")} availableUnits={tempUnits} onValueChange={field.onChange} onUnitChange={(u) => setValue("globals.t_air_unit", u)} />
@@ -277,7 +277,8 @@ const StockInputPage: React.FC<Props> = ({ selectedStocks, turbine, onSubmit, on
                     </FormControl>
                     
                     <FormControl isRequired isInvalid={!!errors.globals?.p_lst_leak_off} gridColumn={{ md: "span 2" }}>
-                        <FormLabel color="teal.600" fontWeight="bold">Давление последнего отсоса (Вакуум)</FormLabel>
+                        {/* Изменено по ТЗ */}
+                        <FormLabel color="teal.600" fontWeight="bold">Давление последнего отсоса (вакуум)</FormLabel>
                         <Controller name="globals.p_lst_leak_off" control={control} rules={{ required: "Обязательно", validate: (v: any) => isValidDecimal(v) || "Неверный формат" }}
                             render={({ field }) => (
                                 <InputWithUnit value={field.value} unit={watch("globals.p_lst_leak_off_unit")} availableUnits={pressureUnits} onValueChange={field.onChange} onUnitChange={(u) => setValue("globals.p_lst_leak_off_unit", u)} />
@@ -288,7 +289,6 @@ const StockInputPage: React.FC<Props> = ({ selectedStocks, turbine, onSubmit, on
                 </SimpleGrid>
             </Box>
 
-            {/* ПРОМЕЖУТОЧНЫЕ ОТСОСЫ */}
             {groupFields.map((field, idx) => {
                 const stockItem = selectedStocks[idx];
                 const intermediateCount = Math.max(0, (stockItem.valve.count_parts || 3) - 2);
