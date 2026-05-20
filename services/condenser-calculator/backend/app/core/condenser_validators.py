@@ -1,7 +1,9 @@
+import logging
 from typing import Optional, List, Dict, Any
 from app.models.condenser import Condenser
 from app.core.exceptions import ValidationError
 
+logger = logging.getLogger(__name__)
 
 def validate_condenser_for_method(condenser: Condenser, method: str) -> None:
     """
@@ -62,6 +64,16 @@ def validate_water_flow_limits(
         warnings.append(
             "Оба расхода воды равны нулю — проверьте входные данные.")
         return warnings
+    
+    # ФИКС: Обработка списка [4000, 20000], который реально лежит в вашей базе
+    if isinstance(limits, list) and len(limits) == 2:
+        limits = {
+            "main_bundle": {"min": limits[0], "max": limits[1]},
+            "builtin_bundle": {"min": 0, "max": limits[1]}
+        }
+
+    if not isinstance(limits, dict):
+        return []
 
     main_limits = limits.get("main_bundle", {})
     builtin_limits = limits.get("builtin_bundle", {})
