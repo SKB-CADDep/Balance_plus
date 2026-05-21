@@ -1,0 +1,178 @@
+{
+  "material_id": "b283d138-d24f-4dfd-9751-c173edffe99f",
+  "metadata": {
+    "name_material_standard": "ЛО70-1",
+    "name_material_alternative": [],
+    "application_area": [
+      "Трубки конденсатора"
+    ],
+    "comment": "состояние - твердое\nЛитейные материалы",
+    "classification": {
+      "classification_category": "",
+      "classification_class": "",
+      "classification_subclass": ""
+    }
+  },
+  "physical_properties": {
+    "modulus_elasticity": {
+      "property_source": "ГОСТ 1019-47",
+      "property_subsource": "2",
+      "comment": "",
+      "temperature_value_pairs": [
+        [
+          20.0,
+          10500.0
+        ]
+      ],
+      "property_name": "Модуль упругости",
+      "property_unit": "МПа",
+      "property_last_updated": "2025-08-20T07:56:19.148591"
+    },
+    "coefficient_linear_expansion": {
+      "property_source": "ГОСТ 1019-47",
+      "property_subsource": "2",
+      "comment": "",
+      "temperature_value_pairs": [
+        [
+          20.0,
+          20.2
+        ]
+      ],
+      "property_name": "Коэффициент линейного расширения",
+      "property_unit": "1/°С",
+      "property_last_updated": "2025-08-20T07:56:19.148591"
+    },
+    "coefficient_thermal_conductivity": {
+      "property_source": "ГОСТ 1019-47",
+      "property_subsource": "2",
+      "comment": "",
+      "temperature_value_pairs": [
+        [
+          20.0,
+          2.6
+        ]
+      ],
+      "property_name": "Коэффициент теплопроводности",
+      "property_unit": "Вт/(м·°С)",
+      "property_last_updated": "2025-08-20T07:56:19.148591"
+    },
+    "density": {
+      "property_source": "ГОСТ 1019-47",
+      "property_subsource": "2",
+      "comment": "",
+      "temperature_value_pairs": [
+        [
+          20.0,
+          854.0
+        ]
+      ],
+      "property_name": "Плотность",
+      "property_unit": "кг/м³",
+      "property_last_updated": "2025-08-20T07:56:19.148591"
+    }
+  },
+  "mechanical_properties": {
+    "strength_category": [
+      {
+        "value_strength_category": "-",
+        "hardness": [],
+        "yield_strength": {
+          "property_source": "ГОСТ 1019-47",
+          "property_subsource": "19",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              20.0,
+              180.5
+            ]
+          ],
+          "property_name": "Предел текучести",
+          "property_unit": "МПа",
+          "property_last_updated": "2025-08-20T07:56:19.148591"
+        },
+        "tensile_strength": {
+          "property_source": "ГОСТ 1019-47",
+          "property_subsource": "2",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              20.0,
+              686.7
+            ]
+          ],
+          "property_name": "Предел прочности",
+          "property_unit": "МПа",
+          "property_last_updated": "2025-08-20T07:56:19.148591"
+        },
+        "impact_strength": {
+          "property_source": "",
+          "property_subsource": "19",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              20.0,
+              61.0
+            ]
+          ],
+          "property_name": "Ударная вязкость",
+          "property_unit": "Дж/см²",
+          "property_last_updated": "2025-08-20T07:56:19.148591"
+        }
+      }
+    ]
+  },
+  "chemical_properties": {
+    "composition": [
+      {
+        "composition_source": "ГОСТ 15527-2004",
+        "other_elements": [
+          {
+            "element": "Cu",
+            "unit_value": "%",
+            "min_value": 69.0,
+            "max_value": 71.0
+          },
+          {
+            "element": "Sn",
+            "unit_value": "%",
+            "min_value": 1.0,
+            "max_value": 1.5
+          },
+          {
+            "element": "Pb",
+            "unit_value": "%",
+            "max_value": 0.07
+          },
+          {
+            "element": "Fe",
+            "unit_value": "%",
+            "max_value": 0.07
+          },
+          {
+            "element": "Sb",
+            "unit_value": "%",
+            "max_value": 0.005
+          },
+          {
+            "element": "Bi",
+            "unit_value": "%",
+            "max_value": 0.002
+          },
+          {
+            "element": "P",
+            "unit_value": "%",
+            "max_value": 0.01
+          },
+          {
+            "element": "Zn",
+            "unit_value": "%",
+            "min_value": 30.0
+          }
+        ],
+        "composition_subsource": "1",
+        "comment": "",
+        "base_element": "Cu"
+      }
+    ]
+  }
+}
