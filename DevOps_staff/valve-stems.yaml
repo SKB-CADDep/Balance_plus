@@ -1,0 +1,19 @@
+valve-stems:
+  config:
+    # Настройки приложения
+    PROJECT_NAME: "WSAPropertiesCalculator"
+    ENVIRONMENT: "production"
+    API_V1_STR: "/api/v1"
+    
+    # CORS: Адреса фронтендов, которым разрешено делать запросы (нужно указать реальные URL)
+    BACKEND_CORS_ORIGINS: '["https://valve-stems.your-domain.com", "https://balance.your-domain.com"]'
+    
+    # Настройки подключения к базе данных (хост и порт внутри кластера)
+    POSTGRES_SERVER: "clapans_calculator_db" # Имя сервиса БД в кластере
+    POSTGRES_PORT: "5432"
+    POSTGRES_DB: "postgres"
+
+  secrets:
+    # Чувствительные данные для доступа к БД
+    POSTGRES_USER: "postgres"
+    POSTGRES_PASSWORD: "fake_production_password_here"

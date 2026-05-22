@@ -1,0 +1,22 @@
+condenser-calculator:
+  config:
+    # Настройки приложения
+    PROJECT_NAME: "Condenser Calculator API"
+    API_V1_STR: "/api/v1"
+    
+    # Настройки БД (внутрикластерные адреса)
+    POSTGRES_SERVER: "condenser-db" # Имя сервиса БД в Kubernetes/Swarm
+    POSTGRES_PORT: "5432"
+    POSTGRES_DB: "balance_db"
+    
+    # Настройки брокера сообщений (Celery + Redis)
+    # Девопсу нужно будет подставить актуальное имя сервиса Redis в кластере
+    CELERY_BROKER_URL: "redis://condenser-redis:6379/0"
+    
+    # Резервная переменная на случай, если какой-то модуль читает её напрямую (как в docker-compose)
+    DATABASE_URL: "postgresql+psycopg://condenser:fake_password_here@condenser-db:5432/balance_db"
+
+  secrets:
+    # Доступы к базе данных
+    POSTGRES_USER: "condenser"
+    POSTGRES_PASSWORD: "fake_production_password_here"
