@@ -22,15 +22,33 @@ def calculate_async_task(self, payload: dict):
         # 1. Парсим входящий JSON обратно в Pydantic модель
         calc_input = CalculationInput(**payload)
         
-        # 2. Достаем нужные справочники из БД
+        # 2. Достаем конденсатор
         condenser = db.query(Condenser).filter(Condenser.id == calc_input.condenser_id).first()
-        material = db.query(Material).filter(Material.id == calc_input.material_id).first()
         
-        if not condenser or not material:
+        if not condenser:
             return {
                 "status": "error", 
                 "error_type": "EntityNotFound", 
-                "message": f"Конденсатор (ID {calc_input.condenser_id}) или материал (ID {calc_input.material_id}) не найдены в БД"
+                "message": f"Конденсатор (ID {calc_input.condenser_id}) не найден в БД"
+            }
+
+        # --- НОВАЯ ЛОГИКА MANY-TO-MANY ДЛЯ МАТЕРИАЛОВ ---
+        material = None
+        # Проверяем, передал ли клиент конкретный ID материала (через getattr на случай, если поле станет опциональным)
+        requested_material_id = getattr(calc_input, 'material_id', None)
+        
+        if requested_material_id:
+            # Ищем конкретный материал, который запросил пользователь
+            material = db.query(Material).filter(Material.id == requested_material_id).first()
+        elif condenser.materials:
+            # Если не запросил, берем первый доступный (дефолтный для этого конденсатора)
+            material = condenser.materials[0]
+
+        if not material:
+            return {
+                "status": "error", 
+                "error_type": "EntityNotFound", 
+                "message": f"Не удалось определить материал для конденсатора (ID {condenser.id})"
             }
             
         # 3. Запускаем тяжелый физический расчет
@@ -39,7 +57,7 @@ def calculate_async_task(self, payload: dict):
         
         logger.info(f"Расчет успешно завершен. Task ID: {task_id}")
         
-        # 4. Возвращаем результат в формате, утвержденном в контракте [ARCH-2]
+        # 4. Возвращаем результат в формате, утвержденном в контракте
         return {
             "status": "success",
             "result": result.model_dump()

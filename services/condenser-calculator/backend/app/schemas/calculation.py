@@ -12,7 +12,13 @@ class CalculationInput(BaseModel):
     """Входные данные для расчета матрицы режимов конденсатора."""
     
     condenser_id: int = Field(..., description="ID конденсатора из БД оборудования (DB-EQUIP-CONDENSER)")
-    material_id: int = Field(..., description="ID материала трубок из БД материалов (BR-12)")
+    
+    # --- НОВАЯ ЛОГИКА: material_id теперь опциональный ---
+    material_id: int | None = Field(
+        default=None, 
+        description="ID материала трубок. Если не передан, возьмется первый доступный для данного конденсатора"
+    )
+    
     method: Literal["berman", "metro-vickers"] = Field(..., description="Методика расчета (BR-01)")
     
     coefficient_b: list[FractionValue] = Field(
@@ -60,7 +66,6 @@ class CalculationInput(BaseModel):
         json_schema_extra={
             "example": {
                 "condenser_id": 1,
-                "material_id": 2,
                 "method": "berman",
                 "coefficient_b": [0.8, 1.0],
                 "G_steam": [10.0, 20.0, 30.0],
