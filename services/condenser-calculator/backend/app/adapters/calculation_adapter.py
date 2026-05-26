@@ -89,13 +89,11 @@ class CondenserCalculationAdapter:
             )
 
         except Exception as e:
-            logger.exception(
-                "Calculation failed",
-                extra={
-                    "method": input_data.method,
-                    "condenser_id": condenser.id,
-                    "material_id": material.id,
-                }
+            # Убрали extra, добавили exc_info=True для 100% гарантии вывода Traceback
+            logger.error(
+                f"Calculation failed for Method: {input_data.method}, "
+                f"Condenser: {condenser.id}, Material: {material.id}. Error: {str(e)}", 
+                exc_info=True
             )
             raise CalculationEngineError(
                 message="Ошибка при выполнении расчёта конденсатора",

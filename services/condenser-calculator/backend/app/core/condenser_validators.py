@@ -36,12 +36,21 @@ def _check_flow_limit(value: float, limits: dict, bundle_type: str, rule: str) -
     if not limits:
         return warnings
 
-    if "min" in limits and value < limits["min"]:
+    # Безопасно достаем значения (если ключа нет или там null, получим None)
+    min_limit = limits.get("min")
+    max_limit = limits.get("max")
+
+    # Явно проверяем, что лимит существует и не равен None, прежде чем сравнивать математически
+    if min_limit is not None and value < min_limit:
         warnings.append(
-            f"Расход {bundle_type} ({value}) ниже минимума ({limits['min']}) ({rule}).")
-    if "max" in limits and value > limits["max"]:
+            f"Расход {bundle_type} ({value}) ниже минимума ({min_limit}) ({rule})."
+        )
+        
+    if max_limit is not None and value > max_limit:
         warnings.append(
-            f"Расход {bundle_type} ({value}) выше максимума ({limits['max']}) ({rule}).")
+            f"Расход {bundle_type} ({value}) выше максимума ({max_limit}) ({rule})."
+        )
+        
     return warnings
 
 
