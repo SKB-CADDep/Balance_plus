@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.routing import APIRoute
 
-from app.api.main import api_router
+from app.api.router import api_router
 from app.core.config import settings
 from app.core.logging_config import setup_logging
 from app.core.error_handlers import setup_exception_handlers
