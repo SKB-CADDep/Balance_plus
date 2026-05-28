@@ -46,7 +46,7 @@ services:
       environment: staging
       version: "1.0.0"
       log: "enabled"
-
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "5253", "--workers", "4"]
   frontend:
     build: ./frontend
     container_name: clapans_calculator_frontend
@@ -107,5 +107,55 @@ services:
       version: "1.0.0"
       log: "enabled"
 
+  redis:
+      image: redis:7-alpine
+      container_name: clapans_calculator_redis
+      restart: always
+      ports:
+        - "6380:6379" # Используем порт 6380 снаружи, чтобы не было конфликта с редисом конденсатора
+      healthcheck:
+        test: ["CMD", "redis-cli", "ping"]
+        interval: 5s
+        timeout: 3s
+        retries: 5
+      logging: *default-logging
+      labels:
+        app_name: automation_of_construction
+        component_type: database
+        environment: staging
+        version: "1.0.0"
+        log: "enabled"
+
+  worker:
+    build:
+      context: ./backend
+    container_name: clapans_calculator_worker
+    restart: always
+    env_file:
+      - .env
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - POSTGRES_SERVER=${POSTGRES_SERVER}
+      - POSTGRES_PORT=${POSTGRES_PORT:-5432}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend/app:/app/app
+    logging: *default-logging
+    labels:
+      app_name: automation_of_construction
+      component_type: application
+      environment: staging
+      version: "1.0.0"
+      log: "enabled"
+    command: ["celery", "-A", "app.core.celery_app.celery_app", "worker", "--loglevel=info"]
+  
 volumes:
   pgdata:

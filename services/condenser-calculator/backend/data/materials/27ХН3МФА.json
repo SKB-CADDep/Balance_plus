@@ -1,0 +1,188 @@
+{
+  "material_id": "bad53b04-50d6-4da5-858b-ac37d5c2cb18",
+  "metadata": {
+    "name_material_standard": "27ХН3МФА",
+    "name_material_alternative": [],
+    "application_area": [
+      "Материалы дисков и роторов"
+    ],
+    "comment": "",
+    "classification": {
+      "classification_category": "",
+      "classification_class": "",
+      "classification_subclass": ""
+    }
+  },
+  "physical_properties": {},
+  "mechanical_properties": {
+    "strength_category": [
+      {
+        "value_strength_category": "КП65",
+        "hardness": [],
+        "yield_strength": {
+          "property_source": "",
+          "property_subsource": "",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              20.0,
+              638.0
+            ]
+          ],
+          "property_name": "Предел текучести",
+          "property_unit": "МПа",
+          "property_last_updated": "2025-09-08T15:56:43.325437"
+        },
+        "tensile_strength": {
+          "property_source": "",
+          "property_subsource": "",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              20.0,
+              765.0
+            ]
+          ],
+          "property_name": "Предел прочности",
+          "property_unit": "МПа",
+          "property_last_updated": "2025-09-08T15:56:43.325437"
+        },
+        "impact_strength": {
+          "property_source": "",
+          "property_subsource": "",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              20.0,
+              44.0
+            ]
+          ],
+          "property_name": "Ударная вязкость",
+          "property_unit": "Дж/см²",
+          "property_last_updated": "2025-09-08T15:56:43.325437"
+        }
+      },
+      {
+        "value_strength_category": "КП68",
+        "hardness": [],
+        "yield_strength": {
+          "property_source": "",
+          "property_subsource": "",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              20.0,
+              667.0
+            ]
+          ],
+          "property_name": "Предел текучести",
+          "property_unit": "МПа",
+          "property_last_updated": "2025-09-08T15:56:43.325437"
+        },
+        "tensile_strength": {
+          "property_source": "",
+          "property_subsource": "",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              20.0,
+              834.0
+            ]
+          ],
+          "property_name": "Предел прочности",
+          "property_unit": "МПа",
+          "property_last_updated": "2025-09-08T15:56:43.325437"
+        },
+        "impact_strength": {
+          "property_source": "",
+          "property_subsource": "",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              20.0,
+              59.0
+            ]
+          ],
+          "property_name": "Ударная вязкость",
+          "property_unit": "Дж/см²",
+          "property_last_updated": "2025-09-08T15:56:43.325437"
+        }
+      }
+    ]
+  },
+  "chemical_properties": {
+    "composition": [
+      {
+        "composition_source": "ТУ 108.1029-81",
+        "composition_subsource": "",
+        "comment": "",
+        "base_element": "Fe",
+        "other_elements": [
+          {
+            "element": "C",
+            "unit_value": "%",
+            "min_value": 0.24,
+            "max_value": 0.3,
+            "min_value_tolerance": "0.23",
+            "max_value_tolerance": "0.31"
+          },
+          {
+            "element": "Si",
+            "unit_value": "%",
+            "min_value": 0.0,
+            "max_value": 0.37,
+            "max_value_tolerance": "0.4"
+          },
+          {
+            "element": "Mn",
+            "unit_value": "%",
+            "min_value": 0.3,
+            "max_value": 0.6
+          },
+          {
+            "element": "S",
+            "unit_value": "%",
+            "min_value": 0.0,
+            "max_value": 0.02
+          },
+          {
+            "element": "P",
+            "unit_value": "%",
+            "min_value": 0.0,
+            "max_value": 0.02
+          },
+          {
+            "element": "Cr",
+            "unit_value": "%",
+            "min_value": 1.4,
+            "max_value": 1.8
+          },
+          {
+            "element": "Ni",
+            "unit_value": "%",
+            "min_value": 3.2,
+            "max_value": 3.75
+          },
+          {
+            "element": "Mo",
+            "unit_value": "%",
+            "min_value": 0.4,
+            "max_value": 0.6
+          },
+          {
+            "element": "V",
+            "unit_value": "%",
+            "min_value": 0.05,
+            "max_value": 0.15
+          },
+          {
+            "element": "Cu",
+            "unit_value": "%",
+            "min_value": 0.0,
+            "max_value": 0.25
+          }
+        ]
+      }
+    ]
+  }
+}

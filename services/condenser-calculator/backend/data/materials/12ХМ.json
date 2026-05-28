@@ -1,0 +1,176 @@
+{
+  "material_id": "89fede64-88f1-4ccf-94a5-19ae24e62056",
+  "metadata": {
+    "name_material_standard": "12ХМ",
+    "name_material_alternative": [],
+    "application_area": [
+      "Конструкционные материалы"
+    ],
+    "comment": "",
+    "classification": {
+      "classification_category": "",
+      "classification_class": "",
+      "classification_subclass": ""
+    }
+  },
+  "physical_properties": {},
+  "mechanical_properties": {
+    "strength_category": [
+      {
+        "value_strength_category": "-",
+        "hardness": [],
+        "yield_strength": {
+          "property_name": "Предел текучести",
+          "property_unit": "МПа",
+          "property_source": "ГОСТ 5520-2017",
+          "property_subsource": "[7]",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              20.0,
+              235.0
+            ],
+            [
+              250.0,
+              225.0
+            ],
+            [
+              300.0,
+              216.0
+            ],
+            [
+              350.0,
+              206.0
+            ],
+            [
+              400.0,
+              196.0
+            ],
+            [
+              450.0,
+              186.0
+            ]
+          ],
+          "property_last_updated": "2025-09-11T09:23:04.729059"
+        },
+        "tensile_strength_limit_100_thousands_hours": {
+          "property_name": "Предел длит. прочности за 100 тыс.ч",
+          "property_unit": "МПа",
+          "property_source": "ГОСТ 5520-2017",
+          "property_subsource": "[7]",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              500.0,
+              143.0
+            ],
+            [
+              510.0,
+              117.0
+            ],
+            [
+              520.0,
+              99.0
+            ],
+            [
+              530.0,
+              81.0
+            ],
+            [
+              540.0,
+              65.0
+            ]
+          ],
+          "property_last_updated": "2025-09-11T09:23:04.729059"
+        },
+        "tensile_strength_limit_200_thousands_hours": {
+          "property_name": "Предел длит. прочности за 200 тыс.ч",
+          "property_unit": "МПа",
+          "property_source": "ГОСТ 5520-2017",
+          "property_subsource": "[7]",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              480.0,
+              153.0
+            ],
+            [
+              500.0,
+              116.0
+            ],
+            [
+              510.0,
+              90.0
+            ],
+            [
+              520.0,
+              74.0
+            ],
+            [
+              530.0,
+              60.0
+            ]
+          ],
+          "property_last_updated": "2025-09-11T09:23:04.729059"
+        },
+        "сreep_strain_rate_1_100_thousands_hours": {
+          "property_source": "ГОСТ 5520-2017",
+          "property_subsource": "[1]",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              450.0,
+              192.0
+            ],
+            [
+              460.0,
+              178.0
+            ],
+            [
+              470.0,
+              163.0
+            ],
+            [
+              480.0,
+              146.0
+            ],
+            [
+              490.0,
+              129.0
+            ],
+            [
+              500.0,
+              113.0
+            ],
+            [
+              510.0,
+              94.0
+            ],
+            [
+              520.0,
+              78.0
+            ],
+            [
+              530.0,
+              64.0
+            ],
+            [
+              540.0,
+              50.0
+            ],
+            [
+              550.0,
+              38.0
+            ]
+          ],
+          "property_name": "Ползучесть при скорости деформации 1%/100 тыс.ч",
+          "property_unit": "МПа",
+          "property_last_updated": "2025-09-11T09:23:04.729059"
+        }
+      }
+    ]
+  },
+  "chemical_properties": {
+    "composition": []
+  }
+}
