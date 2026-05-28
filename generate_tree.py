@@ -12,7 +12,7 @@ from datetime import datetime
 # НАСТРОЙКИ
 # ============================================================
 
-PROJECT_DIR = Path(r"C:\Cursor_projects\Balance_plus-1")
+PROJECT_DIR = Path(__file__).resolve().parent
 OUTPUT_FILE = PROJECT_DIR / "PROJECT_TREE.md"
 
 # Папки, которые нужно ПОЛНОСТЬЮ игнорировать

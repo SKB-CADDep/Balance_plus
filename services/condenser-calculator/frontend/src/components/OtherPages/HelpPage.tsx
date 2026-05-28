@@ -13,16 +13,16 @@ import {
     Icon,
     Divider,
 } from "@chakra-ui/react";
-import {MdHelpOutline, MdQuestionAnswer, MdContactSupport} from "react-icons/md";
+import { MdHelpOutline, MdQuestionAnswer, MdContactSupport } from "react-icons/md";
 
 const faqData = [
     {
         question: "Как начать новый расчет?",
-        answer: "Для начала нового расчета перейдите на страницу 'Калькулятор' из главного меню. Если вы уже на ней, выберите турбину, затем клапан (шток). Если для данного штока есть предыдущие расчеты, вам будет предложено использовать их или начать новый. Для нового расчета нажмите 'Да' (пересчитать) или выберите шток, для которого нет предыдущих расчетов. Затем заполните все необходимые входные параметры на странице ввода данных и нажмите кнопку 'Отправить на расчет'.",
+        answer: "Для начала нового расчета перейдите на главную страницу 'Поиск оборудования'. Выберите конденсатор, для которого нужно произвести расчет. Затем заполните все необходимые входные параметры на странице калькулятора и нажмите кнопку 'Рассчитать'.",
     },
     {
         question: "Где я могу найти результаты предыдущих расчетов?",
-        answer: "После выбора турбины и штока, если для данного штока существуют сохраненные расчеты, вам будет показана страница 'Обнаружен предыдущий расчет'. На ней будут отображены входные и выходные данные последнего расчета. Вы можете либо использовать эти данные (нажав 'Нет' на вопрос о перерасчете), либо начать новый расчет.",
+        answer: "Данная версия калькулятора производит расчет 'на лету' и не сохраняет историю расчетов в базе данных. Пожалуйста, используйте функцию выгрузки в Excel для сохранения результатов.",
     },
     {
         question: "Как сохранить результаты расчета в Excel?",
@@ -50,15 +50,15 @@ function HelpPage() {
     const accordionItemBorderColor = useColorModeValue("gray.200", "gray.600");
 
     return (
-        <Container maxW="container.lg" py={{base: 8, md: 12}}>
+        <Container maxW="container.lg" py={{ base: 8, md: 12 }}>
             <VStack spacing={8} align="stretch">
                 <Box textAlign="center">
-                    <Icon as={MdHelpOutline} w={16} h={16} color="teal.500" mb={4}/>
+                    <Icon as={MdHelpOutline} w={16} h={16} color="teal.500" mb={4} />
                     <Heading as="h1" size="2xl" color={headingColor} mb={2}>
                         Помощь и Ответы на Вопросы
                     </Heading>
                     <Text fontSize="lg" color={useColorModeValue("gray.600", "gray.400")}>
-                        Здесь вы найдете ответы на часто задаваемые вопросы по работе с WSAPropertiesCalculator.
+                        Здесь вы найдете ответы на часто задаваемые вопросы по работе с CondenserCalculator.
                     </Text>
                 </Box>
 
@@ -74,14 +74,14 @@ function HelpPage() {
                         >
                             <h2>
                                 <AccordionButton
-                                    _expanded={{bg: "teal.500", color: "white"}}
+                                    _expanded={{ bg: "teal.500", color: "white" }}
                                     py={3}
                                     px={4}
                                 >
                                     <Box flex="1" textAlign="left" fontWeight="semibold" fontSize="lg">
-                                        <Icon as={MdQuestionAnswer} mr={2} verticalAlign="middle"/> {faq.question}
+                                        <Icon as={MdQuestionAnswer} mr={2} verticalAlign="middle" /> {faq.question}
                                     </Box>
-                                    <AccordionIcon/>
+                                    <AccordionIcon />
                                 </AccordionButton>
                             </h2>
                             <AccordionPanel
@@ -98,11 +98,11 @@ function HelpPage() {
                     ))}
                 </Accordion>
 
-                <Divider my={6}/>
+                <Divider my={6} />
 
                 <Box textAlign="center">
                     <Heading as="h2" size="lg" color={headingColor} mb={3}>
-                        <Icon as={MdContactSupport} mr={2} verticalAlign="middle"/> Не нашли ответ?
+                        <Icon as={MdContactSupport} mr={2} verticalAlign="middle" /> Не нашли ответ?
                     </Heading>
                     <Text fontSize="md" color={textColor}>
                         Если у вас остались вопросы или возникли проблемы, пожалуйста, обратитесь

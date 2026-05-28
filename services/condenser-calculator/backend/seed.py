@@ -7,10 +7,14 @@ import os
 from pathlib import Path
 
 # --- БРОНЕБОЙНЫЙ ФИКС (Хост + Порт) ---
-os.environ["POSTGRES_SERVER"] = "localhost"
-os.environ["DB_HOST"] = "localhost"
-os.environ["POSTGRES_PORT"] = "5255"  # <-- Указываем правильный порт!
-os.environ["DB_PORT"] = "5255"        # На всякий случай
+if "POSTGRES_SERVER" not in os.environ:
+    os.environ["POSTGRES_SERVER"] = "localhost"
+if "DB_HOST" not in os.environ:
+    os.environ["DB_HOST"] = "localhost"
+if "POSTGRES_PORT" not in os.environ:
+    os.environ["POSTGRES_PORT"] = "5255"
+if "DB_PORT" not in os.environ:
+    os.environ["DB_PORT"] = "5255"
 
 # Принудительно добавляем текущую папку (backend) в пути Python
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))

@@ -1,11 +1,10 @@
-# 🌳 Дерево проекта: Balance_plus-1
+# 🌳 Дерево проекта: Balance_plus
 
-> Автоматически сгенерировано: `2026-05-13 11:47:18`  
-> Директорий: **134** | Файлов: **512**
+> Автоматически сгенерировано: `2026-05-28 11:19:45`  
+> Директорий: **132** | Файлов: **512**
 
 ```
-Balance_plus-1/
-├── 📁 .cursor/
+Balance_plus/
 ├── 📁 .github/
 │   ├── 📁 prompts/
 │   │   ├── 📝 system_prompt.md
@@ -279,7 +278,6 @@ Balance_plus-1/
 │   │   │   │   ├── 🐍 conftest.py
 │   │   │   │   └── 📖 README.md
 │   │   │   ├── 📄 .dockerignore
-│   │   │   ├── 📄 .env
 │   │   │   ├── ⚙️ alembic.ini
 │   │   │   ├── ⚙️ docker-compose.dev.yml
 │   │   │   ├── 🐳 Dockerfile
@@ -449,6 +447,7 @@ Balance_plus-1/
 │       │   │   │   └── 📄 script.py.mako
 │       │   │   ├── 📁 api/
 │       │   │   │   ├── 📁 routes/
+│       │   │   │   │   ├── 📁 generated_diagrams/
 │       │   │   │   │   ├── 🐍 calculations.py
 │       │   │   │   │   ├── 🐍 drawio.py
 │       │   │   │   │   ├── 🐍 health.py
@@ -472,7 +471,6 @@ Balance_plus-1/
 │       │   │   ├── 📁 domain/
 │       │   │   │   ├── 🐍 models.py
 │       │   │   │   └── 🐍 valve_physics_engine.py
-│       │   │   ├── 📁 generated_diagrams/
 │       │   │   ├── 📁 middleware/
 │       │   │   │   ├── 🐍 __init__.py
 │       │   │   │   └── 🐍 logging_middleware.py
@@ -493,7 +491,6 @@ Balance_plus-1/
 │       │   │   │   ├── 🐍 initial_data.py
 │       │   │   │   ├── 🐍 load_from_excel.py
 │       │   │   │   └── 🐍 tests_pre_start.py
-│       │   │   ├── 📁 services/
 │       │   │   ├── 📁 templates/
 │       │   │   │   └── 📄 template_2_parts.xml
 │       │   │   ├── 📁 tests/

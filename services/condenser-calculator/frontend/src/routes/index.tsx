@@ -36,6 +36,7 @@ function SearchPage() {
 
     const cardBg = useColorModeValue("white", "gray.800");
     const borderColor = useColorModeValue("gray.200", "gray.700");
+    const hoverBg = useColorModeValue("gray.50", "gray.700");
 
     return (
         <Container maxW="container.xl" py={8}>
@@ -76,10 +77,10 @@ function SearchPage() {
                                 </Thead>
                                 <Tbody>
                                     {condensers.map((condenser) => (
-                                        <Tr key={condenser.id} _hover={{ bg: useColorModeValue("gray.50", "gray.700") }}>
+                                        <Tr key={condenser.id} _hover={{ bg: hoverBg }}>
                                             <Td>{condenser.id}</Td>
-                                            <Td fontWeight="medium">{condenser.marking}</Td>
-                                            <Td>{condenser.project}</Td>
+                                            <Td fontWeight="medium">{condenser.name_condenser}</Td>
+                                            <Td>{condenser.project_name}</Td>
                                             <Td textAlign="right">
                                                 <Button
                                                     size="sm"

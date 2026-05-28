@@ -12,7 +12,7 @@ import {
     WrapItem,
     Icon,
 } from "@chakra-ui/react";
-import {MdInfoOutline, MdCode, MdBusiness, MdPeople } from "react-icons/md"; // Иконки
+import { MdInfoOutline, MdCode, MdBusiness, MdPeople } from "react-icons/md"; // Иконки
 
 function AboutPage() {
     const headingColor = useColorModeValue("gray.700", "whiteAlpha.900");
@@ -30,10 +30,10 @@ function AboutPage() {
                 <Box textAlign="center">
                     <Icon as={MdInfoOutline} w={16} h={16} color={accentColor} mb={4} />
                     <Heading as="h1" size="2xl" color={headingColor} mb={2}>
-                        О программе WSAPropertiesCalculator
+                        О программе CondenserCalculator
                     </Heading>
                     <Text fontSize="lg" color={textColor}>
-                        Детальная информация о нашем приложении для расчета параметров штоков паровых турбин.
+                        Детальная информация о нашем приложении для расчета параметров конденсаторов паровых турбин.
                     </Text>
                 </Box>
 
@@ -45,9 +45,9 @@ function AboutPage() {
                             <Icon as={MdBusiness} mr={2} verticalAlign="middle" /> Назначение
                         </Heading>
                         <Text fontSize="md" color={textColor} lineHeight="tall">
-                            Программа <strong>WSAPropertiesCalculator</strong> предназначена для инженеров и специалистов
+                            Программа <strong>CondenserCalculator</strong> предназначена для инженеров и специалистов
                             АО «Уральский турбинный завод», занимающихся проектированием и анализом паровых турбин.
-                            Она позволяет производить точные расчеты параметров штоков на основе заданных входных данных,
+                            Она позволяет производить точные расчеты параметров конденсаторов на основе заданных входных данных,
                             учитывая различные режимы работы и конструктивные особенности.
                         </Text>
                         <Text fontSize="md" color={textColor} mt={3} lineHeight="tall">
