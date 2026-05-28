@@ -1,15 +1,19 @@
 from fastapi import APIRouter
 from app.core.celery_app import celery_app
-from app.worker import calculate_async_task
+# Импорт самого calculate_async_task отсюда можно удалить, он нам больше не нужен
+from app.schemas.calculation import CalculationInput
 
 router = APIRouter(tags=["Async Calculations"])
 
 @router.post("/calculate-async")
-def trigger_calculation(input_data: dict):
+def trigger_calculation(input_data: CalculationInput):
     """
-    Отправляет задачу на расчет в очередь (Redis) через Celery.
+    Отправляет задачу на расчет конденсатора в очередь (Redis) через Celery.
     """
-    task = calculate_async_task.delay(input_data)
+    payload = input_data.model_dump()
+    
+    # ЯВНО указываем полное имя задачи, которое зарегистрировал воркер
+    task = celery_app.send_task("app.worker.calculate_async_task", args=[payload])
     
     return {"task_id": task.id, "status": "Processing"}
 
@@ -26,7 +30,8 @@ def get_task_status(task_id: str):
     }
     
     if task_result.state == "SUCCESS":
-        response["result"] = task_result.result
+        # task_result.result содержит словарь, который мы вернули из worker.py
+        response.update(task_result.result) 
     elif task_result.state == "FAILURE":
         response["error"] = str(task_result.info)
         

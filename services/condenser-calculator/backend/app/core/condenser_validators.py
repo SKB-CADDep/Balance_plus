@@ -1,7 +1,9 @@
+import logging
 from typing import Optional, List, Dict, Any
 from app.models.condenser import Condenser
 from app.core.exceptions import ValidationError
 
+logger = logging.getLogger(__name__)
 
 def validate_condenser_for_method(condenser: Condenser, method: str) -> None:
     """
@@ -36,12 +38,21 @@ def _check_flow_limit(value: float, limits: dict, bundle_type: str, rule: str) -
     if not limits:
         return warnings
 
-    if "min" in limits and value < limits["min"]:
+    # Безопасно достаем значения (если ключа нет или там null, получим None)
+    min_limit = limits.get("min")
+    max_limit = limits.get("max")
+
+    # Явно проверяем, что лимит существует и не равен None, прежде чем сравнивать математически
+    if min_limit is not None and value < min_limit:
         warnings.append(
-            f"Расход {bundle_type} ({value}) ниже минимума ({limits['min']}) ({rule}).")
-    if "max" in limits and value > limits["max"]:
+            f"Расход {bundle_type} ({value}) ниже минимума ({min_limit}) ({rule})."
+        )
+        
+    if max_limit is not None and value > max_limit:
         warnings.append(
-            f"Расход {bundle_type} ({value}) выше максимума ({limits['max']}) ({rule}).")
+            f"Расход {bundle_type} ({value}) выше максимума ({max_limit}) ({rule})."
+        )
+        
     return warnings
 
 
@@ -62,6 +73,16 @@ def validate_water_flow_limits(
         warnings.append(
             "Оба расхода воды равны нулю — проверьте входные данные.")
         return warnings
+    
+    # ФИКС: Обработка списка [4000, 20000], который реально лежит в вашей базе
+    if isinstance(limits, list) and len(limits) == 2:
+        limits = {
+            "main_bundle": {"min": limits[0], "max": limits[1]},
+            "builtin_bundle": {"min": 0, "max": limits[1]}
+        }
+
+    if not isinstance(limits, dict):
+        return []
 
     main_limits = limits.get("main_bundle", {})
     builtin_limits = limits.get("builtin_bundle", {})
