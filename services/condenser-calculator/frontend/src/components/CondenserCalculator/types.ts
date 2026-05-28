@@ -1,8 +1,8 @@
 export type CondenserMethod = 'berman' | 'metro-vickers';
 
 /**
- * Все числовые поля типизируем как string, потому что пользователь может вводить
- * диапазоны вида "10-50-5", а парсинг делает бэкенд.
+ * UI-значения: пользователь вводит диапазоны/списки строкой (BR-08),
+ * поэтому числовые поля на уровне формы — string.
  */
 export interface CondenserFormValues {
   method: CondenserMethod;
@@ -30,22 +30,4 @@ export interface CondenserFormValues {
   t1_builtin_unit: string;
   H_steam_unit: string;
 }
-
-export type CondenserMatrix = {
-  columns: Array<number | string>; // G_steam
-  rows: Array<number | string>; // t1
-  values: Array<Array<number | string | null>>;
-};
-
-export type CondenserMatrixResult = {
-  meta?: Record<string, unknown>;
-  matrix?: CondenserMatrix;
-
-  // поддержка формата, где матрица "расплющена" (как MatrixResult в текущем клиенте)
-  columns?: CondenserMatrix['columns'];
-  rows?: CondenserMatrix['rows'];
-  values?: CondenserMatrix['values'];
-
-  warnings?: string[];
-};
 

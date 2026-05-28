@@ -17,27 +17,27 @@ export type CalculationInput = {
 	/**
 	 * Коэффициент чистоты (от 0 до 1)
 	 */
-	coefficient_b?: Array<number>;
+	coefficient_b?: string | Array<number>;
 	/**
 	 * Массив расходов пара (Ось X)
 	 */
-	G_steam: Array<number>;
+	G_steam: string | Array<number>;
 	/**
 	 * Массив расходов основной охл. воды
 	 */
-	W_main: Array<number>;
+	W_main: string | Array<number>;
 	/**
 	 * Массив расходов воды встроенного пучка
 	 */
-	W_builtin?: Array<number> | null;
+	W_builtin?: string | Array<number> | null;
 	/**
 	 * Массив температур воды на входе (Ось Y)
 	 */
-	t1_main: Array<number>;
+	t1_main: string | Array<number>;
 	/**
 	 * Температуры встроенного пучка
 	 */
-	t1_builtin?: Array<number> | null;
+	t1_builtin?: string | Array<number> | null;
 	/**
 	 * Количество рабочих эжекторов
 	 */
