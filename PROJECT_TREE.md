@@ -1,11 +1,10 @@
-# 🌳 Дерево проекта: Balance_plus-1
+# 🌳 Дерево проекта: Balance_plus
 
-> Автоматически сгенерировано: `2026-05-06 11:25:03`  
-> Директорий: **121** | Файлов: **462**
+> Автоматически сгенерировано: `2026-05-28 11:19:45`  
+> Директорий: **132** | Файлов: **512**
 
 ```
-Balance_plus-1/
-├── 📁 .cursor/
+Balance_plus/
 ├── 📁 .github/
 │   ├── 📁 prompts/
 │   │   ├── 📝 system_prompt.md
@@ -108,8 +107,7 @@ Balance_plus-1/
 │   │   │   │   │       ├── 🐍 test_calculations.py
 │   │   │   │   │       ├── ⚙️ test_calculations.tavern.yaml
 │   │   │   │   │       ├── 🐍 test_projects.py
-│   │   │   │   │       ├── 🐍 test_tasks.py
-│   │   │   │   │       └── ⚙️ test_turbines.db.yaml
+│   │   │   │   │       └── 🐍 test_tasks.py
 │   │   │   │   ├── 📁 unit/
 │   │   │   │   │   └── ⚙️ __group__.yml
 │   │   │   │   ├── 🐍 conftest.py
@@ -169,18 +167,22 @@ Balance_plus-1/
 │   │   │   │   ├── 📁 api/
 │   │   │   │   │   └── 📁 routes/
 │   │   │   │   │       ├── 🐍 __init__.py
+│   │   │   │   │       ├── 🐍 async_calculations.py
 │   │   │   │   │       ├── 🐍 calculations.py
 │   │   │   │   │       ├── 🐍 condensers.py
 │   │   │   │   │       ├── 🐍 health.py
 │   │   │   │   │       └── 🐍 materials.py
 │   │   │   │   ├── 📁 core/
 │   │   │   │   │   ├── 🐍 __init__.py
+│   │   │   │   │   ├── 🐍 celery_app.py
 │   │   │   │   │   ├── 🐍 condenser_validators.py
 │   │   │   │   │   ├── 🐍 config.py
 │   │   │   │   │   ├── 🐍 converter.py
 │   │   │   │   │   ├── 🐍 database.py
 │   │   │   │   │   ├── 🐍 exceptions.py
+│   │   │   │   │   ├── 🐍 logging.py
 │   │   │   │   │   ├── 🐍 material_lambda.py
+│   │   │   │   │   ├── 🐍 middleware.py
 │   │   │   │   │   └── 🐍 range_parser.py
 │   │   │   │   ├── 📁 crud/
 │   │   │   │   │   ├── 🐍 __init__.py
@@ -222,7 +224,8 @@ Balance_plus-1/
 │   │   │   │   │   └── 🐍 VKU_strategy.py
 │   │   │   │   ├── 🐍 __init__.py
 │   │   │   │   ├── 🐍 dependencies.py
-│   │   │   │   └── 🐍 main.py
+│   │   │   │   ├── 🐍 main.py
+│   │   │   │   └── 🐍 worker.py
 │   │   │   ├── 📁 scripts/
 │   │   │   │   ├── 🐍 _common.py
 │   │   │   │   ├── 🐍 compare_selection_methods.py
@@ -239,7 +242,8 @@ Balance_plus-1/
 │   │   │   │   ├── 📁 api/
 │   │   │   │   │   ├── ⚙️ __group__.yml
 │   │   │   │   │   ├── 🐍 __init__.py
-│   │   │   │   │   └── 🐍 test_calculations.py
+│   │   │   │   │   ├── 🐍 test_calculations.py
+│   │   │   │   │   └── 🐍 test_health.py
 │   │   │   │   ├── 📁 unit/
 │   │   │   │   │   ├── ⚙️ __group__.yml
 │   │   │   │   │   ├── 🐍 __init__.py
@@ -267,13 +271,13 @@ Balance_plus-1/
 │   │   │   │   │   │   ├── 🐍 test_mode_3.py
 │   │   │   │   │   │   ├── 🐍 test_mode_4.py
 │   │   │   │   │   │   └── 🐍 test_verification.py
+│   │   │   │   │   ├── ⚙️ __group__.yml
 │   │   │   │   │   ├── 🐍 __init__.py
-│   │   │   │   │   └── 🐍 berman_verification_calc.py
+│   │   │   │   │   └── 🐍 test_berman_verification_calc.py
 │   │   │   │   ├── 🐍 __init__.py
 │   │   │   │   ├── 🐍 conftest.py
 │   │   │   │   └── 📖 README.md
 │   │   │   ├── 📄 .dockerignore
-│   │   │   ├── 📄 .env
 │   │   │   ├── ⚙️ alembic.ini
 │   │   │   ├── ⚙️ docker-compose.dev.yml
 │   │   │   ├── 🐳 Dockerfile
@@ -345,6 +349,64 @@ Balance_plus-1/
 │   │   │       ├── 📋 Сталь 40.json
 │   │   │       ├── 📋 Сталь 45.json
 │   │   │       └── 📋 ХН35ВТ.json
+│   │   ├── 📁 frontend/
+│   │   │   ├── 📁 public/
+│   │   │   │   ├── 📁 assets/
+│   │   │   │   │   └── 📁 images/
+│   │   │   │   │       └── 🖼️ favicon.ico
+│   │   │   │   ├── 🌐 index.html
+│   │   │   │   └── 🖼️ logo.png
+│   │   │   ├── 📁 src/
+│   │   │   │   ├── 📁 client/
+│   │   │   │   │   ├── 📁 core/
+│   │   │   │   │   │   ├── 📜 ApiError.ts
+│   │   │   │   │   │   ├── 📜 ApiRequestOptions.ts
+│   │   │   │   │   │   ├── 📜 ApiResult.ts
+│   │   │   │   │   │   ├── 📜 CancelablePromise.ts
+│   │   │   │   │   │   ├── 📜 OpenAPI.ts
+│   │   │   │   │   │   ├── 📜 request.ts
+│   │   │   │   │   │   └── 📜 types.ts
+│   │   │   │   │   ├── 📜 index.ts
+│   │   │   │   │   ├── 📜 models.ts
+│   │   │   │   │   ├── 📜 schemas.ts
+│   │   │   │   │   └── 📜 services.ts
+│   │   │   │   ├── 📁 components/
+│   │   │   │   │   ├── 📁 Common/
+│   │   │   │   │   │   ├── 📄 InputWithUnit.tsx
+│   │   │   │   │   │   ├── 📄 MainLayout.tsx
+│   │   │   │   │   │   ├── 📄 NotFound.tsx
+│   │   │   │   │   │   └── 📄 ThemeToggleButton.tsx
+│   │   │   │   │   ├── 📁 CondenserCalculator/
+│   │   │   │   │   │   ├── 📄 CondenserForm.tsx
+│   │   │   │   │   │   ├── 📜 index.ts
+│   │   │   │   │   │   ├── 📄 ResultMatrixViewer.tsx
+│   │   │   │   │   │   ├── 📜 types.ts
+│   │   │   │   │   │   └── 📜 useCondenserCalculation.ts
+│   │   │   │   │   └── 📁 OtherPages/
+│   │   │   │   │       ├── 📄 AboutPage.tsx
+│   │   │   │   │       └── 📄 HelpPage.tsx
+│   │   │   │   ├── 📁 routes/
+│   │   │   │   │   ├── 📄 __root.tsx
+│   │   │   │   │   ├── 📄 about.tsx
+│   │   │   │   │   ├── 📄 calculator.tsx
+│   │   │   │   │   ├── 📄 help.tsx
+│   │   │   │   │   └── 📄 index.tsx
+│   │   │   │   ├── 📁 utils/
+│   │   │   │   │   └── 📜 parser.ts
+│   │   │   │   ├── 📄 main.tsx
+│   │   │   │   ├── 📜 routeTree.gen.ts
+│   │   │   │   ├── 📄 theme.tsx
+│   │   │   │   └── 📜 vite-env.d.ts
+│   │   │   ├── 📄 .env.production
+│   │   │   ├── 🙈 .gitignore
+│   │   │   ├── 📋 biome.json
+│   │   │   ├── 🌐 index.html
+│   │   │   ├── 📋 openapi.json
+│   │   │   ├── 📋 package-lock.json
+│   │   │   ├── 📋 package.json
+│   │   │   ├── 📋 tsconfig.json
+│   │   │   ├── 📋 tsconfig.node.json
+│   │   │   └── 📜 vite.config.ts
 │   │   └── ⚙️ docker-compose.yml
 │   └── 📁 valve-stems/
 │       ├── 📁 backend/
@@ -386,6 +448,7 @@ Balance_plus-1/
 │       │   │   │   └── 📄 script.py.mako
 │       │   │   ├── 📁 api/
 │       │   │   │   ├── 📁 routes/
+│       │   │   │   │   ├── 📁 generated_diagrams/
 │       │   │   │   │   ├── 🐍 calculations.py
 │       │   │   │   │   ├── 🐍 drawio.py
 │       │   │   │   │   ├── 🐍 health.py
@@ -409,7 +472,6 @@ Balance_plus-1/
 │       │   │   ├── 📁 domain/
 │       │   │   │   ├── 🐍 models.py
 │       │   │   │   └── 🐍 valve_physics_engine.py
-│       │   │   ├── 📁 generated_diagrams/
 │       │   │   ├── 📁 middleware/
 │       │   │   │   ├── 🐍 __init__.py
 │       │   │   │   └── 🐍 logging_middleware.py
@@ -430,7 +492,6 @@ Balance_plus-1/
 │       │   │   │   ├── 🐍 initial_data.py
 │       │   │   │   ├── 🐍 load_from_excel.py
 │       │   │   │   └── 🐍 tests_pre_start.py
-│       │   │   ├── 📁 services/
 │       │   │   ├── 📁 templates/
 │       │   │   │   └── 📄 template_2_parts.xml
 │       │   │   ├── 📁 tests/
