@@ -38,5 +38,6 @@ done
 # alembic -c /app/alembic.ini upgrade head
 # echo "Alembic migrations applied."
 
-echo "Starting Uvicorn server..."
-exec uvicorn app.main:app --host 0.0.0.0 --port 5253 --workers 4
+# Запускаем команду, переданную в контейнер (из CMD или command в docker-compose.yml)
+echo "Executing command: $@"
+exec "$@"

@@ -1,0 +1,340 @@
+{
+  "material_id": "6eac82e1-4bb1-4f1f-8072-264c816bd452",
+  "metadata": {
+    "name_material_standard": "08Х18Н10Т",
+    "name_material_alternative": [
+      "ОХ18Н10Т",
+      "ЭИ914"
+    ],
+    "application_area": [
+      "Трубки конденсатора"
+    ],
+    "comment": "",
+    "classification": {
+      "classification_category": "Коррозионно-стойкая, жаростойкая",
+      "classification_class": "Аустенитный",
+      "classification_subclass": "Хромистая"
+    }
+  },
+  "physical_properties": {
+    "modulus_elasticity": {
+      "property_source": "",
+      "property_subsource": "10",
+      "comment": "",
+      "temperature_value_pairs": [
+        [
+          20.0,
+          2050.0
+        ],
+        [
+          100.0,
+          2020.0
+        ],
+        [
+          200.0,
+          1970.0
+        ],
+        [
+          300.0,
+          1900.0
+        ],
+        [
+          400.0,
+          1810.0
+        ],
+        [
+          450.0,
+          1800.0
+        ],
+        [
+          600.0,
+          1730.0
+        ],
+        [
+          550.0,
+          1700.0
+        ],
+        [
+          600.0,
+          1650.0
+        ]
+      ],
+      "property_name": "Модуль упругости",
+      "property_unit": "МПа",
+      "property_last_updated": "2025-08-29T09:29:18.092741"
+    },
+    "coefficient_linear_expansion": {
+      "property_source": "",
+      "property_subsource": "10",
+      "comment": "",
+      "temperature_value_pairs": [
+        [
+          100.0,
+          15.3
+        ],
+        [
+          200.0,
+          15.9
+        ],
+        [
+          300.0,
+          16.5
+        ],
+        [
+          400.0,
+          16.9
+        ],
+        [
+          500.0,
+          17.3
+        ],
+        [
+          600.0,
+          17.7
+        ],
+        [
+          700.0,
+          18.2
+        ]
+      ],
+      "property_name": "Коэффициент линейного расширения",
+      "property_unit": "1/°С",
+      "property_last_updated": "2025-08-29T09:29:18.092741"
+    }
+  },
+  "mechanical_properties": {
+    "strength_category": [
+      {
+        "value_strength_category": "-",
+        "hardness": [],
+        "yield_strength": {
+          "property_source": "",
+          "property_subsource": "5",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              20.0,
+              275.0
+            ],
+            [
+              300.0,
+              200.0
+            ],
+            [
+              400.0,
+              175.0
+            ],
+            [
+              500.0,
+              175.0
+            ],
+            [
+              600.0,
+              175.0
+            ],
+            [
+              700.0,
+              160.0
+            ]
+          ],
+          "property_name": "Предел текучести",
+          "property_unit": "МПа",
+          "property_last_updated": "2025-08-29T09:29:18.092741"
+        },
+        "tensile_strength": {
+          "property_source": "",
+          "property_subsource": "5",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              20.0,
+              610.0
+            ],
+            [
+              300.0,
+              450.0
+            ],
+            [
+              400.0,
+              440.0
+            ],
+            [
+              500.0,
+              440.0
+            ],
+            [
+              600.0,
+              390.0
+            ],
+            [
+              700.0,
+              270.0
+            ]
+          ],
+          "property_name": "Предел прочности",
+          "property_unit": "МПа",
+          "property_last_updated": "2025-08-29T09:29:18.092741"
+        },
+        "impact_strength": {
+          "property_source": "",
+          "property_subsource": "5",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              20.0,
+              245.0
+            ],
+            [
+              400.0,
+              313.0
+            ],
+            [
+              500.0,
+              363.0
+            ],
+            [
+              600.0,
+              353.0
+            ],
+            [
+              700.0,
+              333.0
+            ]
+          ],
+          "property_name": "Ударная вязкость",
+          "property_unit": "Дж/см²",
+          "property_last_updated": "2025-08-29T09:29:18.092741"
+        },
+        "tensile_strength_limit_10_thousands_hours": {
+          "property_source": "",
+          "property_subsource": "5",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              600.0,
+              147.0
+            ],
+            [
+              650.0,
+              78.0
+            ]
+          ],
+          "property_name": "Предел длит. прочности за 10 тыс.ч",
+          "property_unit": "МПа",
+          "property_last_updated": "2025-08-29T09:29:18.092741"
+        },
+        "tensile_strength_limit_100_thousands_hours": {
+          "property_source": "",
+          "property_subsource": "5",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              600.0,
+              108.0
+            ]
+          ],
+          "property_name": "Предел длит. прочности за 100 тыс.ч",
+          "property_unit": "МПа",
+          "property_last_updated": "2025-08-29T09:29:18.092741"
+        },
+        "tensile_strength_limit_200_thousands_hours": {
+          "property_source": "",
+          "property_subsource": "11",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              500.0,
+              186.0
+            ]
+          ],
+          "property_name": "Предел длит. прочности за 200 тыс.ч",
+          "property_unit": "МПа",
+          "property_last_updated": "2025-08-29T09:29:18.092741"
+        },
+        "сreep_strain_rate_1_100_thousands_hours": {
+          "property_source": "",
+          "property_subsource": "5",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              600.0,
+              74.0
+            ],
+            [
+              650.0,
+              29.0
+            ]
+          ],
+          "property_name": "Ползучесть при скорости деформации 1%/100 тыс.ч",
+          "property_unit": "МПа",
+          "property_last_updated": "2025-08-29T09:29:18.092741"
+        }
+      }
+    ]
+  },
+  "chemical_properties": {
+    "composition": [
+      {
+        "composition_source": "ГОСТ  5632-2014",
+        "other_elements": [
+          {
+            "element": "C",
+            "unit_value": "%",
+            "max_value": 0.08,
+            "max_value_tolerance": "0,9"
+          },
+          {
+            "element": "Si",
+            "unit_value": "%",
+            "max_value": 0.8,
+            "max_value_tolerance": "0,85"
+          },
+          {
+            "element": "Mn",
+            "unit_value": "%",
+            "max_value": 2.0,
+            "max_value_tolerance": "2,05"
+          },
+          {
+            "element": "Cr",
+            "unit_value": "%",
+            "min_value": 17.0,
+            "max_value": 19.0,
+            "min_value_tolerance": "16,8",
+            "max_value_tolerance": "19,20"
+          },
+          {
+            "element": "Ni",
+            "unit_value": "%",
+            "min_value": 9.0,
+            "max_value": 11.0,
+            "min_value_tolerance": "8,9",
+            "max_value_tolerance": "11,15"
+          },
+          {
+            "element": "Ti",
+            "unit_value": "%",
+            "max_value": 0.7,
+            "min_value_tolerance": "5*С-0,1",
+            "max_value_tolerance": "0,75"
+          },
+          {
+            "element": "S",
+            "unit_value": "%",
+            "max_value": 0.02,
+            "max_value_tolerance": "0,025"
+          },
+          {
+            "element": "P",
+            "unit_value": "%",
+            "max_value": 0.04,
+            "max_value_tolerance": "0,045"
+          }
+        ],
+        "composition_subsource": "",
+        "comment": "Ti по ГОСТ через формулу 5*С",
+        "base_element": "Fe"
+      }
+    ]
+  }
+}

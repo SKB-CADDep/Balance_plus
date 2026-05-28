@@ -1,0 +1,171 @@
+{
+  "material_id": "5aca2e68-cb85-4c3a-9343-8cb8b99b53c9",
+  "metadata": {
+    "name_material_standard": "МНЖ5-1",
+    "name_material_alternative": [
+      "CuNi5FeIMn",
+      "Медноникелевый сплав"
+    ],
+    "application_area": [
+      "Трубки конденсатора"
+    ],
+    "comment": "Состояние - твердое",
+    "classification": {
+      "classification_category": "",
+      "classification_class": "",
+      "classification_subclass": ""
+    }
+  },
+  "physical_properties": {
+    "coefficient_linear_expansion": {
+      "property_source": "",
+      "property_subsource": "2",
+      "comment": "",
+      "temperature_value_pairs": [
+        [
+          20.0,
+          13.7
+        ]
+      ],
+      "property_name": "Коэффициент линейного расширения",
+      "property_unit": "1/°С",
+      "property_last_updated": "2025-08-29T09:56:45.500348"
+    },
+    "coefficient_thermal_conductivity": {
+      "property_source": "",
+      "property_subsource": "2",
+      "comment": "",
+      "temperature_value_pairs": [
+        [
+          20.0,
+          0.56
+        ]
+      ],
+      "property_name": "Коэффициент теплопроводности",
+      "property_unit": "Вт/(м·°С)",
+      "property_last_updated": "2025-08-29T09:56:45.500348"
+    },
+    "density": {
+      "property_source": "",
+      "property_subsource": "2",
+      "comment": "",
+      "temperature_value_pairs": [
+        [
+          20.0,
+          8760.0
+        ]
+      ],
+      "property_name": "Плотность",
+      "property_unit": "кг/м³",
+      "property_last_updated": "2025-08-29T09:56:45.500348"
+    }
+  },
+  "mechanical_properties": {
+    "strength_category": [
+      {
+        "value_strength_category": "-",
+        "hardness": [],
+        "tensile_strength": {
+          "property_source": "",
+          "property_subsource": "2",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              20.0,
+              45.0
+            ]
+          ],
+          "property_name": "Предел прочности",
+          "property_unit": "МПа",
+          "property_last_updated": "2025-08-29T09:56:45.500348"
+        }
+      }
+    ]
+  },
+  "chemical_properties": {
+    "composition": [
+      {
+        "composition_source": "ГОСТ 15527-2004",
+        "other_elements": [
+          {
+            "element": "Cu",
+            "unit_value": "%",
+            "min_value": 89.748,
+            "max_value": 93.7
+          },
+          {
+            "element": "Fe",
+            "unit_value": "%",
+            "min_value": 1.0,
+            "max_value": 1.4
+          },
+          {
+            "element": "Mn",
+            "unit_value": "%",
+            "min_value": 0.3,
+            "max_value": 0.8
+          },
+          {
+            "element": "S",
+            "unit_value": "%",
+            "max_value": 0.01
+          },
+          {
+            "element": "Zn",
+            "unit_value": "%",
+            "max_value": 0.5
+          },
+          {
+            "element": "Pb",
+            "unit_value": "%",
+            "max_value": 0.005
+          },
+          {
+            "element": "Sb",
+            "unit_value": "%",
+            "max_value": 0.005
+          },
+          {
+            "element": "Sn",
+            "unit_value": "%",
+            "max_value": 0.1
+          },
+          {
+            "element": "Si",
+            "unit_value": "%",
+            "max_value": 0.15
+          },
+          {
+            "element": "Ni+Co",
+            "unit_value": "%",
+            "min_value": 5.0,
+            "max_value": 6.5
+          },
+          {
+            "element": "C",
+            "unit_value": "%",
+            "max_value": 0.03
+          },
+          {
+            "element": "P",
+            "unit_value": "%",
+            "max_value": 0.04
+          },
+          {
+            "element": "Bi",
+            "unit_value": "%",
+            "max_value": 0.002
+          },
+          {
+            "element": "As",
+            "unit_value": "%",
+            "max_value": 0.01
+          }
+        ],
+        "composition_subsource": "1",
+        "comment": "",
+        "base_element": "Cu"
+      }
+    ]
+  }
+}

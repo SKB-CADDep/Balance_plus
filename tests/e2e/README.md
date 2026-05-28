@@ -5,4 +5,4 @@
 Тесты конкретных сервисов лежат внутри сервисов:
 - `services/balance-orchestrator/backend/tests/`
 - `services/condenser-calculator/backend/tests/`
-
+- `services/valve-stems/backend/tests/`

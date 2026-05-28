@@ -371,25 +371,24 @@ Balance_plus/
 │   │   │   │   │   ├── 📜 schemas.ts
 │   │   │   │   │   └── 📜 services.ts
 │   │   │   │   ├── 📁 components/
+│   │   │   │   │   ├── 📁 Calculator/
+│   │   │   │   │   │   ├── 📄 EarlyCalculationPage.tsx
+│   │   │   │   │   │   ├── 📄 ResultsPage.tsx
+│   │   │   │   │   │   ├── 📄 StockInputPage.tsx
+│   │   │   │   │   │   ├── 📄 StockSelection.tsx
+│   │   │   │   │   │   └── 📄 TurbineSearch.tsx
 │   │   │   │   │   ├── 📁 Common/
 │   │   │   │   │   │   ├── 📄 InputWithUnit.tsx
 │   │   │   │   │   │   ├── 📄 MainLayout.tsx
 │   │   │   │   │   │   ├── 📄 NotFound.tsx
+│   │   │   │   │   │   ├── 📄 Sidebar.tsx
 │   │   │   │   │   │   └── 📄 ThemeToggleButton.tsx
-│   │   │   │   │   ├── 📁 CondenserCalculator/
-│   │   │   │   │   │   ├── 📄 CondenserForm.tsx
-│   │   │   │   │   │   ├── 📜 index.ts
-│   │   │   │   │   │   ├── 📄 ResultMatrixViewer.tsx
-│   │   │   │   │   │   ├── 📜 types.ts
-│   │   │   │   │   │   └── 📜 useCondenserCalculation.ts
 │   │   │   │   │   └── 📁 OtherPages/
 │   │   │   │   │       ├── 📄 AboutPage.tsx
 │   │   │   │   │       └── 📄 HelpPage.tsx
 │   │   │   │   ├── 📁 routes/
 │   │   │   │   │   ├── 📄 __root.tsx
-│   │   │   │   │   ├── 📄 about.tsx
 │   │   │   │   │   ├── 📄 calculator.tsx
-│   │   │   │   │   ├── 📄 help.tsx
 │   │   │   │   │   └── 📄 index.tsx
 │   │   │   │   ├── 📁 utils/
 │   │   │   │   │   └── 📜 parser.ts
