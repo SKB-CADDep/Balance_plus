@@ -1,10 +1,11 @@
-# 🌳 Дерево проекта: Balance_plus
+# 🌳 Дерево проекта: Balance_plus-1
 
-> Автоматически сгенерировано: `2026-05-28 11:19:45`  
-> Директорий: **132** | Файлов: **512**
+> Автоматически сгенерировано: `2026-05-29 11:29:23`  
+> Директорий: **138** | Файлов: **587**
 
 ```
-Balance_plus/
+Balance_plus-1/
+├── 📁 .cursor/
 ├── 📁 .github/
 │   ├── 📁 prompts/
 │   │   ├── 📝 system_prompt.md
@@ -106,6 +107,7 @@ Balance_plus/
 │   │   │   │   │       ├── 🐍 test_berman_demo_calc.py
 │   │   │   │   │       ├── 🐍 test_calculations.py
 │   │   │   │   │       ├── ⚙️ test_calculations.tavern.yaml
+│   │   │   │   │       ├── 🐍 test_orchestrator_negative.py
 │   │   │   │   │       ├── 🐍 test_projects.py
 │   │   │   │   │       └── 🐍 test_tasks.py
 │   │   │   │   ├── 📁 unit/
@@ -156,6 +158,7 @@ Balance_plus/
 │   │   ├── 📁 backend/
 │   │   │   ├── 📁 alembic/
 │   │   │   │   ├── 📁 versions/
+│   │   │   │   │   ├── 🐍 2c6b7ba017bb_migration_m2m_materials.py
 │   │   │   │   │   └── 🐍 c24375df89dc_initial_full_schema.py
 │   │   │   │   ├── 🐍 env.py
 │   │   │   │   ├── 📖 README
@@ -226,6 +229,70 @@ Balance_plus/
 │   │   │   │   ├── 🐍 dependencies.py
 │   │   │   │   ├── 🐍 main.py
 │   │   │   │   └── 🐍 worker.py
+│   │   │   ├── 📁 data/
+│   │   │   │   ├── 📁 materials/
+│   │   │   │   │   ├── 📋 08Х13.json
+│   │   │   │   │   ├── 📋 08Х16Н13М2Б.json
+│   │   │   │   │   ├── 📋 08Х18Н10Т.json
+│   │   │   │   │   ├── 📋 09Г2С.json
+│   │   │   │   │   ├── 📋 12МХЛ.json
+│   │   │   │   │   ├── 📋 12Х13.json
+│   │   │   │   │   ├── 📋 12Х18Н10Т.json
+│   │   │   │   │   ├── 📋 12Х18Н9Т.json
+│   │   │   │   │   ├── 📋 12Х1МФ.json
+│   │   │   │   │   ├── 📋 12ХМ.json
+│   │   │   │   │   ├── 📋 15Х11МФ.json
+│   │   │   │   │   ├── 📋 15Х12ВНМФ.json
+│   │   │   │   │   ├── 📋 15Х1М1Ф.json
+│   │   │   │   │   ├── 📋 15Х1М1ФЛ.json
+│   │   │   │   │   ├── 📋 15ХМ.json
+│   │   │   │   │   ├── 📋 18X11МНФБ-Ш.json
+│   │   │   │   │   ├── 📋 18Х12ВМБФР.json
+│   │   │   │   │   ├── 📋 20ГСЛ.json
+│   │   │   │   │   ├── 📋 20К.json
+│   │   │   │   │   ├── 📋 20Л.json
+│   │   │   │   │   ├── 📋 20Х12ВНМФ.json
+│   │   │   │   │   ├── 📋 20Х13.json
+│   │   │   │   │   ├── 📋 20Х1М1Ф1ТР.json
+│   │   │   │   │   ├── 📋 20Х3МВФА.json
+│   │   │   │   │   ├── 📋 20ХМЛ.json
+│   │   │   │   │   ├── 📋 20ХМФЛ.json
+│   │   │   │   │   ├── 📋 22К.json
+│   │   │   │   │   ├── 📋 25Л.json
+│   │   │   │   │   ├── 📋 25Х1М1ФА.json
+│   │   │   │   │   ├── 📋 25Х1МФ.json
+│   │   │   │   │   ├── 📋 25Х2М1Ф.json
+│   │   │   │   │   ├── 📋 25Х2Н4МФА.json
+│   │   │   │   │   ├── 📋 26ХН3М2ФА.json
+│   │   │   │   │   ├── 📋 27ХН3МФА.json
+│   │   │   │   │   ├── 📋 30ХМА.json
+│   │   │   │   │   ├── 📋 30ХН2МФА.json
+│   │   │   │   │   ├── 📋 30ХН3М2ФА.json
+│   │   │   │   │   ├── 📋 34ХМА.json
+│   │   │   │   │   ├── 📋 34ХН1МА.json
+│   │   │   │   │   ├── 📋 34ХН3МА.json
+│   │   │   │   │   ├── 📋 35Х.json
+│   │   │   │   │   ├── 📋 35ХМ.json
+│   │   │   │   │   ├── 📋 35ХН1М2ФА.json
+│   │   │   │   │   ├── 📋 36ХН3МФА.json
+│   │   │   │   │   ├── 📋 38ХН3МФА.json
+│   │   │   │   │   ├── 📋 40Х.json
+│   │   │   │   │   ├── 📋 40ХА.json
+│   │   │   │   │   ├── 📋 X10CrMoNb9-1.json
+│   │   │   │   │   ├── 📋 ВТ1-0.json
+│   │   │   │   │   ├── 📋 ВТ5.json
+│   │   │   │   │   ├── 📋 Л68.json
+│   │   │   │   │   ├── 📋 ЛО70-1.json
+│   │   │   │   │   ├── 📋 МНЖ5-1.json
+│   │   │   │   │   ├── 📋 Ст3сп.json
+│   │   │   │   │   ├── 📋 Сталь 20.json
+│   │   │   │   │   ├── 📋 Сталь 25.json
+│   │   │   │   │   ├── 📋 Сталь 30.json
+│   │   │   │   │   ├── 📋 Сталь 35.json
+│   │   │   │   │   ├── 📋 Сталь 40.json
+│   │   │   │   │   ├── 📋 Сталь 45.json
+│   │   │   │   │   └── 📋 ХН35ВТ.json
+│   │   │   │   └── 📊 default.xlsx
 │   │   │   ├── 📁 scripts/
 │   │   │   │   ├── 🐍 _common.py
 │   │   │   │   ├── 🐍 compare_selection_methods.py
@@ -243,6 +310,7 @@ Balance_plus/
 │   │   │   │   │   ├── ⚙️ __group__.yml
 │   │   │   │   │   ├── 🐍 __init__.py
 │   │   │   │   │   ├── 🐍 test_calculations.py
+│   │   │   │   │   ├── 🐍 test_condenser_negative.py
 │   │   │   │   │   └── 🐍 test_health.py
 │   │   │   │   ├── 📁 unit/
 │   │   │   │   │   ├── ⚙️ __group__.yml
@@ -278,6 +346,7 @@ Balance_plus/
 │   │   │   │   ├── 🐍 conftest.py
 │   │   │   │   └── 📖 README.md
 │   │   │   ├── 📄 .dockerignore
+│   │   │   ├── 📄 .env
 │   │   │   ├── ⚙️ alembic.ini
 │   │   │   ├── ⚙️ docker-compose.dev.yml
 │   │   │   ├── 🐳 Dockerfile
@@ -287,6 +356,8 @@ Balance_plus/
 │   │   │   ├── 📖 README.md
 │   │   │   └── 🐍 seed.py
 │   │   ├── 📁 db/
+│   │   │   ├── 📁 condenser_data/
+│   │   │   │   └── 📊 default.xlsx
 │   │   │   └── 📁 materials/
 │   │   │       ├── 📋 08Х13.json
 │   │   │       ├── 📋 08Х16Н13М2Б.json
@@ -371,24 +442,25 @@ Balance_plus/
 │   │   │   │   │   ├── 📜 schemas.ts
 │   │   │   │   │   └── 📜 services.ts
 │   │   │   │   ├── 📁 components/
-│   │   │   │   │   ├── 📁 Calculator/
-│   │   │   │   │   │   ├── 📄 EarlyCalculationPage.tsx
-│   │   │   │   │   │   ├── 📄 ResultsPage.tsx
-│   │   │   │   │   │   ├── 📄 StockInputPage.tsx
-│   │   │   │   │   │   ├── 📄 StockSelection.tsx
-│   │   │   │   │   │   └── 📄 TurbineSearch.tsx
 │   │   │   │   │   ├── 📁 Common/
 │   │   │   │   │   │   ├── 📄 InputWithUnit.tsx
 │   │   │   │   │   │   ├── 📄 MainLayout.tsx
 │   │   │   │   │   │   ├── 📄 NotFound.tsx
-│   │   │   │   │   │   ├── 📄 Sidebar.tsx
 │   │   │   │   │   │   └── 📄 ThemeToggleButton.tsx
+│   │   │   │   │   ├── 📁 CondenserCalculator/
+│   │   │   │   │   │   ├── 📄 CondenserForm.tsx
+│   │   │   │   │   │   ├── 📜 index.ts
+│   │   │   │   │   │   ├── 📄 ResultMatrixViewer.tsx
+│   │   │   │   │   │   ├── 📜 types.ts
+│   │   │   │   │   │   └── 📜 useCondenserCalculation.ts
 │   │   │   │   │   └── 📁 OtherPages/
 │   │   │   │   │       ├── 📄 AboutPage.tsx
 │   │   │   │   │       └── 📄 HelpPage.tsx
 │   │   │   │   ├── 📁 routes/
 │   │   │   │   │   ├── 📄 __root.tsx
+│   │   │   │   │   ├── 📄 about.tsx
 │   │   │   │   │   ├── 📄 calculator.tsx
+│   │   │   │   │   ├── 📄 help.tsx
 │   │   │   │   │   └── 📄 index.tsx
 │   │   │   │   ├── 📁 utils/
 │   │   │   │   │   └── 📜 parser.ts
@@ -447,16 +519,17 @@ Balance_plus/
 │       │   │   │   └── 📄 script.py.mako
 │       │   │   ├── 📁 api/
 │       │   │   │   ├── 📁 routes/
-│       │   │   │   │   ├── 📁 generated_diagrams/
+│       │   │   │   │   ├── 🐍 async_calculations.py
 │       │   │   │   │   ├── 🐍 calculations.py
 │       │   │   │   │   ├── 🐍 drawio.py
 │       │   │   │   │   ├── 🐍 health.py
 │       │   │   │   │   ├── 🐍 turbines.py
 │       │   │   │   │   ├── 🐍 utils.py
 │       │   │   │   │   └── 🐍 valves.py
-│       │   │   │   └── 🐍 main.py
+│       │   │   │   └── 🐍 router.py
 │       │   │   ├── 📁 core/
 │       │   │   │   ├── 🐍 __init__.py
+│       │   │   │   ├── 🐍 celery_app.py
 │       │   │   │   ├── 🐍 config.py
 │       │   │   │   ├── 🐍 converter.py
 │       │   │   │   ├── 🐍 database.py
@@ -471,6 +544,7 @@ Balance_plus/
 │       │   │   ├── 📁 domain/
 │       │   │   │   ├── 🐍 models.py
 │       │   │   │   └── 🐍 valve_physics_engine.py
+│       │   │   ├── 📁 generated_diagrams/
 │       │   │   ├── 📁 middleware/
 │       │   │   │   ├── 🐍 __init__.py
 │       │   │   │   └── 🐍 logging_middleware.py
@@ -491,13 +565,15 @@ Balance_plus/
 │       │   │   │   ├── 🐍 initial_data.py
 │       │   │   │   ├── 🐍 load_from_excel.py
 │       │   │   │   └── 🐍 tests_pre_start.py
+│       │   │   ├── 📁 services/
 │       │   │   ├── 📁 templates/
 │       │   │   │   └── 📄 template_2_parts.xml
 │       │   │   ├── 📁 tests/
 │       │   │   │   ├── 📁 api/
 │       │   │   │   │   ├── ⚙️ __group__.yml
 │       │   │   │   │   ├── 🐍 __init__.py
-│       │   │   │   │   └── ⚙️ test_full_cycle.tavern.yaml
+│       │   │   │   │   ├── ⚙️ test_full_cycle.tavern.yaml
+│       │   │   │   │   └── 🐍 test_negative_validation.py
 │       │   │   │   ├── 📁 crud/
 │       │   │   │   │   ├── ⚙️ __group__.yml
 │       │   │   │   │   ├── 🐍 __init__.py
@@ -516,7 +592,8 @@ Balance_plus/
 │       │   │   │   └── 🐍 conftest.py
 │       │   │   ├── 🐍 __init__.py
 │       │   │   ├── 🐍 dependencies.py
-│       │   │   └── 🐍 main.py
+│       │   │   ├── 🐍 main.py
+│       │   │   └── 🐍 worker.py
 │       │   ├── 📄 .dockerignore
 │       │   ├── 🙈 .gitignore
 │       │   ├── ⚙️ alembic.ini
@@ -600,7 +677,12 @@ Balance_plus/
 │       ├── 📋 package-lock.json
 │       └── 📖 README.md
 ├── 📁 tests/
-│   └── 📁 e2e/
+│   ├── 📁 e2e/
+│   │   └── 📖 README.md
+│   └── 📁 load/
+│       ├── 🐍 locust_condensers.py
+│       ├── 🐍 locust_orchestrator.py
+│       ├── 🐍 locust_valves.py
 │       └── 📖 README.md
 ├── 📁 validation_data/
 │   ├── 📁 balance/
