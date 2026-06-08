@@ -1,6 +1,10 @@
 """
-Универсальный и расширяемый конвертер инженерных единиц измерения
-(ориентирован на термодинамику, но не ограничивается ею).
+Модуль универсального конвертера физических величин.
+
+Обеспечивает точный перевод единиц измерения (давление, температура, 
+энтальпия, расход и т.д.) перед подачей данных в математическое ядро 
+или перед возвратом ответа клиенту. Поддерживает как простые линейные 
+коэффициенты, так и нелинейные функциональные преобразования (например, для Кельвинов).
 """
 
 from __future__ import annotations
@@ -13,19 +17,25 @@ FactorOrFunc = Number | Callable[[Number], Number]
 
 
 class UnknownParameterError(ValueError):
+    """Исключение, выбрасываемое при запросе незарегистрированного типа параметра (например, 'voltage')."""
     pass
 
 
 class UnknownUnitError(ValueError):
+    """Исключение, выбрасываемое при попытке конвертации неизвестной единицы измерения (например, 'фунты')."""
     pass
 
 
 def _linear(to_base_factor: float) -> tuple[Callable[[Number], Number],
                                             Callable[[Number], Number]]:
     """
-    Вспомогательная фабрика. Возвращает две функции:
-        - `to_base(value)`   : value * to_base_factor
-        - `from_base(value)` : value / to_base_factor
+    Вспомогательная фабрика для генерации линейных функций конвертации.
+
+    Args:
+        to_base_factor (float): Коэффициент перевода в базовую единицу.
+
+    Returns:
+        tuple: Кортеж из двух функций (`to_base(value)`, `from_base(value)`).
     """
     return (
         lambda v, f=to_base_factor: v * f,
@@ -35,7 +45,7 @@ def _linear(to_base_factor: float) -> tuple[Callable[[Number], Number],
 
 class UnitConverter:
     """
-    Главный класс-конвертер.
+    Главный класс-конвертер физических величин.
 
     Содержит словарь `self.parameters`, где каждая запись описывает один
     физический параметр (pressure, temperature, ...).
@@ -68,6 +78,7 @@ class UnitConverter:
     # API
     # -------------------------------------------------------------
     def __init__(self) -> None:
+        """Инициализирует конвертер и загружает стандартную базу единиц измерения."""
         self.parameters: dict[str, dict[str, Any]] = {}
         self._build_defaults()
 
@@ -77,8 +88,16 @@ class UnitConverter:
                 to_unit: str,
                 parameter_type: str) -> float:
         """
-        Универсальная конвертация между двумя единицами
-        одного параметра (pressure, temperature, ...).
+        Универсальная конвертация значения между двумя единицами одного параметра.
+
+        Args:
+            value (Number): Исходное числовое значение.
+            from_unit (str): Символ исходной единицы (например, 'бар').
+            to_unit (str): Символ целевой единицы (например, 'МПа').
+            parameter_type (str): Тип физической величины (например, 'pressure').
+
+        Returns:
+            float: Сконвертированное значение в целевых единицах.
         """
         parameter_type = self._norm_param(parameter_type)
         base_val = self.to_base(value, from_unit=from_unit,
@@ -89,7 +108,17 @@ class UnitConverter:
     def to_base(self, value: Number, *,
                 from_unit: str,
                 parameter_type: str) -> float:
-        """Перевод `value` из `from_unit` → базовая единица параметра."""
+        """
+        Перевод значения в базовую единицу измерения (системную эталонную).
+
+        Args:
+            value (Number): Исходное числовое значение.
+            from_unit (str): Текущая единица измерения.
+            parameter_type (str): Тип величины.
+
+        Returns:
+            float: Значение в базовой единице измерения.
+        """
         parameter_type = self._norm_param(parameter_type)
         unit = self._get_unit(parameter_type, from_unit)
         return unit["to_base"](value)
@@ -97,18 +126,44 @@ class UnitConverter:
     def from_base(self, value: Number, *,
                   to_unit: str,
                   parameter_type: str) -> float:
-        """Перевод `value` из базовой единицы параметра → `to_unit`."""
+        """
+        Перевод значения из базовой единицы (системной эталонной) в требуемую.
+
+        Args:
+            value (Number): Значение в базовой единице измерения.
+            to_unit (str): Целевая единица измерения.
+            parameter_type (str): Тип величины.
+
+        Returns:
+            float: Значение в целевой единице измерения.
+        """
         parameter_type = self._norm_param(parameter_type)
         unit = self._get_unit(parameter_type, to_unit)
         return unit["from_base"](value)
 
     def get_available_units(self, parameter_type: str) -> list[str]:
-        """Список всех поддерживаемых единиц (символы)."""
+        """
+        Получает список поддерживаемых единиц измерения для параметра.
+
+        Args:
+            parameter_type (str): Тип величины.
+
+        Returns:
+            list[str]: Список символов единиц измерения (например, ['Па', 'кПа', 'бар']).
+        """
         parameter_type = self._norm_param(parameter_type)
         return list(self.parameters[parameter_type]["units"])
 
     def get_base_unit(self, parameter_type: str) -> str:
-        """Символ базовой единицы параметра."""
+        """
+        Возвращает символ базовой единицы параметра (эталон).
+
+        Args:
+            parameter_type (str): Тип величины.
+
+        Returns:
+            str: Символ базовой единицы.
+        """
         parameter_type = self._norm_param(parameter_type)
         return self.parameters[parameter_type]["base"]
 
@@ -118,7 +173,17 @@ class UnitConverter:
                       *,
                       base_unit_symbol: str,
                       base_unit_name: str) -> None:
-        """Добавить новый тип физического параметра."""
+        """
+        Регистрирует новый тип физического параметра в конвертере.
+
+        Args:
+            parameter_type (str): Внутренний ключ (например, 'velocity').
+            base_unit_symbol (str): Символ эталонной величины (например, 'м/с').
+            base_unit_name (str): Полное название (например, 'метры в секунду').
+
+        Raises:
+            ValueError: Если параметр с таким именем уже существует.
+        """
         p = self._norm_param(parameter_type)
         if p in self.parameters:
             raise ValueError(f"Parameter '{parameter_type}' уже существует")
@@ -142,10 +207,19 @@ class UnitConverter:
                  to_base: FactorOrFunc,
                  from_base: FactorOrFunc | None = None) -> None:
         """
-        Добавить новую единицу к существующему параметру.
+        Добавляет новую единицу измерения к существующему параметру.
 
-        Если `to_base` и/или `from_base` — число,
-        то считаем это линейным коэффициентом.
+        Args:
+            parameter_type (str): Зарегистрированный тип величины.
+            unit_symbol (str): Символ новой единицы.
+            unit_name (str): Полное название новой единицы.
+            to_base (FactorOrFunc): Множитель (число) или функция конвертации В базу.
+            from_base (FactorOrFunc | None): Множитель или функция конвертации ИЗ базы.
+                Если не передано и `to_base` — число, автоматически рассчитывается 1/to_base.
+
+        Raises:
+            UnknownParameterError: Если параметр не зарегистрирован.
+            ValueError: Если `from_base` не передан при нелинейной (функциональной) конверсии.
         """
         parameter_type = self._norm_param(parameter_type)
         if parameter_type not in self.parameters:
@@ -190,6 +264,7 @@ class UnitConverter:
         return p.strip().lower()
 
     def _get_unit(self, parameter_type: str, unit_symbol: str) -> dict[str, Any]:
+        """Внутренний метод извлечения словаря единицы с проверками."""
         if parameter_type not in self.parameters:
             raise UnknownParameterError(parameter_type)
 
@@ -203,7 +278,7 @@ class UnitConverter:
 
     # ------------------- Default parameters ----------------------
     def _build_defaults(self) -> None:
-        """Инициализация «из коробки»."""
+        """Инициализация словаря единиц измерения «из коробки» (Давление, Температура и др.)."""
         # 1) Pressure ------------------------------------------------
         self.add_parameter("pressure",
                            base_unit_symbol="кгс/см²",

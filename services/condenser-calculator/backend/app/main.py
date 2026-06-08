@@ -1,19 +1,35 @@
+"""
+Главный модуль приложения (Entrypoint) микросервиса condenser-calculator.
+
+Отвечает за инициализацию экземпляра FastAPI, настройку глобальных конфигураций 
+(CORS, документация OpenAPI), подключение промежуточного ПО (Middlewares), 
+инициализацию системы логирования и регистрацию всех API-маршрутизаторов.
+"""
+
 import logging
 
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import calculations, condensers, materials, health, async_calculations, async_calculations
+from app.api.routes import (
+    calculations, 
+    condensers, 
+    materials, 
+    health, 
+    async_calculations, 
+    async_calculations  # Внимание: дубликат импорта оставлен как в исходном коде
+)
 from app.core.config import settings
 from app.core.logging import setup_logging
 from app.core.middleware import RequestIDMiddleware
 
-# Настройка структурированного JSON-логирования
+# Настройка структурированного JSON-логирования для всего микросервиса
 setup_logging()
 logger = logging.getLogger(__name__)
 
 api_router = APIRouter()
 
+# Инициализация ядра FastAPI с подтягиванием метаданных из настроек
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version="0.1.0",
@@ -21,8 +37,10 @@ app = FastAPI(
     docs_url="/docs",
 )
 
-# Добавляем Middleware
+# --- Настройка промежуточного ПО (Middlewares) ---
+# RequestIDMiddleware добавляет уникальный ID каждому запросу для сквозного трассирования логов
 app.add_middleware(RequestIDMiddleware)
+# Настройка кросс-доменных запросов (позволяет фронтенду общаться с API)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -31,23 +49,29 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Healthcheck на корневом уровне
+# --- Регистрация маршрутизаторов (Routers) ---
+# Сборка всех бизнес-эндпоинтов в единый API-роутер
 api_router.include_router(health.router, prefix="/health")
-api_router.include_router(
-    calculations.router)
-api_router.include_router(
-    condensers.router)
-api_router.include_router(
-    materials.router)
-api_router.include_router(
-    async_calculations.router)
+api_router.include_router(calculations.router)
+api_router.include_router(condensers.router)
+api_router.include_router(materials.router)
+api_router.include_router(async_calculations.router)
 
-# Все бизнес-роуты под /api/v1
+# Подключение собранного роутера к приложению с глобальным префиксом (обычно /api/v1)
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
 
 @app.get("/")
 async def root():
+    """
+    Корневой эндпоинт приложения (Index).
+
+    Служит точкой входа по умолчанию. Часто используется балансировщиками нагрузки 
+    в качестве резервного healthcheck-эндпоинта. Возвращает навигационную информацию.
+
+    Returns:
+        dict: Краткая информация о сервисе и путях к документации.
+    """
     return {
         "service": "condenser-calculator",
         "docs": "/docs",

@@ -1,103 +1,502 @@
-from typing import Any, ClassVar
+"""
+Модуль универсального конвертера физических величин.
 
-import numpy as np
-from scipy.interpolate import RegularGridInterpolator
+Обеспечивает точный перевод единиц измерения (давление, температура, 
+энтальпия, расход и т.д.) перед подачей данных в математическое ядро 
+или перед возвратом ответа клиенту. Поддерживает как простые линейные 
+коэффициенты, так и нелинейные функциональные преобразования (например, для Кельвинов).
+"""
+
+from __future__ import annotations
+
+from collections.abc import Callable
+from typing import Any
+
+Number = int | float
+FactorOrFunc = Number | Callable[[Number], Number]
 
 
-class VKUStrategy:
+class UnknownParameterError(ValueError):
+    """Исключение, выбрасываемое при запросе незарегистрированного типа параметра (например, 'voltage')."""
+    pass
+
+
+class UnknownUnitError(ValueError):
+    """Исключение, выбрасываемое при попытке конвертации неизвестной единицы измерения (например, 'фунты')."""
+    pass
+
+
+def _linear(to_base_factor: float) -> tuple[Callable[[Number], Number],
+                                            Callable[[Number], Number]]:
     """
-    Класс для расчета давления в воздушно-конденсационной установке (ВКУ).
-    Методика основана на определении давления по приведенному расходу пара
-    и температуре наружного воздуха с использованием 2D-интерполяции.
+    Вспомогательная фабрика для генерации линейных функций конвертации.
+
+    Args:
+        to_base_factor (float): Коэффициент перевода в базовую единицу.
+
+    Returns:
+        tuple: Кортеж из двух функций (`to_base(value)`, `from_base(value)`).
     """
-    _TVOZD_CONST_DEFAULT = 20.0
-    _P_DATA: ClassVar[list] = [
-        [40, 35, 30, 25, 20],
-        [40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140],
-        [
-            [0.104011054, 0.080455609, 0.061998746, 0.046804974, 0.036709784],
-            [0.111862869, 0.086879821, 0.067199298, 0.050985811, 0.039972876],
-            [0.119918627, 0.093100090, 0.072297880, 0.055880448, 0.043847797],
-            [0.127974385, 0.099830217, 0.077498432, 0.060367200, 0.047416804],
-            [0.136743944, 0.106968231, 0.083718701, 0.065567752, 0.051597640],
-            [0.145819418, 0.114718074, 0.090142913, 0.070360419, 0.056186363],
-            [0.155812637, 0.123181719, 0.097280927, 0.075866886, 0.060673115],
-            [0.165805856, 0.131543391, 0.104418940, 0.081373354, 0.065873667],
-            [0.176512876, 0.140618866, 0.112168783, 0.087899538, 0.071686050],
-            [0.187525812, 0.150000255, 0.119918627, 0.094323750, 0.077498432],
-            [0.198232832, 0.159381644, 0.127668470, 0.101155848, 0.083718701]
-        ]
-    ]
+    return (
+        lambda v, f=to_base_factor: v * f,
+        lambda v, f=to_base_factor: v / f,
+    )
 
-    def __init__(self, mass_flow_steam_nom: float, degree_dryness_steam_nom: float):
-        if mass_flow_steam_nom <= 0:
-            raise ValueError("Номинальный расход пара (mass_flow_steam_nom) должен быть больше нуля.")
-        if not (0 < degree_dryness_steam_nom <= 1):
-            raise ValueError("Номинальная степень сухости (degree_dryness_steam_nom) должна быть в диапазоне (0, 1].")
 
-        self.mass_flow_steam_nom = mass_flow_steam_nom
-        self.degree_dryness_steam_nom = degree_dryness_steam_nom
+class UnitConverter:
+    """
+    Главный класс-конвертер физических величин.
 
-        self._interpolator = self._create_interpolator()
+    Содержит словарь `self.parameters`, где каждая запись описывает один
+    физический параметр (pressure, temperature, ...).
 
-    def _create_interpolator(self) -> RegularGridInterpolator:
-        t_air_axis_desc = np.array(self._P_DATA[0])
-        g_reduced_axis = np.array(self._P_DATA[1])
-        p_values = np.array(self._P_DATA[2])
+    Структура self.parameters
+    -------------------------
+    {
+        'pressure': {
+            'name': 'Давление',
+            'base': 'кгс/см²',                # базовая единица (символ)
+            'units': {
+                'кгс/см²': {
+                    'name': 'килограмм-сила на квадратный сантиметр',
+                    'to_base': (lambda v: v),        # identity
+                    'from_base': (lambda v: v)
+                },
+                'Па':  {
+                    'name': 'паскаль',
+                    'to_base':  lambda v: v / 98_066.5,
+                    'from_base':lambda v: v * 98_066.5,
+                },
+                ...
+            }
+        },
+        ...
+    }
+    """
 
-        if t_air_axis_desc[0] > t_air_axis_desc[-1]:
-            t_air_axis_asc = np.flip(t_air_axis_desc)
-            p_values_reordered = np.fliplr(p_values)
-        else:
-            t_air_axis_asc = t_air_axis_desc
-            p_values_reordered = p_values
+    # -------------------------------------------------------------
+    # API
+    # -------------------------------------------------------------
+    def __init__(self) -> None:
+        """Инициализирует конвертер и загружает стандартную базу единиц измерения."""
+        self.parameters: dict[str, dict[str, Any]] = {}
+        self._build_defaults()
 
-        return RegularGridInterpolator(
-            (g_reduced_axis, t_air_axis_asc),
-            p_values_reordered,
-            bounds_error=False,
-            fill_value=None
-        )
-
-    def calculate(self, params: dict[str, Any]) -> dict[str, float]:
+    # ------------------------ PUBLIC -----------------------------
+    def convert(self, value: Number, *,
+                from_unit: str,
+                to_unit: str,
+                parameter_type: str) -> float:
         """
-        Выполняет расчет давления в конденсаторе.
+        Универсальная конвертация значения между двумя единицами одного параметра.
 
         Args:
-            params (Dict[str, Any]): Словарь с входными параметрами.
-                Обязательные ключи:
-                - 'mass_flow_flow_path_1' (float): G1, текущий расход пара [т/ч].
-                - 'degree_dryness_flow_path_1' (float): X1, текущая степень сухости.
-                Опциональный ключ:
-                - 'temperature_air' (float): tвозд, температура наружного воздуха [°C].
+            value (Number): Исходное числовое значение.
+            from_unit (str): Символ исходной единицы (например, 'бар').
+            to_unit (str): Символ целевой единицы (например, 'МПа').
+            parameter_type (str): Тип физической величины (например, 'pressure').
 
         Returns:
-            Dict[str, float]: Словарь с результатами расчета.
-                - 'pressure_flow_path_1': P1, рассчитанное давление в конденсаторе [кгс/см²].
-                - 'mass_flow_reduced_steam_condencer': Gк_прив, приведенный расход [%].
+            float: Сконвертированное значение в целевых единицах.
+        """
+        parameter_type = self._norm_param(parameter_type)
+        base_val = self.to_base(value, from_unit=from_unit,
+                                parameter_type=parameter_type)
+        return self.from_base(base_val, to_unit=to_unit,
+                              parameter_type=parameter_type)
+
+    def to_base(self, value: Number, *,
+                from_unit: str,
+                parameter_type: str) -> float:
+        """
+        Перевод значения в базовую единицу измерения (системную эталонную).
+
+        Args:
+            value (Number): Исходное числовое значение.
+            from_unit (str): Текущая единица измерения.
+            parameter_type (str): Тип величины.
+
+        Returns:
+            float: Значение в базовой единице измерения.
+        """
+        parameter_type = self._norm_param(parameter_type)
+        unit = self._get_unit(parameter_type, from_unit)
+        return unit["to_base"](value)
+
+    def from_base(self, value: Number, *,
+                  to_unit: str,
+                  parameter_type: str) -> float:
+        """
+        Перевод значения из базовой единицы (системной эталонной) в требуемую.
+
+        Args:
+            value (Number): Значение в базовой единице измерения.
+            to_unit (str): Целевая единица измерения.
+            parameter_type (str): Тип величины.
+
+        Returns:
+            float: Значение в целевой единице измерения.
+        """
+        parameter_type = self._norm_param(parameter_type)
+        unit = self._get_unit(parameter_type, to_unit)
+        return unit["from_base"](value)
+
+    def get_available_units(self, parameter_type: str) -> list[str]:
+        """
+        Получает список поддерживаемых единиц измерения для параметра.
+
+        Args:
+            parameter_type (str): Тип величины.
+
+        Returns:
+            list[str]: Список символов единиц измерения (например, ['Па', 'кПа', 'бар']).
+        """
+        parameter_type = self._norm_param(parameter_type)
+        return list(self.parameters[parameter_type]["units"])
+
+    def get_base_unit(self, parameter_type: str) -> str:
+        """
+        Возвращает символ базовой единицы параметра (эталон).
+
+        Args:
+            parameter_type (str): Тип величины.
+
+        Returns:
+            str: Символ базовой единицы.
+        """
+        parameter_type = self._norm_param(parameter_type)
+        return self.parameters[parameter_type]["base"]
+
+    # ------ Расширение (динамическое добавление) -----------------
+    def add_parameter(self,
+                      parameter_type: str,
+                      *,
+                      base_unit_symbol: str,
+                      base_unit_name: str) -> None:
+        """
+        Регистрирует новый тип физического параметра в конвертере.
+
+        Args:
+            parameter_type (str): Внутренний ключ (например, 'velocity').
+            base_unit_symbol (str): Символ эталонной величины (например, 'м/с').
+            base_unit_name (str): Полное название (например, 'метры в секунду').
 
         Raises:
-            KeyError: Если в словаре `params` отсутствует обязательный ключ.
+            ValueError: Если параметр с таким именем уже существует.
         """
-        try:
-            mass_flow_flow_path_1 = params['mass_flow_flow_path_1']
-            degree_dryness_flow_path_1 = params['degree_dryness_flow_path_1']
-        except KeyError as e:
-            raise KeyError(f"Отсутствует обязательный параметр в словаре: {e}")
-
-        t_air = params.get('temperature_air', self._TVOZD_CONST_DEFAULT)
-
-        mass_flow_reduced_steam_condencer = (
-                (mass_flow_flow_path_1 / self.mass_flow_steam_nom) *
-                (degree_dryness_flow_path_1 / self.degree_dryness_steam_nom) * 100
-        )
-
-        point_to_interpolate = (mass_flow_reduced_steam_condencer, t_air)
-        pressure_flow_path_1 = self._interpolator(point_to_interpolate).item()
-
-        results = {
-            'pressure_flow_path_1': pressure_flow_path_1,
-            'mass_flow_reduced_steam_condencer': mass_flow_reduced_steam_condencer
+        p = self._norm_param(parameter_type)
+        if p in self.parameters:
+            raise ValueError(f"Parameter '{parameter_type}' уже существует")
+        self.parameters[p] = {
+            "name": parameter_type,
+            "base": base_unit_symbol,
+            "units": {
+                base_unit_symbol: {
+                    "name": base_unit_name,
+                    "to_base": lambda v: v,   # identity
+                    "from_base": lambda v: v,
+                }
+            },
         }
 
-        return results
+    def add_unit(self,
+                 parameter_type: str,
+                 *,
+                 unit_symbol: str,
+                 unit_name: str,
+                 to_base: FactorOrFunc,
+                 from_base: FactorOrFunc | None = None) -> None:
+        """
+        Добавляет новую единицу измерения к существующему параметру.
+
+        Args:
+            parameter_type (str): Зарегистрированный тип величины.
+            unit_symbol (str): Символ новой единицы.
+            unit_name (str): Полное название новой единицы.
+            to_base (FactorOrFunc): Множитель (число) или функция конвертации В базу.
+            from_base (FactorOrFunc | None): Множитель или функция конвертации ИЗ базы.
+                Если не передано и `to_base` — число, автоматически рассчитывается 1/to_base.
+
+        Raises:
+            UnknownParameterError: Если параметр не зарегистрирован.
+            ValueError: Если `from_base` не передан при нелинейной (функциональной) конверсии.
+        """
+        parameter_type = self._norm_param(parameter_type)
+        if parameter_type not in self.parameters:
+            raise UnknownParameterError(parameter_type)
+
+        # Превращаем фактор в функцию (если нужно)
+        if not callable(to_base):
+            factor = float(to_base)
+
+            def to_base_func(value: Number) -> Number:
+                return value * factor
+        else:
+            to_base_func = to_base
+
+        if from_base is None:
+            # для линейного случая достаточно обратного коэффициента
+            if callable(to_base):
+                raise ValueError("from_base обязателен для нелинейных "
+                                "конверсий")
+            else:
+                from_base = 1 / float(to_base)
+
+        if not callable(from_base):
+            actor_inv = float(from_base)
+
+            def from_base_func(value: Number) -> Number:
+                return value * actor_inv
+
+        else:
+            from_base_func = from_base
+
+        self.parameters[parameter_type]["units"][unit_symbol] = {
+            "name": unit_name,
+            "to_base": to_base_func,
+            "from_base": from_base_func,
+        }
+
+    # ---------------------- INTERNAL -----------------------------
+    # нормализация ключа параметра
+    @staticmethod
+    def _norm_param(p: str) -> str:
+        return p.strip().lower()
+
+    def _get_unit(self, parameter_type: str, unit_symbol: str) -> dict[str, Any]:
+        """Внутренний метод извлечения словаря единицы с проверками."""
+        if parameter_type not in self.parameters:
+            raise UnknownParameterError(parameter_type)
+
+        units_dict = self.parameters[parameter_type]["units"]
+        if unit_symbol not in units_dict:
+            raise UnknownUnitError(
+                f"Unit '{unit_symbol}' is not registered for parameter "
+                f"'{parameter_type}'."
+            )
+        return units_dict[unit_symbol]
+
+    # ------------------- Default parameters ----------------------
+    def _build_defaults(self) -> None:
+        """Инициализация словаря единиц измерения «из коробки» (Давление, Температура и др.)."""
+        # 1) Pressure ------------------------------------------------
+        self.add_parameter("pressure",
+                           base_unit_symbol="кгс/см²",
+                           base_unit_name="килограмм-сила на квадратный сантиметр")
+
+        # линейные коэффициенты через фабрику _linear
+        _to_base, _from_base = _linear(1.0)  # identity для примера
+        # (базовая записана выше; повтор добавлять не нужно)
+
+        # Па
+        self.add_unit("pressure",
+                      unit_symbol="Па",
+                      unit_name="паскаль",
+                      to_base=lambda v: v / 98_066.5,
+                      from_base=lambda v: v * 98_066.5)
+
+        # кПа
+        self.add_unit("pressure",
+                      unit_symbol="кПа",
+                      unit_name="килопаскаль",
+                      to_base=lambda v: v * 1_000 / 98_066.5,
+                      from_base=lambda v: v * 98_066.5 / 1_000)
+
+        # МПа
+        self.add_unit("pressure",
+                      unit_symbol="МПа",
+                      unit_name="мегапаскаль",
+                      to_base=lambda v: v * 1_000_000 / 98_066.5,
+                      from_base=lambda v: v * 98_066.5 / 1_000_000)
+
+        # бар
+        self.add_unit("pressure",
+                      unit_symbol="бар",
+                      unit_name="бар",
+                      to_base=lambda v: v * 100_000 / 98_066.5,
+                      from_base=lambda v: v * 98_066.5 / 100_000)
+
+        # атм
+        self.add_unit("pressure",
+                      unit_symbol="атм",
+                      unit_name="атмосфера",
+                      to_base=lambda v: v * 101_325 / 98_066.5,
+                      from_base=lambda v: v * 98_066.5 / 101_325)
+
+        # мм рт. ст.
+        self.add_unit("pressure",
+                      unit_symbol="мм рт. ст.",
+                      unit_name="миллиметр ртутного столба",
+                      to_base=lambda v: v * 133.322 / 98_066.5,
+                      from_base=lambda v: v * 98_066.5 / 133.322)
+
+        # 2) Temperature --------------------------------------------
+        self.add_parameter("temperature",
+                           base_unit_symbol="°C",
+                           base_unit_name="градус Цельсия")
+
+        # Kelvin
+        self.add_unit("temperature",
+                      unit_symbol="K",
+                      unit_name="кельвин",
+                      to_base=lambda v: v - 273.15,        # K -> °C
+                      from_base=lambda v: v + 273.15)      # °C -> K
+
+        # 3) Enthalpy -----------------------------------------------
+        self.add_parameter("enthalpy",
+                           base_unit_symbol="ккал/кг",
+                           base_unit_name="килокалория на килограмм")
+
+        kJ_coeff = 1 / 4.1868  # кДж/кг -> ккал/кг
+        self.add_unit("enthalpy",
+                      unit_symbol="кДж/кг",
+                      unit_name="килоджоуль на килограмм",
+                      to_base=lambda v, c=kJ_coeff: v * c,
+                      from_base=lambda v, c=kJ_coeff: v / c)
+
+        J_coeff = 1 / 4186.8
+        self.add_unit("enthalpy",
+                      unit_symbol="Дж/кг",
+                      unit_name="джоуль на килограмм",
+                      to_base=lambda v, c=J_coeff: v * c,
+                      from_base=lambda v, c=J_coeff: v / c)
+
+        # 4) Entropy -------------------------------------------------
+        self.add_parameter("entropy",
+                           base_unit_symbol="ккал/кгК",
+                           base_unit_name="килокалория на килограмм-кельвин")
+
+        kJ_coeff_S = 1 / 4.1868
+        self.add_unit("entropy",
+                      unit_symbol="кДж/кгК",
+                      unit_name="килоджоуль на килограмм-кельвин",
+                      to_base=lambda v, c=kJ_coeff_S: v * c,
+                      from_base=lambda v, c=kJ_coeff_S: v / c)
+
+        # 5) Density -------------------------------------------------
+        self.add_parameter("density",
+                           base_unit_symbol="кг/м³",
+                           base_unit_name="килограмм на кубический метр")
+
+        # Пример других единиц (г/см³) — покажем как фактор:
+        g_cm3_factor = 1000  # 1 г/см³ = 1000 кг/м³
+        self.add_unit("density",
+                      unit_symbol="г/см³",
+                      unit_name="грамм на кубический сантиметр",
+                      to_base=g_cm3_factor,
+                      from_base=1 / g_cm3_factor)
+
+        # 6) Specific volume ----------------------------------------
+        self.add_parameter("specific_volume",
+                           base_unit_symbol="м³/кг",
+                           base_unit_name="кубический метр на килограмм")
+        # (для краткости доп. ед. не добавляем)
+
+        # 7) Power ---------------------------------------------------
+        self.add_parameter("power",
+                           base_unit_symbol="МВт",
+                           base_unit_name="мегаватт")
+
+        self.add_unit("power",
+                      unit_symbol="кВт",
+                      unit_name="киловатт",
+                      to_base=0.001,
+                      from_base=1000)
+
+        self.add_unit("power",
+                      unit_symbol="Вт",
+                      unit_name="ватт",
+                      to_base=0.000001,
+                      from_base=1_000_000)
+
+        hp_factor = 0.00073549875
+        self.add_unit("power",
+                      unit_symbol="л.с.",
+                      unit_name="метрическая лошадиная сила",
+                      to_base=hp_factor,
+                      from_base=1 / hp_factor)
+
+        # 8) Mass flow rate -----------------------------------------
+        self.add_parameter("mass_flow",
+                           base_unit_symbol="т/ч",
+                           base_unit_name="тонна в час")
+
+        self.add_unit("mass_flow",
+                      unit_symbol="кг/с",
+                      unit_name="килограмм в секунду",
+                      to_base=3.6,          # 1 кг/с = 3.6 т/ч
+                      from_base=1 / 3.6)
+
+        self.add_unit("mass_flow",
+                      unit_symbol="кг/ч",
+                      unit_name="килограмм в час",
+                      to_base=0.001,        # 1 кг/ч = 0.001 т/ч
+                      from_base=1000)
+
+        # 9) Heat power (Q) -----------------------------------------
+        self.add_parameter("heat_power",
+                           base_unit_symbol="Гкал/ч",
+                           base_unit_name="гигакалория в час")
+
+        # МДж/ч
+        mjh_coeff = 1 / (4.1868 * 1000)  # 1 МДж/ч -> Гкал/ч
+        self.add_unit("heat_power",
+                      unit_symbol="МДж/ч",
+                      unit_name="мегаджоуль в час",
+                      to_base=mjh_coeff,
+                      from_base=1 / mjh_coeff)
+
+        # кВт
+        kw_coeff = 3600 / (4.1868e9)  # 1 кВт = 1 kJ/s = 3600 kJ/h
+        self.add_unit("heat_power",
+                      unit_symbol="кВт",
+                      unit_name="киловатт (тепловая мощность)",
+                      to_base=kw_coeff,
+                      from_base=1 / kw_coeff)
+
+        # 10) Dryness / Moisture fraction ---------------------------
+        self.add_parameter("quality",
+                           base_unit_symbol="fraction",
+                           base_unit_name="доля (0–1)")
+
+        self.add_unit("quality",
+                      unit_symbol="%",
+                      unit_name="проценты",
+                      to_base=lambda v: v / 100.0,
+                      from_base=lambda v: v * 100.0)
+
+    # -------------------------------------------------------------
+
+
+# -----------------------------------------------------------------
+# Пример использования
+# -----------------------------------------------------------------
+if __name__ == "__main__":
+    uc = UnitConverter()
+
+    # 1. Давление: 10 бар → кгс/см²
+    p_kgf = uc.convert(10, from_unit="бар", to_unit="кгс/см²",
+                       parameter_type="pressure")
+    print(f"10 бар = {p_kgf:.3f} кгс/см²")
+
+    # 2. Температура: 100 °C → K
+    t_kelvin = uc.convert(100, from_unit="°C", to_unit="K",
+                          parameter_type="temperature")
+    print(f"100 °C = {t_kelvin:.2f} K")
+
+    # 3. Плотность: 1.2 г/см³ → кг/м³
+    rho = uc.convert(1.2, from_unit="г/см³", to_unit="кг/м³",
+                     parameter_type="density")
+    print(f"1.2 г/см³ = {rho:.1f} кг/м³")
+
+    # 4. Качество (dryness) 85 % → доля
+    x_fraction = uc.to_base(85, from_unit="%", parameter_type="quality")
+    print(f"85 % = {x_fraction:.3f} (доля)")
+
+    # 5. Мощность 2500 кВт → л.с.
+    hp = uc.convert(2500, from_unit="кВт", to_unit="л.с.",
+                    parameter_type="power")
+    print(f"2500 кВт = {hp:.1f} л.с.")
+
+    # Список доступных единиц для давления
+    print("Доступные единицы давления:", uc.get_available_units("pressure"))

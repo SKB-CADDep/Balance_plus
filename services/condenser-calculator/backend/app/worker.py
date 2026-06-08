@@ -1,13 +1,12 @@
 """
-Модуль фоновых задач (Celery Workers) микросервиса Condenser Calculator.
+Модуль фоновых задач (Workers) для выполнения ресурсоемких вычислений.
 
-Содержит "тяжелые" вычислительные задачи, которые выполняются асинхронно
-вне цикла событий (Event Loop) FastAPI. Это позволяет не блокировать API
-и возвращать пользователю task_id для последующего поллинга (polling) статуса.
+Использует Celery для запуска математического ядра вне основного HTTP-цикла (FastAPI).
+Позволяет обрабатывать массивные расчеты асинхронно, предотвращая тайм-ауты 
+сетевых соединений и зависание клиентского приложения (фронтенда).
 """
-import logging
-from typing import Dict, Any
 
+import logging
 from app.core.celery_app import celery_app
 from app.core.database import SessionLocal
 from app.models.condenser import Condenser
@@ -19,35 +18,37 @@ logger = logging.getLogger(__name__)
 
 
 @celery_app.task(bind=True)
-def calculate_async_task(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+def calculate_async_task(self, payload: dict):
     """
-    Выполняет полный цикл физического расчета конденсатора в фоне.
+    Выполняет полный цикл расчета конденсатора в фоновом процессе.
 
-    Аргументы передаются в виде словаря (dict), а не Pydantic-модели, 
-    так как брокер сообщений Celery (Redis/RabbitMQ) сериализует задачи 
-    в JSON, который не поддерживает сложные Python-объекты.
+    Поскольку задача выполняется вне контекста FastAPI, она самостоятельно 
+    управляет жизненным циклом подключения к базе данных.
 
     Args:
-        self: Экземпляр задачи Celery (доступен благодаря bind=True).
-        payload (Dict[str, Any]): Сериализованный объект CalculationInput.
+        self (celery.app.task.Task): Экземпляр задачи Celery (доступен благодаря bind=True).
+            Позволяет получать метаданные, такие как ID текущей задачи.
+        payload (dict): Сериализованные входные данные для расчета 
+            (соответствуют схеме CalculationInput).
 
     Returns:
-        Dict[str, Any]: Стандартный контракт ответа. Содержит ключ 'status' 
-        ('success' или 'error') и либо результаты расчета ('result'), либо 
-        информацию об ошибке ('error_type', 'message').
+        dict: Унифицированный словарь с результатами. 
+            При успехе содержит {"status": "success", "result": <данные>}.
+            При ошибке содержит {"status": "error", "error_type": <тип>, "message": <текст>}.
     """
     task_id = self.request.id
-    logger.info("Начат асинхронный расчет конденсатора", extra={"task_id": task_id})
+    logger.info(f"Начат асинхронный расчет конденсатора. Task ID: {task_id}")
     
-    # Воркеры Celery работают в отдельных процессах (или потоках),
-    # у них нет доступа к Dependency Injection FastAPI (Depends(get_db)).
-    # Поэтому каждый воркер обязан самостоятельно управлять жизненным циклом сессии.
+    # Воркер выполняется в изолированном процессе, поэтому Dependency Injection (get_db) недоступен.
+    # Открываем независимую сессию базы данных вручную.
     db = SessionLocal()
     try:
-        # Восстанавливаем строгую типизацию и валидацию данных из "сырого" словаря
+        # 1. Парсим входящий JSON обратно в валидированную Pydantic модель
         calc_input = CalculationInput(**payload)
         
+        # 2. Загружаем геометрию конденсатора из базы данных
         condenser = db.query(Condenser).filter(Condenser.id == calc_input.condenser_id).first()
+        
         if not condenser:
             return {
                 "status": "error", 
@@ -55,9 +56,9 @@ def calculate_async_task(self, payload: Dict[str, Any]) -> Dict[str, Any]:
                 "message": f"Конденсатор (ID {calc_input.condenser_id}) не найден в БД"
             }
 
-        # Резолвинг материала (связь Many-to-Many).
-        # Алгоритм: если клиент явно передал material_id — используем его.
-        # Иначе используем механизм Fallback и берем первый привязанный материал по умолчанию.
+        # Бизнес-правило: Определение материала трубок (Many-to-Many).
+        # Если клиент передал конкретный материал — используем его. 
+        # Если материал не передан, извлекаем первый доступный (по умолчанию) из связей конденсатора.
         material = None
         requested_material_id = getattr(calc_input, 'material_id', None)
         
@@ -73,26 +74,27 @@ def calculate_async_task(self, payload: Dict[str, Any]) -> Dict[str, Any]:
                 "message": f"Не удалось определить материал для конденсатора (ID {condenser.id})"
             }
             
-        # Запуск расчетного ядра через паттерн Адаптер
+        # 3. Инициализируем адаптер и запускаем тяжелый физический расчет
         adapter = CondenserCalculationAdapter()
         result = adapter.calculate(calc_input, condenser, material)
         
-        logger.info("Расчет успешно завершен", extra={"task_id": task_id})
+        logger.info(f"Расчет успешно завершен. Task ID: {task_id}")
         
+        # 4. Возвращаем результат в формате, который ожидает эндпоинт статуса (get_task_status)
         return {
             "status": "success",
             "result": result.model_dump()
         }
         
     except Exception as e:
-        # Ловим все исключения (вкл. CalculationEngineError), чтобы воркер
-        # не упал тихо (Silent Failure), а вернул статус ошибки в брокер.
-        logger.exception("Ошибка при выполнении фонового расчета", extra={"task_id": task_id})
+        # Отлов всех непредвиденных математических или системных сбоев
+        logger.error(f"Ошибка при расчете Task ID {task_id}: {str(e)}", exc_info=True)
         return {
             "status": "error", 
             "error_type": type(e).__name__, 
             "message": str(e)
         }
     finally:
-        # Гарантируем возврат соединения в пул, чтобы воркер не "повесил" базу
+        # Критически важный блок: гарантия освобождения пула соединений БД
+        # даже при возникновении фатальной ошибки (Exception) внутри try.
         db.close()
