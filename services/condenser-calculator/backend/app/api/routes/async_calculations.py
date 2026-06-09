@@ -6,14 +6,18 @@
 Позволяет не блокировать HTTP-запросы клиента при длительных вычислениях.
 """
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Path
 from app.core.celery_app import celery_app
 from app.schemas.calculation import CalculationInput
 
 router = APIRouter(tags=["Async Calculations"])
 
-@router.post("/calculate-async")
-def trigger_calculation(input_data: CalculationInput):
+
+@router.post(
+    "/calculate-async",
+    summary="Запуск асинхронного расчета",
+)
+def trigger_calculation(input_data: CalculationInput) -> dict:
     """
     Отправляет задачу на расчет конденсатора в асинхронную очередь.
 
@@ -35,8 +39,14 @@ def trigger_calculation(input_data: CalculationInput):
     
     return {"task_id": task.id, "status": "Processing"}
 
-@router.get("/calculate-async/{task_id}")
-def get_task_status(task_id: str):
+
+@router.get(
+    "/calculate-async/{task_id}",
+    summary="Статус асинхронного расчета",
+)
+def get_task_status(
+    task_id: str = Path(..., description="Уникальный идентификатор (UUID) задачи, полученный при запуске")
+) -> dict:
     """
     Получает текущий статус и результаты выполнения асинхронной задачи по её ID.
 
@@ -48,11 +58,8 @@ def get_task_status(task_id: str):
         task_id (str): Уникальный идентификатор (UUID) задачи.
 
     Returns:
-        dict: Объект ответа с полями:
-            - task_id (str): Идентификатор запрошенной задачи.
-            - status (str): Статус Celery (PENDING, STARTED, SUCCESS, FAILURE и др.).
-            - [остальные поля]: Результат выполнения (если SUCCESS) 
-              или ключ "error" с текстом ошибки (если FAILURE).
+        dict: Объект ответа со статусом (PENDING, STARTED, SUCCESS, FAILURE) 
+              и результатами (или ошибкой).
     """
     task_result = celery_app.AsyncResult(task_id)
     
