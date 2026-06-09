@@ -12,6 +12,7 @@ import time
 import logging
 from typing import Callable
 
+# Использование numpy для ускорения работы расчетного ядра при интерполяции массивов
 import numpy as np
 
 from app.core.converter import converter
@@ -154,7 +155,6 @@ class CondenserCalculationAdapter:
                 details=f"material_id={material.id}"
             )
 
-        # Использование numpy для ускорения работы расчетного ядра
         x = np.array([p[0] for p in points])
         y = np.array([p[1] for p in points])
 
@@ -243,8 +243,25 @@ class CondenserCalculationAdapter:
 
         return tables, ejectors
 
-    def _prepare_berman_params(self, input_data: CalculationInput, condenser: Condenser, lam: float):
-        """Подготавливает словарь параметров для стратегии Бермана с конвертацией единиц (энтальпия)."""
+    def _prepare_berman_params(self, input_data: CalculationInput, condenser: Condenser, lam: float) -> dict:
+        """
+        Подготавливает плоский словарь параметров для стратегии Бермана.
+
+        Выполняет маппинг геометрических свойств конденсатора и пользовательских 
+        режимов, а также производит конвертацию единиц измерения (энтальпии) 
+        в базовые единицы ядра.
+
+        Args:
+            input_data (CalculationInput): Входные данные (режимы, массивы расходов, b и т.д.).
+            condenser (Condenser): Геометрия аппарата из базы данных.
+            lam (float): Уточненное значение коэффициента теплопроводности.
+
+        Returns:
+            dict: Словарь физических параметров для математического ядра.
+
+        Raises:
+            UnitConversionError: При ошибке конвертации энтальпии пара.
+        """
         try:
             h_steam = converter.convert(
                 input_data.H_steam,
