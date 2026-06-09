@@ -42,7 +42,7 @@ adapter = CondenserCalculationAdapter()
         422: {"description": "Ошибка бизнес-валидации"},
     },
 )
-async def calculate(
+def calculate(
     input_data: CalculationInput,
     db: Session = Depends(get_db),
 ):
@@ -130,7 +130,7 @@ async def calculate(
         422: {"description": "Ошибка бизнес-валидации"},
     },
 )
-async def calculate_excel(
+def calculate_excel(
     input_data: CalculationInput,
     db: Session = Depends(get_db),
 ):

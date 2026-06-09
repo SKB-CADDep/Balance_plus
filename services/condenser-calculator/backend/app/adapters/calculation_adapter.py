@@ -24,8 +24,10 @@ from app.core.exceptions import (
 from app.utils.berman_strategy import BermanStrategy
 from app.utils.metrovickers_strategy import MetroVickersStrategy
 from app.utils.table_models import Table1D
+
+# ИСПРАВЛЕНИЕ: Обновлен импорт валидатора (согласно нашим изменениям в condenser_validators.py)
 from app.core.condenser_validators import (
-    validate_water_flow_limits,
+    validate_water_flows,
     validate_temperature_ranges
 )
 
@@ -91,11 +93,9 @@ class CondenserCalculationAdapter:
 
             # Диспетчеризация расчетов в зависимости от выбранной методики
             if input_data.method == "berman":
-                tables, ejector_results = self._run_berman(
-                    input_data, condenser, lambda_interp)
+                tables, ejector_results = self._run_berman(input_data, condenser, lambda_interp)
             else:
-                tables = self._run_metrovickers(
-                    input_data, condenser, lambda_interp)
+                tables = self._run_metrovickers(input_data, condenser, lambda_interp)
                 ejector_results = []
 
             elapsed_ms = (time.perf_counter() - start) * 1000
@@ -137,15 +137,6 @@ class CondenserCalculationAdapter:
     def _build_lambda_interpolator(self, material: Material) -> Table1D:
         """
         Создает объект одномерной интерполяции теплопроводности (Table1D).
-
-        Args:
-            material (Material): Объект материала с полем `thermal_conductivity_points`.
-
-        Returns:
-            Table1D: Функция, позволяющая получить `lambda` для любой температуры `t`.
-
-        Raises:
-            MaterialPropertyError: Если точек данных недостаточно для интерполяции.
         """
         points = material.thermal_conductivity_points
 
@@ -175,20 +166,6 @@ class CondenserCalculationAdapter:
     ) -> float:
         """
         Итерационное уточнение коэффициента теплопроводности λ (Бизнес-правило BR-12).
-
-        Термодинамическая проблема: теплопроводность зависит от температуры стенки труб, 
-        а температура стенки зависит от коэффициента теплопередачи (в который входит теплопроводность).
-        Решается методом последовательных приближений.
-
-        Args:
-            lambda_interp (Table1D): Функция интерполяции теплопроводности от температуры.
-            t_avg_initial (float): Начальное приближение средней температуры.
-            single_calc_func (Callable): Функция, возвращающая новую температуру при заданной λ.
-            max_iter (int): Максимальное число итераций.
-            tol (float): Допустимая погрешность (условие сходимости).
-
-        Returns:
-            float: Уточненное значение коэффициента теплопроводности.
         """
         t_avg = float(t_avg_initial)
         for i in range(max_iter):
@@ -196,13 +173,11 @@ class CondenserCalculationAdapter:
             new_t_avg = single_calc_func(lam)
 
             if abs(new_t_avg - t_avg) < tol:
-                logger.debug("Lambda iteration converged", extra={
-                             "iterations": i + 1, "lam": lam})
+                logger.debug("Lambda iteration converged", extra={"iterations": i + 1, "lam": lam})
                 return lam
             t_avg = new_t_avg
 
-        logger.warning("Lambda iteration did not converge fully",
-                       extra={"final_t_avg": t_avg})
+        logger.warning("Lambda iteration did not converge fully", extra={"final_t_avg": t_avg})
         return float(lambda_interp(t_avg))
 
     # ===================================================================
@@ -217,9 +192,6 @@ class CondenserCalculationAdapter:
     ):
         """
         Управляет логикой пакетного (batch) расчета по методике Бермана.
-
-        Особенность реализации: передает все массивы параметров в ядро единовременно, 
-        получает плоский список результатов и форматирует их в трехмерную структуру (матрицы).
         """
         logger.info("Running Berman strategy")
 
@@ -237,8 +209,7 @@ class CondenserCalculationAdapter:
         engine = BermanStrategy()
         raw = engine.calculate(params)
 
-        tables = self._reshape_berman_results(
-            raw["main_results"], input_data, condenser)
+        tables = self._reshape_berman_results(raw["main_results"], input_data, condenser)
         ejectors = [EjectorResult(**e) for e in raw.get("ejector_results", [])]
 
         return tables, ejectors
@@ -246,21 +217,6 @@ class CondenserCalculationAdapter:
     def _prepare_berman_params(self, input_data: CalculationInput, condenser: Condenser, lam: float) -> dict:
         """
         Подготавливает плоский словарь параметров для стратегии Бермана.
-
-        Выполняет маппинг геометрических свойств конденсатора и пользовательских 
-        режимов, а также производит конвертацию единиц измерения (энтальпии) 
-        в базовые единицы ядра.
-
-        Args:
-            input_data (CalculationInput): Входные данные (режимы, массивы расходов, b и т.д.).
-            condenser (Condenser): Геометрия аппарата из базы данных.
-            lam (float): Уточненное значение коэффициента теплопроводности.
-
-        Returns:
-            dict: Словарь физических параметров для математического ядра.
-
-        Raises:
-            UnitConversionError: При ошибке конвертации энтальпии пара.
         """
         try:
             h_steam = converter.convert(
@@ -302,8 +258,7 @@ class CondenserCalculationAdapter:
 
     def _reshape_berman_results(self, flat_results: list[dict], input_data: CalculationInput, condenser: Condenser):
         """
-        Преобразует плоский список результатов от ядра Бермана в массив 2D-матриц (MatrixResult).
-        Также применяет бизнес-правила валидации ограничений (расходы воды и температуры).
+        Преобразует плоский список результатов от ядра Бермана в массив 2D-матриц.
         """
         len_W = max(len(input_data.W_main), len(input_data.W_builtin or []))
         len_b = len(input_data.coefficient_b)
@@ -319,22 +274,17 @@ class CondenserCalculationAdapter:
 
                 matrix = []
                 for t_j in range(len_t):
-                    row = [chunk[t_j * len_G + g_k].get('P_steam_seuif_atm', 0.0)
-                           for g_k in range(len_G)]
+                    row = [chunk[t_j * len_G + g_k].get('P_steam_seuif_atm', 0.0) for g_k in range(len_G)]
                     matrix.append(row)
 
-                w_main = input_data.W_main[w_i] if w_i < len(
-                    input_data.W_main) else 0.0
-                w_builtin = input_data.W_builtin[w_i] if input_data.W_builtin and w_i < len(
-                    input_data.W_builtin) else 0.0
+                w_main = input_data.W_main[w_i] if w_i < len(input_data.W_main) else 0.0
+                w_builtin = input_data.W_builtin[w_i] if input_data.W_builtin and w_i < len(input_data.W_builtin) else 0.0
 
-                warnings = validate_water_flow_limits(
-                    w_main, w_builtin, condenser.water_flow_limits)
-
-                t1_warnings = validate_temperature_ranges(
-                    "berman", input_data.t1_main)
+                warnings = validate_water_flows(w_main, w_builtin, condenser.water_flow_limits)
+                t1_warnings = validate_temperature_ranges("berman", input_data.t1_main)
                 warnings.extend(t1_warnings)
 
+                # ИСПРАВЛЕНИЕ СТИЛЯ: Удалены лишние пустые строки внутри инициализации MatrixResult
                 tables.append(MatrixResult(
                     meta={
                         "coefficient_b": input_data.coefficient_b[b_i],
@@ -362,9 +312,6 @@ class CondenserCalculationAdapter:
     ):
         """
         Управляет логикой расчета по методике Метро-Виккерса.
-
-        Особенность реализации: в отличие от Бермана, вызывает ядро `MetroVickersStrategy` 
-        итеративно для каждой отдельной точки (комбинации b, W, t, G), собирая матрицы на лету.
         """
         logger.info("Running MetroVickers strategy")
 
@@ -376,8 +323,7 @@ class CondenserCalculationAdapter:
         # Генерация матриц через вложенные циклы
         for b in input_data.coefficient_b:
             for w_i in range(len_W):
-                w_main = input_data.W_main[w_i] if w_i < len(
-                    input_data.W_main) else 0.0
+                w_main = input_data.W_main[w_i] if w_i < len(input_data.W_main) else 0.0
 
                 matrix = []
                 is_extrapolated_matrix = False
@@ -386,8 +332,7 @@ class CondenserCalculationAdapter:
                     t_avg_est = t1 + 3.0
                     lam = self._get_lambda_iterative(
                         lambda_interp, t_avg_est,
-                        lambda lam_val: self._estimate_t_avg_metrovickers(
-                            t1, w_main, lam_val)
+                        lambda lam_val: self._estimate_t_avg_metrovickers(t1, w_main, lam_val)
                     )
 
                     row = []
@@ -404,21 +349,17 @@ class CondenserCalculationAdapter:
 
                     matrix.append(row)
 
-                w_main = input_data.W_main[w_i] if w_i < len(
-                    input_data.W_main) else 0.0
-                w_builtin = input_data.W_builtin[w_i] if input_data.W_builtin and w_i < len(
-                    input_data.W_builtin) else 0.0
+                w_main = input_data.W_main[w_i] if w_i < len(input_data.W_main) else 0.0
+                w_builtin = input_data.W_builtin[w_i] if input_data.W_builtin and w_i < len(input_data.W_builtin) else 0.0
 
-                warnings = validate_water_flow_limits(
-                    w_main, w_builtin, condenser.water_flow_limits)
-
-                t1_warnings = validate_temperature_ranges(
-                    "metro-vickers", input_data.t1_main)
+                warnings = validate_water_flows(w_main, w_builtin, condenser.water_flow_limits)
+                t1_warnings = validate_temperature_ranges("metro-vickers", input_data.t1_main)
                 warnings.extend(t1_warnings)
 
                 if is_extrapolated_matrix:
                     warnings.append("Данные не подтверждены экспериментально")
 
+                # ИСПРАВЛЕНИЕ СТИЛЯ: Удалены лишние пустые строки внутри инициализации
                 tables.append(MatrixResult(
                     meta={
                         "coefficient_b": b,
