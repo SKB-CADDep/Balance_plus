@@ -6,162 +6,179 @@
 Для получения промежуточных значений используется двумерная (билинейная) интерполяция.
 
 Содержит:
-- Матрицу табличных данных (k_interpolation_data).
-- Функцию точечного расчета (calculate_pressure).
+- Инициализацию глобального интерполятора.
+- Функцию точечного расчета (calculate_pressure) — Фасад.
 - Функцию генерации массивов результатов (batch_calculate).
 """
 
 import math
-
 import numpy as np
 import seuif97
 from scipy.interpolate import RegularGridInterpolator
+from itertools import product
 
 from .uniconv import UnitConverter
+from app.utils import Constants as const  # Импортируем базу данных констант
 
-# Базовый поправочный коэффициент (используется в формуле denom_clean)
-coefficient_B_const = 1.0
+# =====================================================================
+# ИНИЦИАЛИЗАЦИЯ ЯДРА (Выполняется 1 раз при импорте модуля)
+# =====================================================================
 
-# Эмпирические данные из нормативных графиков Метро-Виккерс
-k_interpolation_data = {
-    "temperature_points": [5, 15, 27, 38, 50, 70, 95, 120, 150],  # Средняя температура tср [°C]
-    "speed_points": [0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 1.9, 2.0, 2.1, 2.2, 2.4, 2.6, 2.8, 3.0, 3.2, 3.4, 3.6], # Скорость воды Cов [м/с]
-    "k_values_matrix": [
-        [800, 1050, 1260, 1430, 1540, 1670, 1770, 1870, 1930],
-        [1260, 1510, 1720, 1890, 2000, 2170, 2270, 2370, 2430],
-        [1670, 1920, 2130, 2300, 2430, 2600, 2700, 2800, 2860],
-        [1970, 2220, 2450, 2620, 2750, 2950, 3060, 3160, 3230],
-        [2200, 2450, 2680, 2850, 2990, 3190, 3290, 3390, 3490],
-        [2410, 2680, 2900, 3080, 3210, 3400, 3520, 3620, 3700],
-        [2590, 2840, 3070, 3230, 3380, 3570, 3690, 3790, 3880],
-        [2760, 3010, 3230, 3420, 3550, 3730, 3850, 3960, 4040],
-        [2830, 3080, 3300, 3490, 3630, 3810, 3930, 4040, 4120],
-        [2900, 3150, 3370, 3570, 3700, 3870, 4000, 4110, 4190],
-        [2980, 3230, 3440, 3640, 3770, 3950, 4070, 4180, 4250],
-        [3040, 3290, 3500, 3690, 3830, 4000, 4120, 4220, 4310],
-        [3150, 3400, 3620, 3810, 3940, 4120, 4230, 4350, 4420],
-        [3250, 3500, 3710, 3910, 4040, 4220, 4330, 4440, 4540],
-        [3340, 3590, 3800, 3990, 4130, 4320, 4420, 4530, 4610],
-        [3440, 3690, 3870, 4050, 4180, 4390, 4500, 4600, 4670],
-        [3500, 3750, 3930, 4100, 4230, 4460, 4560, 4660, 4730],
-        [3560, 3810, 3990, 4160, 4290, 4520, 4620, 4720, 4790],
-        [3600, 3850, 4040, 4200, 4340, 4560, 4660, 4760, 4840]
-    ]
-}
+# Оптимизация производительности: Интерполятор и конвертер создаются ОДИН раз.
+_INTERPOLATOR = RegularGridInterpolator(
+    (const.k_interpolation_data["speed_points"], const.k_interpolation_data["temperature_points"]),
+    np.array(const.k_interpolation_data["k_values_matrix"]),
+    method="linear",
+    bounds_error=False,
+    fill_value=None
+)
 
-def calculate_pressure(params: dict) -> dict:
-    """
-    Вычисляет давление в конденсаторе для одной конкретной точки (режима).
+_UC = UnitConverter()
 
-    Физический смысл алгоритма:
-    1. Расчет площади поверхности и скорости воды.
-    2. Определение нагрева воды и средней температуры.
-    3. Билинейная интерполяция базового коэффициента теплопередачи по матрице Метро-Виккерса.
-    4. Уточнение коэффициента с учетом термического сопротивления стенки и загрязнений.
-    5. Расчет температуры насыщения пара и финального давления (seuif97).
 
-    Args:
-        params (dict): Плоский словарь параметров. Ожидаемые ключи:
-            - Геометрия: 'diameter_inside_of_pipes', 'thickness_pipe_wall', 'length_cooling_tubes_of_the_main_bundle', 
-              'number_cooling_tubes_of_the_main_bundle', 'number_cooling_tubes_of_the_built_in_bundle', 
-              'number_cooling_water_passes_of_the_main_bundle', 'number_air_cooler_total_pipes'
-            - Режим: 'mass_flow_cooling_water', 'temperature_cooling_water_1', 'mass_flow_flow_path_1', 'coefficient_b'
-            - Физика: 'thermal_conductivity_cooling_surface_tube_material', 'degree_dryness_flow_path_1'
+# =====================================================================
+# ПРИВАТНЫЕ ВЫЧИСЛИТЕЛЬНЫЕ БЛОКИ (Соблюдение SRP)
+# =====================================================================
 
-    Returns:
-        dict: Словарь с промежуточными коэффициентами и финальным давлением ('p_kgf').
-    """
-    # Инициализация интерполятора
-    get_k_from_table_temp = RegularGridInterpolator(
-        (k_interpolation_data["speed_points"], k_interpolation_data["temperature_points"]),
-        np.array(k_interpolation_data["k_values_matrix"]),
-        method="linear",
-        bounds_error=False,
-        fill_value=None
-    )
+def _get_heat_of_vaporization(temperature: float) -> float:
+    """Эмпирическая аппроксимация скрытой теплоты парообразования."""
+    return (30 - temperature) * 0.582 + 580.4
 
-    def get_heat_of_vaporization(temperature: float) -> float:
-        """Эмпирическая аппроксимация скрытой теплоты парообразования."""
-        return (30 - temperature) * 0.582 + 580.4
 
-    uc = UnitConverter()
-
-    # --- 1. Извлечение входных параметров ---
+def _calc_geometry(params: dict) -> dict:
+    """Шаг 1: Расчет геометрических характеристик аппарата."""
     d_in = params['diameter_inside_of_pipes']
     s_w = params['thickness_pipe_wall']
     L = params['length_cooling_tubes_of_the_main_bundle']
     N_main = params['number_cooling_tubes_of_the_main_bundle']
-    N_extra = params['number_cooling_tubes_of_the_built_in_bundle']
-    n_passes = params['number_cooling_water_passes_of_the_main_bundle']
-    m_cw = params['mass_flow_cooling_water']
-    T_cw1 = params['temperature_cooling_water_1']
+    N_extra = params.get('number_cooling_tubes_of_the_built_in_bundle', 0)
     lambda_mat = params['thermal_conductivity_cooling_surface_tube_material']
-    b = params.get('coefficient_b', 1.0)
-    m_flow = params['mass_flow_flow_path_1']
-    dryness = params['degree_dryness_flow_path_1']
     
-    # Расчет количества трубок воздухоохладителя, если они не заданы (по умолчанию ~15%)
-    N_total = params.get('number_air_cooler_total_pipes', (N_main + N_extra) * 0.15)
+    # Расчет количества трубок воздухоохладителя (~15% если не задано)
+    N_total_air = params.get('number_air_cooler_total_pipes', (N_main + N_extra) * 0.15)
 
-    # --- 2. Геометрические вычисления ---
     d_out = d_in + 2 * s_w
     area_total = (math.pi * L * N_main * d_out * 1e-6)
-    area_air = (math.pi * L * N_total * d_out * 1e-6)
+    area_air = (math.pi * L * N_total_air * d_out * 1e-6)
 
     # Коэффициент влияния воздухоохладителя
     Kf = 1 - 0.225 * (area_air / area_total) if area_total > 0 else 1.0
     
     # Термическое сопротивление стенки трубы
-    R1 = ((2 * s_w / 1000 * d_out / 1000) /
-          ((d_out / 1000 + d_in / 1000) * lambda_mat))
+    R1 = ((2 * s_w / 1000 * d_out / 1000) / ((d_out / 1000 + d_in / 1000) * lambda_mat))
 
-    # --- 3. Теплогидравлические вычисления ---
-    speed = (m_cw * n_passes) / (900 * math.pi * (N_main + N_extra) * (d_in / 1000) ** 2)
-    r_vap = get_heat_of_vaporization(T_cw1)
+    return {
+        'd_out': d_out, 
+        'area_total': area_total, 
+        'area_air': area_air, 
+        'Kf': Kf, 
+        'R1': R1,
+        'N_total': N_main + N_extra
+    }
+
+
+def _calc_thermohydraulics(params: dict, d_in: float, N_total: int) -> dict:
+    """Шаг 2: Расчет скоростей и температур охлаждающей воды."""
+    m_cw = params['mass_flow_cooling_water']
+    n_passes = params['number_cooling_water_passes_of_the_main_bundle']
+    T_cw1 = params['temperature_cooling_water_1']
+    m_flow = params['mass_flow_flow_path_1']
+    dryness = params['degree_dryness_flow_path_1']
+
+    speed = (m_cw * n_passes) / (900 * math.pi * N_total * (d_in / 1000) ** 2)
+    r_vap = _get_heat_of_vaporization(T_cw1)
 
     dT = (m_flow * r_vap * dryness) / m_cw
     T_cw2 = T_cw1 + dT
     T_avg = (T_cw1 + T_cw2) / 2
 
-    # --- 4. Итерационный подбор коэффициента теплопередачи (K_temp) ---
-    max_iter, tol = 20, 0.001
-    K_temp = get_k_from_table_temp((speed, T_avg)).item()
+    return {
+        'speed': speed, 
+        'r_vap': r_vap, 
+        'dT': dT, 
+        'T_cw2': T_cw2, 
+        'T_avg': T_avg
+    }
 
-    for _ in range(max_iter):
-        k_new = get_k_from_table_temp((speed, T_avg)).item()
-        if abs(k_new - K_temp) < tol:
-            K_temp = k_new
-            break
-        K_temp = k_new
 
-    # --- 5. Уточнение коэффициента с учетом загрязнений и стенки ---
-    # 0.85 - поправочный эмпирический коэффициент Метро-Виккерса, 0.087/10000 - стандартное термическое сопротивление
-    denom_clean = (1 / (K_temp * 0.85 * coefficient_B_const * Kf)) - 0.087 / 10000 + R1
+def _calc_heat_transfer_coefficient(speed: float, T_avg: float, Kf: float, R1: float, b: float) -> dict:
+    """Шаг 3: Определение финального коэффициента теплопередачи (K)."""
+    # Билинейная интерполяция по матрице Метро-Виккерса
+    K_temp = _INTERPOLATOR((speed, T_avg)).item()
+
+    # 0.85 - поправка Метро-Виккерса, 0.087/10000 - стандартное термическое сопротивление
+    denom_clean = (1 / (K_temp * 0.85 * const.coefficient_B_const * Kf)) - 0.087 / 10000 + R1
     K_clean = 1 / denom_clean
     
     R = (1 / K_clean) * ((1 / b) - 1)
-    denom_zag = denom_clean + R
-    K_zag = 1 / denom_zag
-
-    # --- 6. Расчет температуры и давления насыщения ---
-    delta_T_rel = 1 / (math.e ** ((K_zag * area_total) / (m_cw * 1000)) - 1)
-    T_sat = T_cw2 + delta_T_rel * (T_cw2 - T_cw1)
-
-    _T_K = uc.convert(T_sat, from_unit="°C", to_unit="K", parameter_type="temperature")
-    
-    # Давление в МПа по стандарту IAPWS-IF97
-    p_MPa = seuif97.tx2p(T_sat, 1)
-    p_kgf = uc.convert(p_MPa, from_unit="МПа", to_unit="кгс/см²", parameter_type="pressure")
-
-    res_str = f"| {m_cw:<8.1f} | {T_cw1:<8.1f} | {T_cw2:<8.2f} | {T_sat:<8.2f} | {m_flow:<7.1f} | {p_kgf:<11.4f} |"
-    print(res_str)
+    K_zag = 1 / (denom_clean + R)
 
     return {
-        'd_out': d_out, 'area_total': area_total, 'area_air': area_air, 'Kf': Kf, 'R1': R1,
-        'speed': speed, 'r_vap': r_vap, 'T_cw2': T_cw2, 'T_avg': T_avg, 'K_temp': K_temp,
-        'K_clean': K_clean, 'R': R, 'K_zag': K_zag, 'delta_T_rel': delta_T_rel,
-        'T_sat': T_sat, 'p_kgf': p_kgf
+        'K_temp': K_temp, 
+        'K_clean': K_clean, 
+        'R': R, 
+        'K_zag': K_zag
     }
+
+
+# =====================================================================
+# ПУБЛИЧНОЕ API (Оркестрация)
+# =====================================================================
+
+def calculate_pressure(params: dict) -> dict:
+    """
+    Вычисляет давление в конденсаторе для одной конкретной точки (режима).
+    
+    Делегирует расчеты изолированным приватным блокам (_calc_geometry, 
+    _calc_thermohydraulics, _calc_heat_transfer_coefficient), объединяя 
+    их результаты в итоговый ответ.
+
+    Args:
+        params (dict): Плоский словарь входных параметров.
+
+    Returns:
+        dict: Промежуточные коэффициенты и финальное давление ('p_kgf').
+    """
+    # 1. Вычисляем геометрию
+    geom = _calc_geometry(params)
+    
+    # 2. Вычисляем термогидравлику
+    thermo = _calc_thermohydraulics(
+        params, 
+        d_in=params['diameter_inside_of_pipes'], 
+        N_total=geom['N_total']
+    )
+    
+    # 3. Вычисляем теплопередачу
+    heat_transfer = _calc_heat_transfer_coefficient(
+        speed=thermo['speed'], 
+        T_avg=thermo['T_avg'], 
+        Kf=geom['Kf'], 
+        R1=geom['R1'], 
+        b=params.get('coefficient_b', 1.0)
+    )
+
+    # 4. Расчет температуры и давления насыщения (IF97)
+    m_cw = params['mass_flow_cooling_water']
+    T_cw1 = params['temperature_cooling_water_1']
+    
+    delta_T_rel = 1 / (math.e ** ((heat_transfer['K_zag'] * geom['area_total']) / (m_cw * 1000)) - 1)
+    T_sat = thermo['T_cw2'] + delta_T_rel * (thermo['T_cw2'] - T_cw1)
+    
+    p_MPa = seuif97.tx2p(T_sat, 1)
+    p_kgf = _UC.convert(p_MPa, from_unit="МПа", to_unit="кгс/см²", parameter_type="pressure")
+
+    # 5. Сборка результатов
+    result = {
+        'delta_T_rel': delta_T_rel,
+        'T_sat': T_sat, 
+        'p_kgf': p_kgf
+    }
+    result.update(geom)
+    result.update(thermo)
+    result.update(heat_transfer)
+
+    return result
 
 
 def batch_calculate(params_template: dict, varying_params: dict) -> list[dict]:
@@ -174,26 +191,20 @@ def batch_calculate(params_template: dict, varying_params: dict) -> list[dict]:
     Args:
         params_template (dict): Базовый словарь параметров (геометрия, константы).
         varying_params (dict): Словарь списков, где ключ - имя параметра, 
-            а значение - список (массив) значений для итерации (например, список температур t1).
+            а значение - список (массив) значений для итерации.
 
     Returns:
-        list[dict]: Плоский список результатов. Каждый элемент содержит исходную 
-            комбинацию параметров и результаты (давление, нагрев и т.д.).
+        list[dict]: Плоский список результатов.
     """
-    from itertools import product
-
     keys = list(varying_params.keys())
     values = list(varying_params.values())
 
     results = []
-    # Декартово произведение - создание всех комбинаций из списков
     for combo in product(*values):
         params = params_template.copy()
-        # Обновляем базовый шаблон текущей комбинацией
         params.update(dict(zip(keys, combo, strict=True)))
         
         res = calculate_pressure(params)
-        # Добавляем в результат информацию о том, при каких параметрах он был получен
         res.update(dict(zip(keys, combo, strict=True)))
         results.append(res)
 

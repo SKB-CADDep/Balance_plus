@@ -16,8 +16,7 @@ from app.api.routes import (
     condensers, 
     materials, 
     health, 
-    async_calculations, 
-    async_calculations  # Внимание: дубликат импорта оставлен как в исходном коде
+    async_calculations
 )
 from app.core.config import settings
 from app.core.logging import setup_logging
