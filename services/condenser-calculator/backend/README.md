@@ -1,18 +1,46 @@
-# condenser-calculator (backend)
+```markdown
+# Condenser Calculator (Backend)
 
-Локальный backend сервиса расчёта конденсатора.
+Локальный backend сервиса расчёта конденсатора на базе **FastAPI** и **SQLAlchemy**.
 
-## Запуск тестов
+## 📌 Что делает эта папка?
+Здесь находится ядро веб-сервиса: REST API для приема параметров от клиента, бизнес-логика маршрутизации, взаимодействие с базой данных (PostgreSQL) для хранения справочников (конденсаторы, материалы) и запуск изолированного математического ядра для расчетов.
 
-Из директории `services/condenser-calculator/backend`:
+## ⚙️ Настройка окружения (.env)
+Для локального запуска необходимо задать переменные окружения. Создайте файл `.env` в корне директории `backend/` (рядом с этим README) на основе следующего примера:
 
-```bash
-python -m pytest
+```env
+# Пример .env файла
+DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/condenser_db
+SECRET_KEY=your_super_secret_key_here
+DEBUG=True
 ```
 
-Если используете Poetry:
+## 🚀 Установка и локальный запуск
+Мы используем пакетный менеджер **Poetry**. Все команды выполняются из директории `services/condenser-calculator/backend`.
 
+**1. Установите зависимости:**
 ```bash
 poetry install
+```
+
+**2. Примените миграции базы данных (Alembic):**  
+Эта команда создаст нужные таблицы в вашей базе данных на основе ORM-моделей.
+```bash
+poetry run alembic upgrade head
+```
+
+**3. Запустите сервер:**
+```bash
+poetry run uvicorn app.main:app --reload
+```
+
+После запуска интерактивная документация к API (Swagger) будет доступна по адресу: 👉 **http://localhost:8000/docs**
+
+## 🧪 Запуск тестов
+Для проверки работоспособности сервиса выполните команду:
+
+```bash
 poetry run pytest
+```
 ```
