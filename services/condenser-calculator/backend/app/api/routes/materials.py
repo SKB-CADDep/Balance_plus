@@ -2,17 +2,14 @@
 API-маршрутизатор для работы со справочником материалов.
 
 Предоставляет эндпоинты для получения списка трубных материалов (сплавов, металлов),
-используемых в конденсаторах. Свойства материала (например, коэффициент теплопроводности) 
+используемых в конденсаторах. Свойства материала (например, коэффициент теплопроводности)
 критически важны для работы физического ядра при расчете коэффициента теплопередачи.
 """
 
-from fastapi import APIRouter, Depends, Path
+from fastapi import APIRouter, Depends, Path, Query
 from sqlalchemy.orm import Session
 
-from app.crud.materials import (
-    get_materials, 
-    get_materials_by_condenser
-)
+from app.crud.materials import get_materials, get_materials_by_condenser
 from app.dependencies import get_db
 from app.schemas.material import MaterialShort
 
@@ -24,21 +21,18 @@ router = APIRouter(tags=["Materials"])
     response_model=list[MaterialShort],
     summary="Список всех материалов в базе",
 )
-async def list_materials(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+def list_materials(
+    skip: int = Query(0, ge=0, description="Смещение для пагинации"), 
+    limit: int = Query(100, ge=1, le=500, description="Максимальное количество возвращаемых записей"), 
+    db: Session = Depends(get_db)
+):
     """
     Возвращает полный список доступных материалов с поддержкой пагинации.
 
     Используется для формирования общих справочников или селекторов на фронтенде
     без привязки к конкретному оборудованию.
-
-    Args:
-        skip (int): Смещение для пагинации (количество пропускаемых записей). По умолчанию 0.
-        limit (int): Максимальное количество возвращаемых записей. По умолчанию 100.
-        db (Session): Сессия базы данных (Dependency Injection).
-
-    Returns:
-        list[MaterialShort]: Краткий список моделей материалов (ID, название и т.п.).
     """
+    # Вызов синхронной CRUD-функции в синхронном роутере (БЕЗ await)
     return get_materials(db, skip=skip, limit=limit)
 
 
@@ -47,8 +41,8 @@ async def list_materials(skip: int = 0, limit: int = 100, db: Session = Depends(
     response_model=list[MaterialShort],
     summary="Список материалов для конкретного конденсатора",
 )
-async def list_condenser_materials(
-    condenser_id: int = Path(..., description="ID конденсатора"), 
+def list_condenser_materials(
+    condenser_id: int = Path(..., description="ID конденсатора, для которого ищутся материалы"),
     db: Session = Depends(get_db)
 ):
     """
@@ -58,12 +52,5 @@ async def list_condenser_materials(
     проектировались под определенные сплавы (например, латунь, мельхиор, титан, нержавеющая сталь). 
     Этот эндпоинт позволяет фронтенду отфильтровать селектор так, чтобы 
     пользователь не выбрал физически невозможный вариант для расчета (защита от "дурака").
-
-    Args:
-        condenser_id (int): Уникальный идентификатор конденсатора (передается в пути запроса).
-        db (Session): Сессия базы данных (Dependency Injection).
-
-    Returns:
-        list[MaterialShort]: Список допустимых материалов для конкретного аппарата.
     """
     return get_materials_by_condenser(db, condenser_id)
