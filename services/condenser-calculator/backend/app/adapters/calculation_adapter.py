@@ -151,10 +151,8 @@ class CondenserCalculationAdapter:
     ):
         logger.info("Running Berman strategy")
 
-        if not input_data.t1_main:
-            raise ValueError("Массив t1_main не может быть пустым")
-            
-        t_avg_est = sum(input_data.t1_main) / len(input_data.t1_main) + 5.0
+        # Получаем базовую среднюю температуру через метод, в котором уже вшита проверка if not input_data.t1_main
+        t_avg_est = self._estimate_t_avg_berman(input_data, 0.0) + 5.0
 
         lam = self._get_lambda_iterative(
             lambda_interp,

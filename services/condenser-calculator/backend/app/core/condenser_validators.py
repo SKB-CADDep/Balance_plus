@@ -15,6 +15,30 @@ from app.core.exceptions import ValidationError
 from app.models.condenser import Condenser
 
 
+def validate_condenser_for_method(condenser: Condenser, method: str) -> None:
+    """
+    Проверяет наличие обязательных геометрических параметров аппарата (BR-02).
+    """
+    missing_fields = []
+    
+    if not condenser.diameter_internal:
+        missing_fields.append("Внутренний диаметр труб")
+    if not condenser.wall_thickness:
+        missing_fields.append("Толщина стенки труб")
+    if not condenser.main_length:
+        missing_fields.append("Длина трубок основного пучка")
+    if not condenser.main_count:
+        missing_fields.append("Количество трубок основного пучка")
+    if condenser.aircooler_count is None:
+        missing_fields.append("Количество трубок воздухоохладителя")
+        
+    if missing_fields:
+        raise ValidationError(
+            message="Недостаточно данных об оборудовании для проведения расчета.",
+            details=f"Отсутствуют параметры: {', '.join(missing_fields)}"
+        )
+
+
 def _check_flow_limit(value: float, limits: dict, bundle_type: str, rule: str) -> List[str]:
     """
     Вспомогательная функция проверки конкретного значения расхода на попадание в лимиты.
@@ -99,28 +123,4 @@ def validate_temperature_ranges(method: str, t1_values: List[float]) -> List[str
             )
             
     return warnings
-
-
-def validate_condenser_for_method(condenser: Condenser, method: str) -> None:
-    """
-    Проверяет наличие обязательных геометрических параметров аппарата (BR-02).
-    """
-    missing_fields = []
     
-    if not condenser.diameter_internal:
-        missing_fields.append("Внутренний диаметр труб")
-    if not condenser.wall_thickness:
-        missing_fields.append("Толщина стенки труб")
-    if not condenser.main_length:
-        missing_fields.append("Длина трубок основного пучка")
-    if not condenser.main_count:
-        missing_fields.append("Количество трубок основного пучка")
-    if condenser.aircooler_count is None:
-        missing_fields.append("Количество трубок воздухоохладителя")
-        
-    if missing_fields:
-        raise ValidationError(
-            message="Недостаточно данных об оборудовании для проведения расчета.",
-            details=f"Отсутствуют параметры: {', '.join(missing_fields)}"
-        )
-        
