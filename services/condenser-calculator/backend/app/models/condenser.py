@@ -34,7 +34,22 @@ class Condenser(Base):
     """
     Таблица 'condensers'. 
     Справочник оборудования (конденсаторных установок).
+    
+    СВЯЗИ (Relationships):
+    -------------------------------------------------------------------
+    - Many-to-Many (Многие ко многим): Конденсатор <-> Материал (Material).
+      Реализуется через промежуточную таблицу `condenser_material_association`.
+      У одного конденсатора может быть несколько допустимых трубных сплавов.
+      
+    - One-to-Many (Один ко многим): Конденсатор -> Результаты расчетов (CalculationResult).
+      Один аппарат выступает шаблоном для множества расчетов.
+      Установлен cascade="all, delete-orphan": при удалении конденсатора 
+      из БД автоматически удалятся все связанные с ним расчеты.
     """
+    
+    # WARNING: Жесткое переопределение имени таблицы во множественном числе ("condensers").
+    # Это отменяет работу автогенератора из Base. Не удаляйте эту строку, 
+    # иначе сломаются ForeignKey в таблице condenser_material_association!
     __tablename__ = "condensers"
 
     # --- Базовая идентификация ---
@@ -93,6 +108,8 @@ class Condenser(Base):
     
     # 2. Связь Many-to-Many с материалами
     # Обратите внимание на типизацию Mapped[list["Material"]]
+    # WARNING: По умолчанию используется lazy="select". При обращении к `.materials` 
+    # без предварительной eager загрузки в запросе будет вызван дополнительный SQL-запрос.
     materials: Mapped[list["Material"]] = relationship(
         secondary=condenser_material_association, 
         back_populates="condensers",
