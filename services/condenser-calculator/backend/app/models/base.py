@@ -51,3 +51,4 @@ class Base(DeclarativeBase):
             col.name: getattr(self, col.name)
             for col in self.__table__.columns
         }
+        

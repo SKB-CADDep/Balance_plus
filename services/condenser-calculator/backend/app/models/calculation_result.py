@@ -66,3 +66,4 @@ class CalculationResult(Base):
         back_populates="calculations",
         doc="Связь с объектом Condenser. Позволяет получать данные оборудования через result.condenser"
     )
+    

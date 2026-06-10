@@ -105,3 +105,4 @@ class Condenser(Base):
         cascade="all, delete-orphan",
         doc="Архив всех расчетов, произведенных для этого аппарата."
     )
+    

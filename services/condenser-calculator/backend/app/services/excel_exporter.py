@@ -163,3 +163,4 @@ class ExcelExporter:
                     max_length = max(max_length, len(str(cell.value)))
             # Ограничиваем ширину от 12 до 40 символов
             ws.column_dimensions[column_letter].width = min(max(max_length + 2, 12), 40)
+            

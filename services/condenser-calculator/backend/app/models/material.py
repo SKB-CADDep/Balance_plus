@@ -49,3 +49,4 @@ class Material(Base):
         secondary="condenser_material_association", 
         back_populates="materials"
     )
+    
