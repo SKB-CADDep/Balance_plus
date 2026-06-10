@@ -25,9 +25,8 @@ from app.utils.berman_strategy import BermanStrategy
 from app.utils.metrovickers_strategy import MetroVickersStrategy
 from app.utils.table_models import Table1D
 
-# ИСПРАВЛЕНИЕ: Обновлен импорт валидатора (согласно нашим изменениям в condenser_validators.py)
 from app.core.condenser_validators import (
-    validate_water_flows,
+    validate_water_flow_limits,
     validate_temperature_ranges
 )
 
@@ -280,11 +279,10 @@ class CondenserCalculationAdapter:
                 w_main = input_data.W_main[w_i] if w_i < len(input_data.W_main) else 0.0
                 w_builtin = input_data.W_builtin[w_i] if input_data.W_builtin and w_i < len(input_data.W_builtin) else 0.0
 
-                warnings = validate_water_flows(w_main, w_builtin, condenser.water_flow_limits)
+                warnings = validate_water_flow_limits(w_main, w_builtin, condenser.water_flow_limits)
                 t1_warnings = validate_temperature_ranges("berman", input_data.t1_main)
                 warnings.extend(t1_warnings)
 
-                # ИСПРАВЛЕНИЕ СТИЛЯ: Удалены лишние пустые строки внутри инициализации MatrixResult
                 tables.append(MatrixResult(
                     meta={
                         "coefficient_b": input_data.coefficient_b[b_i],
@@ -352,14 +350,13 @@ class CondenserCalculationAdapter:
                 w_main = input_data.W_main[w_i] if w_i < len(input_data.W_main) else 0.0
                 w_builtin = input_data.W_builtin[w_i] if input_data.W_builtin and w_i < len(input_data.W_builtin) else 0.0
 
-                warnings = validate_water_flows(w_main, w_builtin, condenser.water_flow_limits)
+                warnings = validate_water_flow_limits(w_main, w_builtin, condenser.water_flow_limits)
                 t1_warnings = validate_temperature_ranges("metro-vickers", input_data.t1_main)
                 warnings.extend(t1_warnings)
 
                 if is_extrapolated_matrix:
                     warnings.append("Данные не подтверждены экспериментально")
 
-                # ИСПРАВЛЕНИЕ СТИЛЯ: Удалены лишние пустые строки внутри инициализации
                 tables.append(MatrixResult(
                     meta={
                         "coefficient_b": b,
@@ -404,3 +401,4 @@ class CondenserCalculationAdapter:
     def _estimate_t_avg_metrovickers(self, t1: float, w_main: float, lam: float) -> float:
         """Вспомогательная оценка температуры стенки для итерации (Метро-Виккерс)."""
         return t1 + 3.0
+        

@@ -33,21 +33,13 @@ def _check_flow_limit(value: float, limits: dict, bundle_type: str, rule: str) -
     return warnings
 
 
-def validate_water_flows(w_main: float, w_builtin: float, limits: Optional[Dict[str, Any]]) -> List[str]:
+def validate_water_flow_limits(w_main: float, w_builtin: float, limits: Optional[Dict[str, Any]]) -> List[str]:
     """
     Проверяет расходы охлаждающей воды на соответствие паспортным лимитам (BR-06 / BR-07).
 
     Генерирует некритичные предупреждения (warnings), если расходы выходят за 
     разрешенные заводом-изготовителем пределы. Учитывает режимы работы как с 
     одним пучком (BR-07), так и с двумя активными пучками (BR-06).
-
-    Args:
-        w_main (float): Текущий расход основной охлаждающей воды в цикле расчета.
-        w_builtin (float): Текущий расход воды во встроенном пучке.
-        limits (Optional[Dict[str, Any]]): Паспортные лимиты (из БД).
-
-    Returns:
-        List[str]: Список сгенерированных предупреждений.
     """
     warnings = []
     if not limits:
@@ -90,25 +82,21 @@ def validate_temperature_ranges(method: str, t1_values: List[float]) -> List[str
     """
     Проверяет температуры охлаждающей воды на применимость к методике (BR-10).
 
-    Каждая расчетная стратегия валидна только в определенном диапазоне:
-    - Метод Бермана: от 0°С до 45°С.
-    - Метод Метро-Виккерса: от 45°С до 150°С.
-    При выходе за эти границы формулы теряют точность (экстраполяция).
-
-    Args:
-        method (str): Название методики расчета.
-        t1_values (List[float]): Массив температур на входе, запрошенных пользователем.
-
-    Returns:
-        List[str]: Список сгенерированных предупреждений.
+    Каждая расчетная стратегия валидна только в определенном диапазоне.
+    Использует проверку минимального и максимального значения массива,
+    чтобы не дублировать одинаковые предупреждения.
     """
     warnings = []
-    
-    for t1 in t1_values:
-        if method == "berman" and t1 > 45.0:
-            warnings.append(f"Температура {t1}°C выходит за рамки применимости метода Бермана (> 45°C).")
-        elif method == "metro-vickers" and t1 < 45.0:
-            warnings.append(f"Температура {t1}°C выходит за рамки применимости метода Метро-Виккерса (< 45°C).")
+    if not t1_values:
+        return warnings
+
+    min_t = min(t1_values)
+    max_t = max(t1_values)
+
+    if method == "berman" and max_t > 45.0:
+        warnings.append(f"Максимальная температура ({max_t}°C) выходит за рамки применимости метода Бермана (> 45°C).")
+    elif method == "metro-vickers" and min_t < 45.0:
+        warnings.append(f"Минимальная температура ({min_t}°C) выходит за рамки применимости метода Метро-Виккерса (< 45°C).")
             
     return warnings
 
