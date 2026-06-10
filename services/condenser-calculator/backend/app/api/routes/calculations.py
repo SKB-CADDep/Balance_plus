@@ -42,7 +42,7 @@ adapter = CondenserCalculationAdapter()
         422: {"description": "Ошибка бизнес-валидации"},
     },
 )
-def calculate(
+async def calculate(
     input_data: CalculationInput,
     db: Session = Depends(get_db),
 ):
@@ -130,7 +130,7 @@ def calculate(
         422: {"description": "Ошибка бизнес-валидации"},
     },
 )
-def calculate_excel(
+async def calculate_excel(
     input_data: CalculationInput,
     db: Session = Depends(get_db),
 ):
@@ -197,3 +197,4 @@ def calculate_excel(
             status_code=500,
             detail="Внутренняя ошибка сервера при генерации Excel.",
         )
+        

@@ -110,3 +110,4 @@ class ValidationError(CondenserBaseError):
         super().__init__(message)
         self.message = message
         self.details = details
+        

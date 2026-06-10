@@ -11,7 +11,26 @@
 
 from typing import List, Dict, Any, Optional
 
-# (Здесь остается ваша функция _check_flow_limit)
+from app.core.exceptions import ValidationError
+from app.models.condenser import Condenser
+
+
+def _check_flow_limit(value: float, limits: dict, bundle_type: str, rule: str) -> List[str]:
+    """
+    Вспомогательная функция проверки конкретного значения расхода на попадание в лимиты.
+    """
+    warnings = []
+    
+    min_limit = limits.get("min")
+    max_limit = limits.get("max")
+    
+    if min_limit is not None and value < min_limit:
+        warnings.append(f"Расход {bundle_type} ({value}) ниже минимума ({min_limit}) ({rule}).")
+    
+    if max_limit is not None and value > max_limit:
+        warnings.append(f"Расход {bundle_type} ({value}) выше максимума ({max_limit}) ({rule}).")
+        
+    return warnings
 
 
 def validate_water_flows(w_main: float, w_builtin: float, limits: Optional[Dict[str, Any]]) -> List[str]:
@@ -38,11 +57,8 @@ def validate_water_flows(w_main: float, w_builtin: float, limits: Optional[Dict[
         warnings.append("Оба расхода воды равны нулю — проверьте входные данные.")
         return warnings
     
-    # --- ИСПРАВЛЕНИЕ ОШИБКИ (Legacy Data) ---
-    # В исторических записях БД лимиты могут храниться как плоский массив [min, max], 
-    # а не как структурированный словарь пучков.
-    # Мы применяем этот старый лимит ТОЛЬКО к основному пучку (main_bundle).
-    # Для встроенного пучка ставим None, чтобы не применять к нему гигантские расходы.
+    # Адаптация для унаследованных данных (Legacy Data): 
+    # В исторических записях БД лимиты могут храниться как плоский массив [min, max].
     if isinstance(limits, list) and len(limits) == 2:
         limits = {
             "main_bundle": {"min": limits[0], "max": limits[1]},
@@ -52,7 +68,6 @@ def validate_water_flows(w_main: float, w_builtin: float, limits: Optional[Dict[
     if not isinstance(limits, dict):
         return []
 
-    # Используем 'or {}', чтобы избежать ошибок, если для пучка стоит None
     main_limits = limits.get("main_bundle") or {}
     builtin_limits = limits.get("builtin_bundle") or {}
 
@@ -87,4 +102,37 @@ def validate_temperature_ranges(method: str, t1_values: List[float]) -> List[str
     Returns:
         List[str]: Список сгенерированных предупреждений.
     """
-    # (Здесь остается ваша логика проверки температур)
+    warnings = []
+    
+    for t1 in t1_values:
+        if method == "berman" and t1 > 45.0:
+            warnings.append(f"Температура {t1}°C выходит за рамки применимости метода Бермана (> 45°C).")
+        elif method == "metro-vickers" and t1 < 45.0:
+            warnings.append(f"Температура {t1}°C выходит за рамки применимости метода Метро-Виккерса (< 45°C).")
+            
+    return warnings
+
+
+def validate_condenser_for_method(condenser: Condenser, method: str) -> None:
+    """
+    Проверяет наличие обязательных геометрических параметров аппарата (BR-02).
+    Если данные отсутствуют, выбрасывает исключение ValidationError.
+    """
+    missing_fields = []
+    
+    # Базовая геометрия обязательна для обоих методов
+    if not condenser.diameter_internal:
+        missing_fields.append("Внутренний диаметр труб")
+    if not condenser.wall_thickness:
+        missing_fields.append("Толщина стенки труб")
+    if not condenser.main_length:
+        missing_fields.append("Длина трубок основного пучка")
+    if not condenser.main_count:
+        missing_fields.append("Количество трубок основного пучка")
+        
+    if missing_fields:
+        raise ValidationError(
+            message="Недостаточно данных об оборудовании для проведения расчета.",
+            details=f"Отсутствуют параметры: {', '.join(missing_fields)}"
+        )
+        

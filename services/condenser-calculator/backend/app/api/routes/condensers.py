@@ -72,3 +72,4 @@ async def get_condenser(condenser_id: int, db: Session = Depends(get_db)):
             глобальным обработчиком исключений FastAPI).
     """
     return get_condenser_by_id(db, condenser_id)
+    
