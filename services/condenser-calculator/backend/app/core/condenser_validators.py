@@ -36,10 +36,6 @@ def _check_flow_limit(value: float, limits: dict, bundle_type: str, rule: str) -
 def validate_water_flow_limits(w_main: float, w_builtin: float, limits: Optional[Dict[str, Any]]) -> List[str]:
     """
     Проверяет расходы охлаждающей воды на соответствие паспортным лимитам (BR-06 / BR-07).
-
-    Генерирует некритичные предупреждения (warnings), если расходы выходят за 
-    разрешенные заводом-изготовителем пределы. Учитывает режимы работы как с 
-    одним пучком (BR-07), так и с двумя активными пучками (BR-06).
     """
     warnings = []
     if not limits:
@@ -50,7 +46,6 @@ def validate_water_flow_limits(w_main: float, w_builtin: float, limits: Optional
         return warnings
     
     # Адаптация для унаследованных данных (Legacy Data): 
-    # В исторических записях БД лимиты могут храниться как плоский массив [min, max].
     if isinstance(limits, list) and len(limits) == 2:
         limits = {
             "main_bundle": {"min": limits[0], "max": limits[1]},
@@ -81,22 +76,27 @@ def validate_water_flow_limits(w_main: float, w_builtin: float, limits: Optional
 def validate_temperature_ranges(method: str, t1_values: List[float]) -> List[str]:
     """
     Проверяет температуры охлаждающей воды на применимость к методике (BR-10).
-
-    Каждая расчетная стратегия валидна только в определенном диапазоне.
-    Использует проверку минимального и максимального значения массива,
-    чтобы не дублировать одинаковые предупреждения.
     """
     warnings = []
+    
     if not t1_values:
         return warnings
-
+    
     min_t = min(t1_values)
     max_t = max(t1_values)
 
-    if method == "berman" and max_t > 45.0:
-        warnings.append(f"Максимальная температура ({max_t}°C) выходит за рамки применимости метода Бермана (> 45°C).")
-    elif method == "metro-vickers" and min_t < 45.0:
-        warnings.append(f"Минимальная температура ({min_t}°C) выходит за рамки применимости метода Метро-Виккерса (< 45°C).")
+    if method == "berman":
+        if min_t < 0 or max_t > 45:
+            warnings.append(
+                f"Температуры выходят за диапазон применимости Бермана (0...45°C). "
+                f"Min: {min_t}, Max: {max_t}"
+            )
+    elif method == "metro-vickers":
+        if min_t < 45 or max_t > 150:
+            warnings.append(
+                f"Температуры выходят за диапазон применимости Метро-Виккерса (45...150°C). "
+                f"Min: {min_t}, Max: {max_t}"
+            )
             
     return warnings
 
@@ -104,11 +104,9 @@ def validate_temperature_ranges(method: str, t1_values: List[float]) -> List[str
 def validate_condenser_for_method(condenser: Condenser, method: str) -> None:
     """
     Проверяет наличие обязательных геометрических параметров аппарата (BR-02).
-    Если данные отсутствуют, выбрасывает исключение ValidationError.
     """
     missing_fields = []
     
-    # Базовая геометрия обязательна для обоих методов
     if not condenser.diameter_internal:
         missing_fields.append("Внутренний диаметр труб")
     if not condenser.wall_thickness:
@@ -117,6 +115,8 @@ def validate_condenser_for_method(condenser: Condenser, method: str) -> None:
         missing_fields.append("Длина трубок основного пучка")
     if not condenser.main_count:
         missing_fields.append("Количество трубок основного пучка")
+    if condenser.aircooler_count is None:
+        missing_fields.append("Количество трубок воздухоохладителя")
         
     if missing_fields:
         raise ValidationError(
