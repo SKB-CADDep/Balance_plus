@@ -69,7 +69,7 @@ def validate_water_flow_limits(w_main: float, w_builtin: float, limits: Optional
     if isinstance(limits, list) and len(limits) == 2:
         limits = {
             "main_bundle": {"min": limits[0], "max": limits[1]},
-            "builtin_bundle": None
+            "builtin_bundle": {"min": 0, "max": limits[1]}
         }
 
     if not isinstance(limits, dict):
