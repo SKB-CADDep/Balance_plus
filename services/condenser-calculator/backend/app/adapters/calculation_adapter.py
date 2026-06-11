@@ -19,6 +19,7 @@ from app.core.exceptions import (
     MaterialPropertyError,
     UnitConversionError,
     CalculationEngineError,
+    ValidationError,
 )
 from app.utils.berman_strategy import BermanStrategy
 from app.utils.metrovickers_strategy import MetroVickersStrategy
@@ -210,7 +211,10 @@ class CondenserCalculationAdapter:
 
     def _estimate_t_avg_berman(self, input_data: CalculationInput, lam: float) -> float:
         if not input_data.t1_main:
-            raise ValueError("Массив t1_main не может быть пустым")
+            raise ValidationError(
+                message="Пустой массив температур",
+                details="Массив t1_main не может быть пустым"
+            )
         return sum(input_data.t1_main) / len(input_data.t1_main)
 
     def _reshape_berman_results(self, flat_results: list[dict], input_data: CalculationInput, condenser: Condenser):

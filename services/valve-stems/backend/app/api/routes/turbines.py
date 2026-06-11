@@ -74,3 +74,4 @@ async def delete_turbine(turbine_id: int, db: Session = Depends(get_db)):
     db.delete(db_turbine)
     db.commit()
     return {"message": f"Турбина '{db_turbine.name}' успешно удалена"}
+    

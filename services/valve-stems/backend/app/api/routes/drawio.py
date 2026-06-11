@@ -10,14 +10,17 @@ from fastapi.responses import FileResponse
 from app.schemas import ValveInfo
 
 
-# Настройка логирования
+# WARNING (Технический долг):
+# Вызов logging.basicConfig() в модуле роутера может переопределить
+# глобальные настройки логирования всего FastAPI-приложения 
+# (например, структурированный JSON из app.core.logging_config).
+# В будущем эту строку рекомендуется убрать, оставив только getLogger().
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
 
-# Класс для работы с XML-файлами diagrams.net
 class DiagramModifier:
     """Класс для парсинга, модификации и сохранения XML-схем diagrams.net."""
 
@@ -91,7 +94,6 @@ class DiagramModifier:
             )
 
 
-# Класс для сопоставления параметров ValveInfo с элементами XML
 class ParameterMapper:
     """Класс для сопоставления параметров модели ValveInfo с элементами XML."""
 
@@ -168,7 +170,6 @@ class ParameterMapper:
         return updates
 
 
-# Класс для генерации итогового файла
 class DiagramGenerator:
     """Класс для генерации итогового XML-файла на основе шаблона и параметров."""
 
