@@ -348,3 +348,4 @@ class CondenserCalculationAdapter:
 
     def _estimate_t_avg_metrovickers(self, t1: float, w_main: float, lam: float) -> float:
         return t1 + 3.0
+        

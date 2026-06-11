@@ -17,20 +17,14 @@ from app.models.condenser import Condenser
 
 def validate_condenser_for_method(condenser: Condenser, method: str) -> None:
     """
-    Проверяет наличие обязательных геометрических параметров аппарата (BR-02).
+    Проверяет наличие дополнительных геометрических параметров аппарата (BR-02).
+    Базовые параметры (диаметр, толщина стенки, параметры основного пучка) 
+    гарантированно присутствуют на уровне схемы БД (NOT NULL).
     """
     missing_fields = []
     
-    if not condenser.diameter_internal:
-        missing_fields.append("Внутренний диаметр труб")
-    if not condenser.wall_thickness:
-        missing_fields.append("Толщина стенки труб")
-    if not condenser.main_length:
-        missing_fields.append("Длина трубок основного пучка")
-    if not condenser.main_count:
-        missing_fields.append("Количество трубок основного пучка")
-    
     # Строгая проверка на None, так как 0 (ноль) является валидным значением.
+    # Это поле в БД может быть nullable=True, но для расчетов нам нужно явное значение.
     if condenser.aircooler_count is None:
         missing_fields.append("Количество трубок воздухоохладителя")
         
