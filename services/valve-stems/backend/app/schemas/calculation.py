@@ -1,8 +1,17 @@
+"""
+Схемы данных Pydantic (Data Transfer Objects).
+
+Описывают структуру входящих (Request) и исходящих (Response) JSON-данных 
+для API расчетов штоков клапанов. Обеспечивают строгую типизацию, 
+конвертацию форматов и сложную бизнес-валидацию (например, проверку 
+взаимоисключающих термодинамических параметров) до передачи управления
+в слой адаптеров.
+"""
+
 from datetime import datetime
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
-
 
 # =====================================================================
 # REQUEST SCHEMAS (Входящие данные)
@@ -53,7 +62,11 @@ class ValveGroupInput(BaseModel):
     valve_id: int = Field(..., description="ID клапана, чью геометрию берем за основу")
     type: Literal["СК", "РК", "СРК"] = Field(..., description="Тип группы")
     
-    valve_names: list[str] = Field(..., min_length=1, description="Список имен клапанов (напр. ['СК-1', 'СК-2'])")
+    valve_names: list[str] = Field(
+        ..., 
+        min_length=1, 
+        description="Список имен клапанов (напр. ['СК-1', 'СК-2'])"
+    )
     quantity: int = Field(..., ge=1, description="Количество клапанов в группе")
 
     p_values: list[float] = Field(default_factory=list, description="Давления перед участками")
@@ -130,6 +143,10 @@ class MultiCalculationResult(BaseModel):
 
 
 class CalculationResultDB(BaseModel):
+    """
+    Схема для сериализации ORM-модели результата расчета.
+    Позволяет конвертировать сложные вложенные JSON-поля из БД.
+    """
     id: int
     user_name: str | None = None
     stock_name: str  
@@ -139,3 +156,4 @@ class CalculationResultDB(BaseModel):
     output_data: dict[str, Any]
 
     model_config = ConfigDict(from_attributes=True)
+    

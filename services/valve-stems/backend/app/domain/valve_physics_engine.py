@@ -1,14 +1,21 @@
+"""
+Математическое ядро (Physics Engine) для расчета штоков клапанов.
+
+Реализует инженерную методику расчета протечек пара и воздуха 
+через зазоры (лабиринтовые уплотнения) по участкам штока. 
+Использует термодинамические таблицы воды и пара IAPWS-IF97 (seuif97)
+и внешнюю библиотеку WSAProperties для определения теплофизических свойств.
+"""
+
 import logging
 from math import pi, sqrt
 
-# IF97
+# Внешние библиотеки (IAPWS-IF97 и свойства воздуха/пара)
 from seuif97 import ph, ph2t, ph2v
-
-# Вспомогательные (наши)
 from WSAProperties import air_calc, ksi_calc, lambda_calc
 
-from app.domain.models import RawCalculationResult, ThermoConditions, ValveGeometry
 from app.core.exceptions import PhysicsCalculationError, SteamPropertiesError
+from app.domain.models import RawCalculationResult, ThermoConditions, ValveGeometry
 
 logger = logging.getLogger(__name__)
 
@@ -47,8 +54,10 @@ def _compute_G(
     under_root = (p1_pa**2 - p2_pa**2) / (p1_pa * v)
     if under_root <= 0:
         raise PhysicsCalculationError(
-            message="Физически невозможный режим течения: \
-                давление после участка выше начального или перепад отсутствует.",
+            message=(
+                "Физически невозможный режим течения: "
+                "давление после участка выше начального или перепад отсутствует."
+            ),
             details=f"P1={p1_pa} Па, P2={p2_pa} Па, под корнем={under_root:.3e}",
         )
     g_t_per_h = alpha * area_S * sqrt(under_root) * 3.6
@@ -121,7 +130,7 @@ def _part_props_detection(
 
 class ValvePhysicsEngine:
     """
-    Чистое математическое ядро расчёта расходов и параметров по участкам.
+    Чистое математическое ядро расчёта расходов и параметров по участкам клапана.
     """
 
     def __init__(self, geo: ValveGeometry, thermo: ThermoConditions):
@@ -204,8 +213,10 @@ class ValvePhysicsEngine:
                 exc_info=True,
             )
             raise PhysicsCalculationError(
-                message="Ошибка в математическом ядре \
-                    (возможно, свойства пара вышли за пределы зоны IAPWS-IF97).",
+                message=(
+                    "Ошибка в математическом ядре "
+                    "(возможно, свойства пара вышли за пределы зоны IAPWS-IF97)."
+                ),
                 details=str(e),
             )
 
@@ -476,3 +487,4 @@ class ValvePhysicsEngine:
             )
 
         return g_list, t_list, h_list, p_list
+        
