@@ -1,3 +1,13 @@
+"""
+API-маршрутизатор для генерации схем (Draw.io / diagrams.net).
+
+Обеспечивает интеграцию расчетного ядра с визуальным представлением.
+Модуль загружает эталонные XML-шаблоны схем клапанов, динамически
+подменяет в них значения (размеры, зазоры, радиусы) на основе 
+результатов расчета (модель ValveInfo) и отдает пользователю 
+готовый .drawio файл для скачивания и просмотра.
+"""
+
 import logging
 import os
 import xml.etree.ElementTree as ET
@@ -350,3 +360,4 @@ async def generate_scheme(valve_info: ValveInfo):
     except Exception as e:
         logger.error(f"Ошибка при генерации схемы: {e}")
         raise HTTPException(status_code=500, detail=f"Ошибка при генерации схемы: {e}")
+        
