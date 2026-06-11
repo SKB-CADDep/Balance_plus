@@ -29,6 +29,8 @@ def validate_condenser_for_method(condenser: Condenser, method: str) -> None:
         missing_fields.append("Длина трубок основного пучка")
     if not condenser.main_count:
         missing_fields.append("Количество трубок основного пучка")
+    
+    # Строгая проверка на None, так как 0 (ноль) является валидным значением.
     if condenser.aircooler_count is None:
         missing_fields.append("Количество трубок воздухоохладителя")
         

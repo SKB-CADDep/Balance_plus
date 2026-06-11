@@ -118,6 +118,7 @@ class CondenserCalculationAdapter:
         x = np.array([p[0] for p in points])
         y = np.array([p[1] for p in points])
 
+        logger.debug("Создан интерполятор теплопроводности (точек: %d)", len(x))
         return Table1D(x_cords=x, y_cords=y)
 
     def _get_lambda_iterative(
@@ -132,6 +133,8 @@ class CondenserCalculationAdapter:
         for i in range(max_iter):
             lam = float(lambda_interp(t_avg))
             new_t_avg = single_calc_func(lam)
+
+            logger.debug("Итерация %d: t_avg=%.2f, lambda=%.4f, new_t_avg=%.2f", i, t_avg, lam, new_t_avg)
 
             if abs(new_t_avg - t_avg) < tol:
                 return lam
@@ -345,4 +348,3 @@ class CondenserCalculationAdapter:
 
     def _estimate_t_avg_metrovickers(self, t1: float, w_main: float, lam: float) -> float:
         return t1 + 3.0
-        
