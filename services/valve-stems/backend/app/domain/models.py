@@ -49,3 +49,5 @@ class RawCalculationResult:
     # Данные отсосов в эжектор(ы).
     # Ожидаемый формат каждого элемента: {"g": ..., "t": ..., "h": ..., "p_mpa": ...}
     ej_results: list[dict[str, float]]
+
+

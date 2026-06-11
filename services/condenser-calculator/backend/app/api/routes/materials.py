@@ -67,3 +67,4 @@ def list_condenser_materials(
         list[MaterialShort]: Список допустимых материалов для конкретного аппарата.
     """
     return get_materials_by_condenser(db, condenser_id)
+    
