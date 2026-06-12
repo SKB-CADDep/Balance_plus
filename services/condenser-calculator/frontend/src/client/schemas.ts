@@ -17,34 +17,51 @@ export const $CalculationInput = {
 	isRequired: true,
 },
 		coefficient_b: {
+	type: 'any-of',
+	description: `Коэффициент чистоты (от 0 до 1)`,
+	contains: [{
+	type: 'string',
+}, {
 	type: 'array',
 	contains: {
 	type: 'number',
 	maximum: 1,
 	minimum: 0,
 },
-	default: [
-    1
-],
+}],
 },
 		G_steam: {
+	type: 'any-of',
+	description: `Массив расходов пара (Ось X)`,
+	contains: [{
+	type: 'string',
+}, {
 	type: 'array',
 	contains: {
 	type: 'number',
 },
+}],
 	isRequired: true,
 },
 		W_main: {
+	type: 'any-of',
+	description: `Массив расходов основной охл. воды`,
+	contains: [{
+	type: 'string',
+}, {
 	type: 'array',
 	contains: {
 	type: 'number',
 },
+}],
 	isRequired: true,
 },
 		W_builtin: {
 	type: 'any-of',
 	description: `Массив расходов воды встроенного пучка`,
 	contains: [{
+	type: 'string',
+}, {
 	type: 'array',
 	contains: {
 	type: 'number',
@@ -54,16 +71,24 @@ export const $CalculationInput = {
 }],
 },
 		t1_main: {
+	type: 'any-of',
+	description: `Массив температур воды на входе (Ось Y)`,
+	contains: [{
+	type: 'string',
+}, {
 	type: 'array',
 	contains: {
 	type: 'number',
 },
+}],
 	isRequired: true,
 },
 		t1_builtin: {
 	type: 'any-of',
 	description: `Температуры встроенного пучка`,
 	contains: [{
+	type: 'string',
+}, {
 	type: 'array',
 	contains: {
 	type: 'number',

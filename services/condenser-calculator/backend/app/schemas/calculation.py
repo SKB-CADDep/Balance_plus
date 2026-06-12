@@ -1,5 +1,7 @@
-from pydantic import BaseModel, Field, model_validator, ConfigDict
+from pydantic import BaseModel, Field, model_validator, field_validator, ConfigDict
 from typing import Literal, Annotated, Any
+
+from app.core.range_parser import parse_range_input
 
 
 FractionValue = Annotated[float, Field(ge=0.0, le=1.0)]
@@ -21,15 +23,15 @@ class CalculationInput(BaseModel):
     
     method: Literal["berman", "metro-vickers"] = Field(..., description="Методика расчета (BR-01)")
     
-    coefficient_b: list[FractionValue] = Field(
+    coefficient_b: str | list[FractionValue] = Field(
         default=[1.0], 
         description="Коэффициент чистоты (от 0 до 1)"
     )
-    G_steam: list[float] = Field(..., min_length=1, description="Массив расходов пара (Ось X)")
-    W_main: list[float] = Field(..., min_length=1, description="Массив расходов основной охл. воды")
-    W_builtin: list[float] | None = Field(default=None, description="Массив расходов воды встроенного пучка")
-    t1_main: list[float] = Field(..., min_length=1, description="Массив температур воды на входе (Ось Y)")
-    t1_builtin: list[float] | None = Field(default=None, description="Температуры встроенного пучка")
+    G_steam: str | list[float] = Field(..., description="Массив расходов пара (Ось X)")
+    W_main: str | list[float] = Field(..., description="Массив расходов основной охл. воды")
+    W_builtin: str | list[float] | None = Field(default=None, description="Массив расходов воды встроенного пучка")
+    t1_main: str | list[float] = Field(..., description="Массив температур воды на входе (Ось Y)")
+    t1_builtin: str | list[float] | None = Field(default=None, description="Температуры встроенного пучка")
     
     # Скалярные параметры (Конструктив)
     Z_ejectors: int = Field(default=1, ge=0, description="Количество рабочих эжекторов")
@@ -44,6 +46,40 @@ class CalculationInput(BaseModel):
     W_main_unit: Literal["т/ч", "кг/с", "м3/ч", "т/с"] = "т/ч"
     t1_main_unit: Literal["°C", "K"] = "°C"
     H_steam_unit: Literal["ккал/кг", "кДж/кг"] = "ккал/кг"
+
+    @field_validator("G_steam", "W_main", "t1_main", mode="before")
+    @classmethod
+    def parse_required_range_fields(cls, value):
+        if isinstance(value, str):
+            parsed = parse_range_input(value)
+            if not parsed:
+                raise ValueError("Поле не может быть пустым.")
+            return parsed
+        return value
+
+    @field_validator("W_builtin", "t1_builtin", mode="before")
+    @classmethod
+    def parse_optional_range_fields(cls, value):
+        if value is None:
+            return None
+        if isinstance(value, str):
+            if not value.strip():
+                return None
+            return parse_range_input(value)
+        return value
+
+    @field_validator("coefficient_b", mode="before")
+    @classmethod
+    def parse_coefficient_b(cls, value):
+        if isinstance(value, str):
+            if not value.strip():
+                return [1.0]
+            parsed = parse_range_input(value)
+            for v in parsed:
+                if v < 0.0 or v > 1.0:
+                    raise ValueError("coefficient_b должен быть в диапазоне [0..1].")
+            return parsed
+        return value
 
     @model_validator(mode="after")
     def validate_cross_dependencies(self) -> "CalculationInput":
