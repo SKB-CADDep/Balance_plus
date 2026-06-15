@@ -1,3 +1,12 @@
+"""
+Скрипт для автоматической генерации Markdown-отчета по бенчмаркам.
+
+Этот модуль запускает сравнение математических решателей (solvers) 
+и формирует человекочитаемый файл `report.md`. Данный артефакт может 
+использоваться разработчиками для обоснования выбора конкретного алгоритма 
+или прикрепляться к Merge Request'ам в GitLab в качестве подтверждения производительности.
+"""
+
 from _common import setup_path
 
 setup_path()
@@ -5,8 +14,22 @@ setup_path()
 from compare_selection_methods import run_comparison
 
 
-def create_markdown_table(results):
-    """Создает строку с таблицей в формате Markdown из списка результатов."""
+def create_markdown_table(results: list[dict]) -> str:
+    """
+    Создает строку с таблицей в формате Markdown из списка результатов.
+
+    [ENGINEERING CONTEXT]
+    Почему используется фиксированная ширина столбцов (`<18`, `<17` и т.д.):
+    Это делается для того, чтобы "сырой" (неотрендеренный) Markdown-файл 
+    оставался идеально читаемым прямо в консоли или простом текстовом редакторе.
+
+    Args:
+        results (list[dict]): Список словарей с метриками работы алгоритмов,
+            полученный из функции run_comparison().
+
+    Returns:
+        str: Готовая к записи в файл строка, представляющая Markdown-таблицу.
+    """
     # Заголовок таблицы
     header = "| Метод              | Найденный X        | Итераций | Время (μs/запуск) | Итоговый A3_delt |"
     separator = "|:-------------------|:-------------------|:---------|:------------------|:-----------------|"
@@ -28,13 +51,26 @@ def create_markdown_table(results):
         delta_val = res["Итоговый A3_delt"]
         delta_str = f"{delta_val:.10f}" if isinstance(delta_val, float) else str(delta_val)
 
-        # Собираем строку
+        # Собираем строку с жестким выравниванием
         rows.append(f"| {method:<18} | {x_str:<18} | {iters_str:<8} | {time_str:<17} | {delta_str:<16} |")
 
     return "\n".join([header, separator, *rows])
 
-def generate_report_file(results, filename="report.md"):
-    """Генерирует полный файл отчета в формате Markdown."""
+
+def generate_report_file(results: list[dict], filename: str = "report.md") -> None:
+    """
+    Генерирует полный файл отчета в формате Markdown и сохраняет его на диск.
+
+    [ENGINEERING CONTEXT]
+    Анализ и выводы жестко зашиты в код (hardcoded), поскольку данный бенчмарк
+    написан для решения конкретной изолированной математической проблемы (problem.py).
+    Текст выступает в роли "базы знаний" (снижение bus-factor), фиксирующей 
+    инженерные причины выбора того или иного алгоритма для будущих разработчиков.
+
+    Args:
+        results (list[dict]): Результаты профилирования решателей.
+        filename (str, optional): Имя выходного файла. По умолчанию "report.md".
+    """
     table_md = create_markdown_table(results)
 
     report_content = f"""
@@ -85,4 +121,4 @@ def generate_report_file(results, filename="report.md"):
 if __name__ == "__main__":
     simulation_results = run_comparison()
     generate_report_file(simulation_results)
-
+    
