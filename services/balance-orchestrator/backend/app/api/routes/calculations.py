@@ -1,3 +1,8 @@
+"""
+Роутер для управления жизненным циклом расчётов.
+Отвечает за сохранение и получение результатов вычислений, используя GitLab 
+в качестве единого источника истины (Git-as-a-Database).
+"""
 import json
 
 import gitlab
@@ -11,8 +16,37 @@ from app.schemas.calculation import CalculationSaveRequest
 router = APIRouter(prefix="/calculations", tags=["Calculations"])
 
 
-@router.post("/save")
+@router.post(
+    "/save",
+    summary="Сохранение результатов расчёта",
+    response_description="Успешный статус сохранения с деталями созданного коммита"
+)
 async def save_calculation_result(req: CalculationSaveRequest):
+    """
+    Сохраняет входные данные и результаты расчёта в репозиторий GitLab.
+
+    Взаимодействует с GitLab API для поиска ветки, привязанной к задаче, 
+    и создает коммит с файлами `input.json` и `result.json` в фиксированной директории.
+
+    Args:
+        req (CalculationSaveRequest): Валидированная Pydantic-схема с данными расчёта,
+            содержащая ID проекта, задачи, входные и выходные параметры.
+
+    Returns:
+        dict: Словарь с информацией об успешном сохранении:
+            - status (str): Статус операции (всегда "saved").
+            - commit_id (str): Хеш созданного коммита.
+            - path (str): Базовый путь в репозитории, куда сохранены файлы.
+            - web_url (str): Прямая ссылка на коммит в GitLab для просмотра.
+
+    Raises:
+        HTTPException (400): Если ветка для задачи не найдена (работа не начата) 
+            или возникла ошибка доступа к проекту.
+        HTTPException (401): При недействительном токене GitLab.
+        HTTPException (404): Если целевой объект не найден в GitLab.
+        HTTPException (502): При проблемах на стороне шлюза/API GitLab.
+        HTTPException (500): При непредвиденных внутренних ошибках сервера.
+    """
     try:
         # 1. Поиск ветки.
         try:
@@ -32,6 +66,14 @@ async def save_calculation_result(req: CalculationSaveRequest):
         # 2. Подготовка данных (используем .get() для commit_message)
         req_data = req.model_dump()
         msg = req_data.get("commit_message") or "Результаты расчёта"
+        
+        # [ENGINEERING CONTEXT]
+        # Почему мы используем фиксированный путь `calculations/{req.app_type}/current`:
+        # GitLab выступает в роли NoSQL-хранилища для состояния расчетов. 
+        # Использование папки /current гарантирует, что при загрузке формы (hydration) 
+        # мы всегда будем брать актуальный срез данных (head) без необходимости 
+        # хранить маппинг "коммит <-> расчет" в отдельной СУБД. 
+        # Версионирование обеспечивается самой историей Git (Git history).
         base_path = f"calculations/{req.app_type}/current"
 
         files_to_commit = {
@@ -66,11 +108,34 @@ async def save_calculation_result(req: CalculationSaveRequest):
         raise HTTPException(status_code=500, detail=f"Internal Error: {str(e)}")
 
 
-@router.get("/latest")
-async def get_latest_calculation(task_iid: int = Query(...), app_type: str = Query(...), project_id: int = Query(...)):
+@router.get(
+    "/latest",
+    summary="Загрузка последних данных расчёта",
+    response_description="Структура данных для гидрации фронтенд-формы (без вызова HTTP-ошибок)"
+)
+async def get_latest_calculation(
+    task_iid: int = Query(..., title="ID Задачи", description="IID Issue в GitLab (внутренний номер задачи)"), 
+    app_type: str = Query(..., title="Тип приложения", description="Идентификатор типа расчёта/модуля"), 
+    project_id: int = Query(..., title="ID Проекта", description="Уникальный идентификатор проекта в GitLab")
+):
     """
-    Возвращает данные последнего расчёта для гидрации формы.
-    Читает из фиксированного пути calculations/{app_type}/current/
+    Возвращает данные последнего расчёта для гидрации формы на клиенте.
+    
+    Осуществляет "умный поиск" ветки по IID задачи и читает содержимое файлов 
+    `input.json` и `result.json` напрямую из репозитория GitLab по фиксированному пути 
+    `calculations/{app_type}/current/`.
+
+    Args:
+        task_iid (int): Номер задачи для поиска привязанной ветки.
+        app_type (str): Тип приложения, определяющий директорию хранения.
+        project_id (int): ID проекта в GitLab для доступа к репозиторию.
+
+    Returns:
+        dict: Объект, описывающий результат поиска:
+            - found (bool): Флаг наличия сохраненных данных.
+            - input_data (dict, optional): Входные параметры (если найдены).
+            - output_data (dict, optional): Результаты расчёта (если найдены).
+            - reason/error (str, optional): Системная причина отсутствия данных для дебага.
     """
     try:
         # 1. Ищем РЕАЛЬНУЮ ветку задачи (Умный поиск)
@@ -104,5 +169,12 @@ async def get_latest_calculation(task_iid: int = Query(...), app_type: str = Que
         return {"found": False, "error": f"Ошибка GitLab API: {e}"}
     except Exception as e:
         print(f"Error getting calc: {e}")
-        # Не падаем с ошибкой, а просто говорим "данных нет", чтобы форма открылась пустой
+        # [ENGINEERING CONTEXT]
+        # Запрет на прерывание потока (Swallowing exceptions):
+        # В отличие от эндпоинта /save, здесь мы намеренно перехватываем ВСЕ исключения
+        # и возвращаем {"found": False} с HTTP статусом 200 OK (без raise HTTPException).
+        # Почему это сделано так: если пользователь впервые открывает задачу (файлов в Git еще нет), 
+        # генерация 404/500 ошибки "сломает" страницу на фронтенде. Возврат `found: False` 
+        # сообщает фронтенду штатно отрендерить пустую форму ввода данных для старта работы.
         return {"found": False, "error": str(e)}
+        
