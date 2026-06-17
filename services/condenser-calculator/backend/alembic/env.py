@@ -1,3 +1,16 @@
+"""
+Конфигурационное окружение Alembic для микросервиса condenser-calculator.
+
+[ENGINEERING CONTEXT]
+Внимание: В данном проекте используется гибридный подход к БД.
+ПЕРВИЧНАЯ инициализация пустой базы данных через `alembic upgrade head` СТРОГО ЗАПРЕЩЕНА,
+так как эталонные справочники оборудования и теплофизических свойств 
+(модели Condenser, Material) разворачиваются исключительно из подготовленных SQL-дампов.
+
+Alembic используется в этом микросервисе ТОЛЬКО для инкрементальных (последующих) 
+изменений схемы поверх уже восстановленной базы данных.
+"""
+
 import sys
 from logging.config import fileConfig
 from sqlalchemy import engine_from_config
@@ -10,11 +23,14 @@ from app.core.config import settings
 
 
 from app.models.base import Base
+# Явный импорт моделей необходим, чтобы Alembic добавил их в target_metadata
+# и смог генерировать миграции (autogenerate) на основе изменений в коде.
 from app.models.material import Material
 from app.models.condenser import Condenser
 
 config = context.config
 
+# Динамическая подстановка URL базы данных из Pydantic настроек
 config.set_main_option("sqlalchemy.url", settings.SQLALCHEMY_DATABASE_URI)
 
 
@@ -25,16 +41,12 @@ target_metadata = Base.metadata
 
 
 def run_migrations_offline() -> None:
-    """Run migrations in 'offline' mode.
+    """
+    Запускает миграции в 'offline' режиме.
 
-    This configures the context with just a URL
-    and not an Engine, though an Engine is acceptable
-    here as well.  By skipping the Engine creation
-    we don't even need a DBAPI to be available.
-
-    Calls to context.execute() here emit the given string to the
-    script output.
-
+    Конфигурирует контекст только с использованием URL, без создания пула соединений (Engine).
+    Позволяет генерировать SQL-скрипты миграций без физического подключения к БД (DBAPI не требуется).
+    Все SQL-выражения перехватываются и выводятся в стандартный поток вывода (stdout).
     """
     url = config.get_main_option("sqlalchemy.url")
     context.configure(
@@ -49,11 +61,19 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
-    """Run migrations in 'online' mode.
+    """
+    Запускает миграции в 'online' режиме (с подключением к БД).
 
-    In this scenario we need to create an Engine
-    and associate a connection with the context.
+    Создает объект Engine и связывает реальное соединение с контекстом Alembic
+    для физического изменения таблиц в PostgreSQL.
 
+    [ENGINEERING CONTEXT]
+    Оптимизация пула соединений: используется `poolclass=pool.NullPool`. 
+    Это предотвращает создание висящего пула соединений для короткоживущего 
+    CLI-скрипта миграций. Без этой настройки скрипт может "зависнуть" 
+    при выполнении автоматических пайплайнов в CI/CD (GitHub Actions/GitLab CI).
+    Флаг `compare_type=True` заставляет Alembic отслеживать изменения 
+    типов данных в колонках (например, Float -> Integer).
     """
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
@@ -76,3 +96,4 @@ if context.is_offline_mode():
     run_migrations_offline()
 else:
     run_migrations_online()
+    

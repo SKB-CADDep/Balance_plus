@@ -1,13 +1,13 @@
-```markdown
-# 🎼 Balance Orchestrator (Backend)
+# Balance Orchestrator (Backend)
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue?style=for-the-badge&logo=python)
 ![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)
 ![GitLab API](https://img.shields.io/badge/python--gitlab-FCA121?style=for-the-badge&logo=gitlab)
+![Vue.js](https://img.shields.io/badge/Vue.js-35495E?style=for-the-badge&logo=vuedotjs&logoColor=4FC08D)
 
 Бэкенд центрального микросервиса **Balance+ IDE**. Выполняет роль API Gateway и интеграционного слоя между клиентским интерфейсом (Vue.js), репозиториями GitLab и изолированными математическими воркерами.
 
-## 🎯 Архитектура и назначение
+## Архитектура и назначение
 
 Оркестратор не выполняет тяжелых математических расчетов (они делегируются в микросервисы `condenser-calculator` и `valve-stems`). Его главные задачи:
 1. **Интеграция с GitLab**: Аутентификация, получение списка проектов, задач (Issues) и управление ветками (Branches).
@@ -25,7 +25,94 @@
 
 ---
 
-## 🛠 Предварительные требования и `.env`
+## Структура проекта
+
+Кодовая база разделена на серверную часть (FastAPI) и клиентский интерфейс (Vue.js):
+
+```text
+📁 balance-orchestrator/
+│   ├── 📁 backend/                 # [API GATEWAY & ИНТЕГРАЦИЯ]
+│   │   ├── 📁 app/
+│   │   │   ├── 📁 api/
+│   │   │   │   ├── 📁 routes/      # HTTP-эндпоинты
+│   │   │   │   │   ├── 🐍 __init__.py
+│   │   │   │   │   ├── 🐍 calculations.py
+│   │   │   │   │   ├── 🐍 config.py
+│   │   │   │   │   ├── 🐍 geometries.py
+│   │   │   │   │   ├── 🐍 health.py
+│   │   │   │   │   ├── 🐍 projects.py
+│   │   │   │   │   ├── 🐍 tasks.py
+│   │   │   │   │   └── 🐍 user.py
+│   │   │   │   └── 🐍 __init__.py
+│   │   │   ├── 📁 core/
+│   │   │   │   ├── 🐍 __init__.py
+│   │   │   │   └── 🐍 gitlab_adapter.py  # Мост для работы с GitLab API
+│   │   │   ├── 📁 schemas/         # Pydantic модели
+│   │   │   │   ├── 🐍 __init__.py
+│   │   │   │   ├── 🐍 calculation.py
+│   │   │   │   ├── 🐍 geometry.py
+│   │   │   │   └── 🐍 task.py
+│   │   │   └── 🐍 main.py
+│   │   ├── 📁 tests/               # Автотесты (Tavern и Pytest)
+│   │   │   ├── 📁 api/
+│   │   │   │   └── 📁 routes/
+│   │   │   │       ├── ⚙️ __group__.yml
+│   │   │   │       ├── 🐍 test_berman_demo_calc.py
+│   │   │   │       ├── 🐍 test_calculations.py
+│   │   │   │       ├── ⚙️ test_calculations.tavern.yaml
+│   │   │   │       ├── 🐍 test_projects.py
+│   │   │   │       └── 🐍 test_tasks.py
+│   │   │   ├── 📁 unit/
+│   │   │   │   └── ⚙️ __group__.yml
+│   │   │   ├── 🐍 conftest.py
+│   │   │   └── 📖 README.md
+│   │   ├── 📄 .env.example
+│   │   ├── 🐳 Dockerfile
+│   │   ├── 🔒 poetry.lock
+│   │   ├── 📦 pyproject.toml
+│   │   └── ⚙️ pytest.ini
+│   │
+│   ├── 📁 frontend/                # [ПОЛЬЗОВАТЕЛЬСКИЙ ИНТЕРФЕЙС]
+│   │   ├── 📁 .vscode/
+│   │   │   └── 📋 extensions.json
+│   │   ├── 📁 public/
+│   │   │   └── 🖼️ vite.svg
+│   │   ├── 📁 src/
+│   │   │   ├── 📁 assets/
+│   │   │   │   └── 🖼️ vue.svg
+│   │   │   ├── 📁 components/
+│   │   │   │   ├── 📁 apps/
+│   │   │   │   │   └── 📄 WsaWrapper.vue
+│   │   │   │   ├── 📁 layout/
+│   │   │   │   │   └── 📄 Header.vue
+│   │   │   │   ├── 📁 task-board/  # Компоненты Kanban-доски
+│   │   │   │   │   ├── 📄 CreateTaskModal.vue
+│   │   │   │   │   ├── 📄 NewTaskCard.vue
+│   │   │   │   │   └── 📄 TaskCard.vue
+│   │   │   │   ├── 📁 ui/
+│   │   │   │   │   └── 📄 Badge.vue
+│   │   │   │   └── 📄 HelloWorld.vue
+│   │   │   ├── 📄 App.vue
+│   │   │   ├── 📜 main.ts
+│   │   │   └── 🎨 style.css
+│   │   ├── 🙈 .gitignore
+│   │   ├── 🐳 Dockerfile
+│   │   ├── 🌐 index.html
+│   │   ├── 📄 nginx.conf
+│   │   ├── 📋 package-lock.json
+│   │   ├── 📋 package.json
+│   │   ├── 📖 README.md
+│   │   ├── 📋 tsconfig.app.json
+│   │   ├── 📋 tsconfig.json
+│   │   ├── 📋 tsconfig.node.json
+│   │   └── 📜 vite.config.ts
+│   │
+│   └── ⚙️ docker-compose.yaml      # Локальный запуск сервиса
+```
+
+---
+
+## Предварительные требования и `.env`
 
 Для локального запуска оркестратора необходимо настроить связь с инстансом GitLab. Создайте файл `.env` в корне директории `backend/`:
 
@@ -42,9 +129,9 @@ DEBUG=True
 
 ---
 
-## 🚀 Руководство по запуску
+## Руководство по локальному запуску
 
-Все команды выполняются из директории микросервиса:  
+Все команды ниже выполняются из директории бэкенда:  
 `services/balance-orchestrator/backend/`
 
 ### 1. Установка зависимостей (Poetry)
@@ -59,12 +146,12 @@ poetry install
 poetry run uvicorn app.main:app --host 0.0.0.0 --port 8005 --reload
 ```
 
-✅ **Успех!** Интерактивная документация (Swagger UI) доступна по адресу:  
-👉 **http://localhost:8005/docs**
+ **Успех!** Интерактивная документация (Swagger UI) доступна по адресу:  
+ **http://localhost:8005/docs**
 
 ---
 
-## 🌐 Взаимодействие с другими сервисами (CORS)
+## Взаимодействие с другими сервисами (CORS)
 
 Так как Оркестратор является шлюзом, он принимает запросы от фронтенда и отправляет их дальше. Убедитесь, что остальные части системы запущены на правильных портах:
 
@@ -77,10 +164,9 @@ poetry run uvicorn app.main:app --host 0.0.0.0 --port 8005 --reload
 
 ---
 
-## 🧪 Качество кода и тесты
+## Качество кода и тесты
 
-Для проверки работоспособности мостов (адаптеров) GitLab и роутов:
+В проекте настроено комплексное тестирование. Для проверки работоспособности мостов (адаптеров) GitLab, Pydantic-схем и роутов выполните:
 ```bash
 poetry run pytest
-```
 ```
