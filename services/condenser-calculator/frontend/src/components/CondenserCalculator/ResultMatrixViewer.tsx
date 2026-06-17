@@ -17,13 +17,7 @@ import {
   Tr,
   useColorModeValue,
 } from '@chakra-ui/react';
-import type { CondenserMatrix, CondenserMatrixResult } from './types';
-
-function pickMatrix(r: CondenserMatrixResult): CondenserMatrix | null {
-  if (r.matrix) return r.matrix;
-  if (r.columns && r.rows && r.values) return { columns: r.columns, rows: r.rows, values: r.values };
-  return null;
-}
+import type { MatrixResult } from '../../client';
 
 function stringifyMeta(meta: Record<string, unknown> | undefined): string {
   if (!meta) return 'case';
@@ -40,7 +34,7 @@ function stringifyMeta(meta: Record<string, unknown> | undefined): string {
 }
 
 export type ResultMatrixViewerProps = {
-  results: Array<CondenserMatrixResult>;
+  results: Array<MatrixResult>;
 };
 
 export function ResultMatrixViewer({ results }: ResultMatrixViewerProps) {
@@ -54,7 +48,7 @@ export function ResultMatrixViewer({ results }: ResultMatrixViewerProps) {
         id: `${idx}`,
         label: stringifyMeta(r.meta),
         warnings: r.warnings ?? [],
-        matrix: pickMatrix(r),
+        matrix: { columns: r.columns, rows: r.rows, values: r.values },
       }))
       .filter((c) => c.matrix);
   }, [results]);
@@ -126,7 +120,7 @@ export function ResultMatrixViewer({ results }: ResultMatrixViewerProps) {
                           <Td fontWeight="bold">{String(row)}</Td>
                           {m.values[rIdx]?.map((v, cIdx) => (
                             <Td key={cIdx} bg={c.warnings.length ? warningBg : undefined}>
-                              {v === null || v === undefined ? '-' : String(v)}
+                              {v === null || v === undefined ? '-' : typeof v === 'number' ? v.toFixed(4) : String(v)}
                             </Td>
                           ))}
                         </Tr>

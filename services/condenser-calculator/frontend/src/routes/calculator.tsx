@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -19,12 +19,10 @@ import {
     useColorModeValue,
     useToast
 } from '@chakra-ui/react';
-import { CondensersService, MaterialsService } from '../client';
+import { CondensersService, MaterialsService, type CalculationInput, type MatrixResult } from '../client';
 import {
   CondenserForm,
-  type CondenserCalculationResponse,
   type CondenserFormValues,
-  type CondenserMatrixResult,
   ResultMatrixViewer,
   useCondenserCalculation,
 } from '../components/CondenserCalculator';
@@ -59,7 +57,7 @@ function CalculatorPage() {
 
     const [materialId, setMaterialId] = useState<number | null>(null);
 
-    const [results, setResults] = useState<Array<CondenserMatrixResult>>([]);
+    const [tables, setTables] = useState<Array<MatrixResult>>([]);
 
     // Default material when loaded
     useEffect(() => {
@@ -69,8 +67,6 @@ function CalculatorPage() {
     }, [materials]);
 
     const mutation = useCondenserCalculation();
-
-    const normalizedResults = useMemo(() => results, [results]);
 
     const handleCalculate = (values: CondenserFormValues) => {
         if (!condenserId) {
@@ -82,37 +78,53 @@ function CalculatorPage() {
             return;
         }
 
-        mutation.mutate(
-          {
-            ...values,
-            condenser_id: String(condenserId),
-            material_id: String(materialId),
+        const payload: CalculationInput = {
+          condenser_id: condenserId,
+          material_id: materialId,
+          method: values.method,
+          G_steam: values.G_steam,
+          W_main: values.W_main,
+          t1_main: values.t1_main,
+          G_steam_unit: values.G_steam_unit as any,
+          W_main_unit: values.W_main_unit as any,
+          t1_main_unit: values.t1_main_unit as any,
+          H_steam_unit: values.H_steam_unit as any,
+        };
+
+        if (values.coefficient_b.trim()) payload.coefficient_b = values.coefficient_b;
+        if (values.W_builtin.trim()) payload.W_builtin = values.W_builtin;
+        if (values.t1_builtin.trim()) payload.t1_builtin = values.t1_builtin;
+
+        if (values.Z_ejectors.trim()) payload.Z_ejectors = Number(values.Z_ejectors);
+        if (values.Z_main.trim()) payload.Z_main = Number(values.Z_main);
+        if (values.Z_builtin.trim()) payload.Z_builtin = Number(values.Z_builtin);
+
+        if (values.H_steam.trim()) payload.H_steam = Number(values.H_steam);
+        if (values.X_steam.trim()) payload.X_steam = Number(values.X_steam);
+
+        mutation.mutate(payload, {
+          onSuccess: (data) => {
+            setTables(data.tables ?? []);
+            toast({ title: "Расчет выполнен успешно!", status: "success" });
           },
-          {
-            onSuccess: (data: CondenserCalculationResponse) => {
-              const arr = Array.isArray(data) ? data : data.results;
-              setResults(arr ?? []);
-              toast({ title: "Расчет выполнен успешно!", status: "success" });
-            },
-            onError: (err: any) => {
-              const detail = err?.response?.data?.detail ?? err?.body?.detail;
-              let description: string;
-              if (Array.isArray(detail)) {
-                description = detail
-                  .map((e: any) => {
-                    const field = Array.isArray(e.loc) ? e.loc.join(' → ') : String(e.loc ?? '');
-                    return field ? `[${field}]: ${e.msg}` : e.msg;
-                  })
-                  .join('\n');
-              } else if (typeof detail === 'string') {
-                description = detail;
-              } else {
-                description = err?.message ?? 'Неизвестная ошибка';
-              }
-              toast({ title: "Ошибка расчета", description, status: "error", isClosable: true, duration: 8000 });
-            },
+          onError: (err: any) => {
+            const detail = err?.response?.data?.detail ?? err?.body?.detail;
+            let description: string;
+            if (Array.isArray(detail)) {
+              description = detail
+                .map((e: any) => {
+                  const field = Array.isArray(e.loc) ? e.loc.join(' → ') : String(e.loc ?? '');
+                  return field ? `[${field}]: ${e.msg}` : e.msg;
+                })
+                .join('\n');
+            } else if (typeof detail === 'string') {
+              description = detail;
+            } else {
+              description = err?.message ?? 'Неизвестная ошибка';
+            }
+            toast({ title: "Ошибка расчета", description, status: "error", isClosable: true, duration: 8000 });
           },
-        );
+        });
     };
 
     if (!condenserId) {
@@ -171,7 +183,7 @@ function CalculatorPage() {
                       <CondenserForm onSubmit={handleCalculate} isSubmitting={mutation.isPending} />
                     </Box>
                     <Box flex="1" minW={0}>
-                      <ResultMatrixViewer results={normalizedResults} />
+                      <ResultMatrixViewer results={tables} />
                     </Box>
                   </Flex>
                 </Box>
