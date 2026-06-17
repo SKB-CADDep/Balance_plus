@@ -152,3 +152,4 @@ class CalculationOutput(BaseModel):
     
     total_tables: int = Field(..., description="Общее количество сгенерированных матриц")
     calculation_time_ms: float = Field(..., description="Время, затраченное математическим ядром, в миллисекундах")
+    

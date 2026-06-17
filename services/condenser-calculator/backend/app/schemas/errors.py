@@ -30,3 +30,4 @@ class ErrorResponse(BaseModel):
         default=None, 
         description="Дополнительные технические детали для отладки (стек-трейс, дампы, причины валидации)"
     )
+    
