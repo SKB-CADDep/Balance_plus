@@ -9,15 +9,21 @@ from app.dependencies import get_db
 from app.core.database import Base
 
 
+# ===== Импортируем хелперы, чтобы они были доступны всем тестам =====
+from app.tests.crud.test_crud import (
+    create_test_turbine,
+    create_test_valve,
+    create_test_calculation_result,
+)
+
 @pytest.fixture(scope="session")
 def engine():
     """
     Создаёт engine с SQLite in-memory.
-    Прикрепляем схему 'autocalc' через ATTACH DATABASE,
-    т.к. SQLite не поддерживает PostgreSQL-схемы нативно.
+    Прикрепляем схему 'autocalc' через ATTACH DATABASE
     """
     test_engine = create_engine(
-        "sqlite:///memory",
+        "sqlite:///:memory:",
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )

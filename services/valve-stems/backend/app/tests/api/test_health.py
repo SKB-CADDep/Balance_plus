@@ -1,0 +1,29 @@
+"""
+Тесты для health check endpoints.
+"""
+import pytest
+
+
+
+@pytest.mark.asyncio
+async def test_health_check(async_client):
+    """Тест проверки работоспособности API (GET /health)."""
+    response = await async_client.get("/health")
+    data = response.json()
+    assert response.status_code == 200
+    assert data["status"] == "ok"
+
+
+
+@pytest.mark.asyncio
+async def test_health_check_db(async_client, db_session):
+    """Тест проверки коннекта к тестовой БД (GET /health/db)."""
+    payload = create_test_turbine(db_session, "Test turbine")
+    response = await async_client.get("/health/db", json=payload)
+    data = response.json()
+    assert response.status_code == 200
+    assert data["status"] == "ok"
+
+
+
+

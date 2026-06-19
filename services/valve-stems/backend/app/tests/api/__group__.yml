@@ -1,2 +1,2 @@
 name: "Штоки: API-тесты"
-description: "Быстрые интеграционные тесты REST-роутеров через httpx + in-memory SQLite"
+description: "Интеграционные тесты REST-роутеров через httpx + in-memory SQLite"
