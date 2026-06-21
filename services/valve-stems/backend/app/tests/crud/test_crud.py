@@ -16,7 +16,7 @@ def create_test_turbine(db: Session, turbine_name: str = "Test Turbine"):
     return turbine
 
 
-def create_test_valve(db: Session, valve_name: str = "VD-001", turbine_id: int | None = None):
+def create_test_valve(db: Session, valve_name: str = "VD-001"):
     valve = models.Valve(
         name=valve_name,
         type="Type A",
@@ -29,7 +29,6 @@ def create_test_valve(db: Session, valve_name: str = "VD-001", turbine_id: int |
         len_part4=1.0,
         len_part5=1.0,
         round_radius=0.5,
-        turbine_id=turbine_id,
     )
     db.add(valve)
     db.commit()
@@ -42,7 +41,6 @@ def create_test_calculation_result(
     valve_name: str,
     input_data: dict,
     output_data: dict,
-    valve_id: int,
 ):
     calculation_result = models.CalculationResultDB(
         stock_name=valve_name,
@@ -50,7 +48,6 @@ def create_test_calculation_result(
         calc_timestamp=datetime.now(timezone.utc),
         input_data=input_data,
         output_data=output_data,
-        valve_id=valve_id,
     )
     db.add(calculation_result)
     db.commit()
@@ -62,8 +59,11 @@ def create_test_calculation_result(
 
 def test_get_valves_by_turbine(db_session):
     turbine = create_test_turbine(db_session)
-    create_test_valve(db_session, valve_name="VD-001", turbine_id=turbine.id)
-    create_test_valve(db_session, valve_name="VD-002", turbine_id=turbine.id)
+    valve1 = create_test_valve(db_session, valve_name="VD-001")
+    valve2 = create_test_valve(db_session, valve_name="VD-002")
+    turbine.valves.append(valve1)
+    turbine.valves.append(valve2)
+    db_session.commit()
 
     result = crud.get_valves_by_turbine(db_session, turbine_name="Test Turbine")
 
@@ -84,7 +84,7 @@ def test_get_valves_by_turbine_no_turbine(db_session):
 
 def test_get_valve_by_drawing(db_session):
     turbine = create_test_turbine(db_session)
-    create_test_valve(db_session, valve_name="VD-003", turbine_id=turbine.id)
+    create_test_valve(db_session, valve_name="VD-003")
 
     result = crud.get_valve_by_drawing(db_session, valve_drawing="VD-003")
 
@@ -102,7 +102,7 @@ def test_get_valve_by_drawing_not_found(db_session):
 
 def test_get_valve_by_id(db_session):
     turbine = create_test_turbine(db_session)
-    valve = create_test_valve(db_session, valve_name="VD-004", turbine_id=turbine.id)
+    valve = create_test_valve(db_session, valve_name="VD-004")
 
     result = crud.get_valve_by_id(db_session, valve_id=valve.id)
 
@@ -121,7 +121,7 @@ def test_get_valve_by_id_not_found(db_session):
 
 def test_create_calculation_result(db_session):
     turbine = create_test_turbine(db_session)
-    valve = create_test_valve(db_session, valve_name="VD-005", turbine_id=turbine.id)
+    valve = create_test_valve(db_session, valve_name="VD-005")
 
     parameters = schemas.CalculationParams(
         turbine_name="Test Turbine",
@@ -147,7 +147,6 @@ def test_create_calculation_result(db_session):
         db=db_session,
         parameters=parameters,
         results=results,
-        valve_id=valve.id,
     )
 
     assert db_result.id is not None
@@ -159,7 +158,7 @@ def test_create_calculation_result(db_session):
 
 def test_get_results_by_valve_drawing(db_session):
     turbine = create_test_turbine(db_session)
-    valve = create_test_valve(db_session, valve_name="VD-006", turbine_id=turbine.id)
+    valve = create_test_valve(db_session, valve_name="VD-006")
 
     parameters1 = schemas.CalculationParams(
         turbine_name="Test Turbine",
@@ -184,7 +183,6 @@ def test_get_results_by_valve_drawing(db_session):
     create_test_calculation_result(
         db_session, "VD-006",
         parameters1.model_dump(), results1.model_dump(),
-        valve_id=valve.id,
     )
 
     parameters2 = schemas.CalculationParams(
@@ -210,7 +208,6 @@ def test_get_results_by_valve_drawing(db_session):
     create_test_calculation_result(
         db_session, "VD-006",
         parameters2.model_dump(), results2.model_dump(),
-        valve_id=valve.id,
     )
 
     results = crud.get_results_by_valve_drawing(db_session, valve_drawing="VD-006")
@@ -229,7 +226,7 @@ def test_get_results_by_valve_drawing_not_found(db_session):
 def test_create_calculation_result_invalid_data(db_session):
     """Pydantic должен отклонить невалидные данные при создании схемы."""
     turbine = create_test_turbine(db_session)
-    create_test_valve(db_session, valve_name="VD-007", turbine_id=turbine.id)
+    create_test_valve(db_session, valve_name="VD-007")
 
     with pytest.raises(ValueError):
         schemas.CalculationParams(

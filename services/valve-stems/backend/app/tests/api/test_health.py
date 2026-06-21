@@ -18,12 +18,8 @@ async def test_health_check(async_client):
 @pytest.mark.asyncio
 async def test_health_check_db(async_client, db_session):
     """Тест проверки коннекта к тестовой БД (GET /health/db)."""
-    payload = create_test_turbine(db_session, "Test turbine")
-    response = await async_client.get("/health/db", json=payload)
+    response = await async_client.get("/health/db")
     data = response.json()
     assert response.status_code == 200
     assert data["status"] == "ok"
-
-
-
-
+    assert data["database"] == "connected"

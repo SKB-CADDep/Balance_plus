@@ -9,13 +9,6 @@ from app.dependencies import get_db
 from app.core.database import Base
 
 
-# ===== Импортируем хелперы, чтобы они были доступны всем тестам =====
-from app.tests.crud.test_crud import (
-    create_test_turbine,
-    create_test_valve,
-    create_test_calculation_result,
-)
-
 @pytest.fixture(scope="session")
 def engine():
     """
