@@ -1,7 +1,7 @@
 import logging
 import unittest
 
-from app.schemas import CalculationParams, ValveInfo
+from app.schemas import MultiCalculationParams, ValveInfo
 from app.services.calculator import ValveCalculator
 
 
@@ -11,13 +11,15 @@ logger = logging.getLogger(__name__)
 
 class TestValveCalculator(unittest.TestCase):
     def setUp(self):
-        params = CalculationParams(
-            temperature_start=555,
-            t_air=40,
-            count_valves=2,
-            p_ejector=[0.97, 0.97],
-            p_values=[130, 10, 1.03]
-        )
+        params = MultiCalculationParams(
+            turbine_id=0,
+            globals=schemas.CalculationGlobals(P_fresh=7, T_fresh=20),
+            groups=[
+                schemas.ValveGroupInput(
+                    valve_id=1,
+                    type="СК",
+                    valve_names=["Test Valve 1"],
+                    quantity=2)], )
         valve_info = ValveInfo(
             id=1,
             name="Test Valve 1",
