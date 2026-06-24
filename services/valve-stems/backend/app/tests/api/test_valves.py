@@ -9,7 +9,7 @@ from app.tests.crud.test_crud import create_test_turbine, create_test_valve
 """
 Позитивные сценарии.
 """
-@pytest.mark.asyncio
+
 async def test_create_valve(async_client, db_session):
     """Тест проверки создания сущностей(POST)."""
     payload = {"name": "Test Valve"}
@@ -19,7 +19,6 @@ async def test_create_valve(async_client, db_session):
     assert data["name"] == payload["name"]
 
 
-@pytest.mark.asyncio
 async def test_get_valves(async_client, db_session):
     """Тест проверки получения списка клапанов(GET)."""
     valve1 = create_test_valve(db_session, "Test Valve1")
@@ -32,7 +31,6 @@ async def test_get_valves(async_client, db_session):
     assert len(data) == 4
 
 
-@pytest.mark.asyncio
 async def test_read_valve_by_id(async_client, db_session):
     """Тест проверки получения клапана по id(GET)."""
     valve = create_test_valve(db_session)
@@ -43,7 +41,6 @@ async def test_read_valve_by_id(async_client, db_session):
     assert data["name"] == valve.name
 
 
-@pytest.mark.asyncio
 async def test_get_turbine_by_valve_name(async_client, db_session):
     """Тест проверки получения турбины по имени клапана(GET)."""
     turbine = create_test_turbine(db_session)
@@ -56,7 +53,6 @@ async def test_get_turbine_by_valve_name(async_client, db_session):
     assert data["id"] == turbine.id
     assert data["name"] == turbine.name
 
-@pytest.mark.asyncio
 async def test_create_valve_duplicate_name(async_client, db_session):
     """Тест проверки создания клапана с дублирующимся именем (POST)."""
     valve = create_test_valve(db_session, "Test Valve")
@@ -66,7 +62,6 @@ async def test_create_valve_duplicate_name(async_client, db_session):
     assert response.status_code in [400, 422]
 
 
-@pytest.mark.asyncio
 async def test_get_turbine_by_nonexistent_valve_name(async_client, db_session):
     """Тест проверки получения турбины по несуществующему имени клапана(GET)."""
     turbine = create_test_turbine(db_session)

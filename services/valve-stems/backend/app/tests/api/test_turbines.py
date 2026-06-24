@@ -6,7 +6,6 @@ import pytest
 
 from app.tests.crud.test_crud import create_test_turbine, create_test_valve
 
-@pytest.mark.asyncio
 async def test_create_turbine(async_client, db_session):
     """Тест проверки создания сущностей(POST)."""
     payload = {"name": "Test Turbine", "id": 1}
@@ -16,7 +15,6 @@ async def test_create_turbine(async_client, db_session):
     assert data["name"] == "Test Turbine"
 
 
-@pytest.mark.asyncio
 async def test_get_valves_by_turbine(async_client, db_session):
     """Тест проверки получения клапанов турбины(GET)."""
     new_turbine = create_test_turbine(db_session, "Test Turbine")
@@ -31,7 +29,6 @@ async def test_get_valves_by_turbine(async_client, db_session):
     assert response.status_code == 200
 
 
-@pytest.mark.asyncio
 async def test_get_all_turbines_with_valves(async_client, db_session):
     """Тест проверки получения турбин с клапанами(GET)."""
     turbine1 = create_test_turbine(db_session, "Turbine1")
@@ -49,7 +46,6 @@ async def test_get_all_turbines_with_valves(async_client, db_session):
     assert response.status_code == 200
 
 
-@pytest.mark.asyncio
 async def test_read_turbine_by_id(async_client, db_session):
     """Тест проверки получения турбины по id(GET)."""
     turbine = create_test_turbine(db_session, "Test Turbine")
@@ -60,7 +56,6 @@ async def test_read_turbine_by_id(async_client, db_session):
     assert data["id"] == turbine.id
 
 
-@pytest.mark.asyncio
 async def test_get_turbine_not_found(async_client, db_session):
     """Тест проверки получения несуществующей турбины по id(GET)."""
     turbine_id = 999
