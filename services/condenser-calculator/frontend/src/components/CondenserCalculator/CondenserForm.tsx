@@ -323,8 +323,6 @@ export function CondenserForm({ onSubmit, isSubmitting }: CondenserFormProps) {
                 )}
               />
             </FormControl>
-
-            </FormControl>
             </Stack>
 
             <Stack spacing={5}>
