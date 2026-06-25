@@ -32,8 +32,12 @@ async def create_valve(valve: ValveCreate, db: Session = Depends(get_db)):
     if existing_valve:
         raise ValidationError("Клапан с таким именем (чертежом) уже существует.")
 
-    new_valve = Valve(**valve.model_dump())
+    new_valve = Valve(**valve.model_dump(exclude={"turbine_id"}))
     db.add(new_valve)
+    if valve.turbine_id is not None:
+        turbine = db.query(Turbine).filter(Turbine.id == valve.turbine_id).first()
+        if turbine is not None:
+            turbine.valves.append(new_valve)
     db.commit()
     db.refresh(new_valve)
     return new_valve
@@ -72,11 +76,7 @@ async def get_turbine_by_valve_name(valve_name: str, db: Session = Depends(get_d
     valve = db.query(Valve).filter(Valve.name == valve_name).first()
     if not valve:
         raise EntityNotFoundError(entity_name="Клапан", entity_id=valve_name)
-
-    turbine = db.query(Turbine).filter(Turbine.id == valve.turbine_id).first()
-    if not turbine:
-        raise EntityNotFoundError(
-            entity_name="Турбина для клапана", entity_id=valve_name
-        )
-
+    if not valve.turbines:
+        raise EntityNotFoundError(entity_name="Турбина для клапана", entity_id=valve_name)
+    turbine = valve.turbines[0]
     return TurbineInfo.model_validate(turbine)

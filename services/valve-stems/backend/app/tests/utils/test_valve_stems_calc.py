@@ -11,7 +11,7 @@ os.environ["POSTGRES_PORT"] = "5254"
 from sqlalchemy import text
 from app.core.database import SessionLocal
 from app.adapters.calculation_adapter import CalculationAdapter
-from app.schemas import CalculationParams
+from app.schemas import MultiCalculationParams, CalculationGlobals, ValveGroupInput
 
 class DummyValveInfo:
     def __init__(self, **kwargs):
@@ -62,22 +62,33 @@ def calculate_wrapper(payload: dict):
             p_ejector = group.get("p_leak_offs",[])
             if not p_ejector and "P_lst_leak_off" in globals_data:
                 p_ejector.append(globals_data["P_lst_leak_off"])
-                
-            params = CalculationParams(
-                count_valves=group["quantity"],
-                p_values=group["p_values"],
-                p_values_unit=group.get("p_values_unit", "кгс/см²"),
-                p_ejector=p_ejector,
-                p_ejector_unit=globals_data.get("P_lst_leak_off_unit", "кгс/см²"),
-                t_air=globals_data.get("T_air", 40),
-                t_air_unit=globals_data.get("T_air_unit", "°C"),
-                temperature_start=globals_data.get("T_fresh"),
-                temperature_start_unit=globals_data.get("T_fresh_unit", "°C"),
-                enthalpy_start=globals_data.get("H_fresh"),
-                enthalpy_start_unit=globals_data.get("H_fresh_unit", "кДж/кг")
-            )
 
-            calc_res = CalculationAdapter.run_calculation(params, valve_info)
+            multi_params = MultiCalculationParams(
+                turbine_id=1,
+                globals=CalculationGlobals(
+                    P_fresh=globals_data.get("P_fresh"),
+                    P_fresh_unit=globals_data.get("P_fresh_unit", "кгс/см²"),
+                    T_fresh=globals_data.get("T_fresh"),
+                    T_fresh_unit=globals_data.get("T_fresh_unit", "°C"),
+                    T_air=globals_data.get("T_air", 40),
+                    T_air_unit=globals_data.get("T_air_unit", "°C"),
+                    P_lst_leak_off=globals_data.get("P_lst_leak_off", 0.97),
+                    P_lst_leak_off_unit=globals_data.get("P_lst_leak_off_unit", "кгс/см²"),
+                ),
+                groups=[
+                    ValveGroupInput(
+                        valve_id=valve_id,
+                        type=group.get("type", "СК"),
+                        valve_names=group.get("valve_names", []),
+                        quantity=group["quantity"],
+                        p_values=group["p_values"],
+                        p_values_unit=group.get("p_values_unit", "кгс/см²"),
+                        p_leak_offs=group.get("p_leak_offs", []),
+                        p_leak_offs_unit=group.get("p_leak_offs_unit", "кгс/см²"),
+                    )
+                ]
+            )
+            calc_res = CalculationAdapter.run_calculation(multi_params, valve_info)
             
             group_total_g = sum(calc_res.Gi) * group["quantity"]
             detail = {
