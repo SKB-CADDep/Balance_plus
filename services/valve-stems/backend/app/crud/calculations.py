@@ -1,10 +1,12 @@
 import logging
 from datetime import datetime
+
 from sqlalchemy.orm import Session
 
+from app.core.exceptions import EntityNotFoundError
 from app.models import CalculationResultDB
 from app.schemas import MultiCalculationParams, MultiCalculationResult
-from app.core.exceptions import EntityNotFoundError
+
 
 logger = logging.getLogger(__name__)
 

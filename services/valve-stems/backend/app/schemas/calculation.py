@@ -52,7 +52,7 @@ class ValveGroupInput(BaseModel):
 
     valve_id: int = Field(..., description="ID клапана, чью геометрию берем за основу")
     type: Literal["СК", "РК", "СРК"] = Field(..., description="Тип группы")
-    
+
     valve_names: list[str] = Field(..., min_length=1, description="Список имен клапанов (напр. ['СК-1', 'СК-2'])")
     quantity: int = Field(..., ge=1, description="Количество клапанов в группе")
 
@@ -107,8 +107,8 @@ class GroupCalculationDetails(BaseModel):
 
 class TypeSummary(BaseModel):
     """Сводные агрегированные данные для конкретного типа (Σ СК или Σ РК)."""
-    total_g: float  
-    mixed_h: float  
+    total_g: float
+    mixed_h: float
 
 
 class CalculationSummary(BaseModel):
@@ -132,7 +132,7 @@ class MultiCalculationResult(BaseModel):
 class CalculationResultDB(BaseModel):
     id: int
     user_name: str | None = None
-    stock_name: str  
+    stock_name: str
     turbine_name: str
     calc_timestamp: datetime
     input_data: dict[str, Any]

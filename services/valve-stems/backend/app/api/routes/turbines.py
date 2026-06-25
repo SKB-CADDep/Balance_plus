@@ -11,6 +11,7 @@ from app.dependencies import get_db
 from app.models import Turbine
 from app.schemas import TurbineInfo, TurbineValves, TurbineWithValvesInfo
 
+
 router = APIRouter()
 logger = logging.getLogger(__name__)
 

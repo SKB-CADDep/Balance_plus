@@ -7,8 +7,9 @@ from seuif97 import ph, ph2t, ph2v
 # Вспомогательные (наши)
 from WSAProperties import air_calc, ksi_calc, lambda_calc
 
-from app.domain.models import RawCalculationResult, ThermoConditions, ValveGeometry
 from app.core.exceptions import PhysicsCalculationError, SteamPropertiesError
+from app.domain.models import RawCalculationResult, ThermoConditions, ValveGeometry
+
 
 logger = logging.getLogger(__name__)
 

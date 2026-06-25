@@ -1,5 +1,7 @@
 import logging
+
 from uniconv import UnitConverter
+
 
 logger = logging.getLogger(__name__)
 
@@ -11,14 +13,14 @@ try:
     converter.get_available_units("enthalpy")
 except Exception:
     logger.info("Добавляем кастомный параметр 'enthalpy' в конвертер...")
-    
+
     converter.add_parameter(
         parameter_type="enthalpy",
         parameter_name="Энтальпия",           # <-- ВОТ ЭТОЙ СТРОКИ НЕ ХВАТАЛО
         base_unit_symbol="кДж/кг",
         base_unit_name="Килоджоуль на килограмм"
     )
-    
+
     # 1 ккал = 4.1868 кДж
     converter.add_unit(
         parameter_type="enthalpy",

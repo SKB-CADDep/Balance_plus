@@ -1,9 +1,12 @@
+import logging
 import time
 import uuid
-import logging
+
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
+
 from app.core.logging_config import request_id_ctx
+
 
 logger = logging.getLogger("app.middleware.access")
 
@@ -20,27 +23,27 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 
         if not is_silent:
             logger.info(
-                "Incoming request", 
+                "Incoming request",
                 extra={"method": method, "path": path}
             )
 
         start = time.perf_counter()
-        
+
         try:
             response = await call_next(request)
-            
+
             response.headers["X-Request-ID"] = rid
-            
+
             duration = round((time.perf_counter() - start) * 1000, 1)
-            
+
             if not is_silent:
                 logger.info(
-                    "Request completed", 
+                    "Request completed",
                     extra={"status_code": response.status_code, "duration_ms": duration, "method": method, "path": path}
                 )
-                
+
             return response
-            
+
         except Exception as e:
             duration = round((time.perf_counter() - start) * 1000, 1)
             logger.error(

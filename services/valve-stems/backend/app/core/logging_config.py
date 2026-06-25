@@ -1,8 +1,9 @@
 import logging
 import sys
 from contextvars import ContextVar
+
 from pythonjsonlogger import jsonlogger
-from app.core.config import settings
+
 
 request_id_ctx: ContextVar[str | None] = ContextVar("request_id", default=None)
 
@@ -14,14 +15,14 @@ class RequestIdFilter(logging.Filter):
 
 def setup_logging(level: str = "INFO"):
     """Инициализация структурированного JSON логирования."""
-    
+
     handler = logging.StreamHandler(sys.stdout)
-    
+
     formatter = jsonlogger.JsonFormatter(
         fmt="%(asctime)s %(levelname)s %(name)s %(message)s %(request_id)s",
         rename_fields={
-            "asctime": "timestamp", 
-            "levelname": "level", 
+            "asctime": "timestamp",
+            "levelname": "level",
             "name": "logger"
         },
     )
@@ -32,7 +33,7 @@ def setup_logging(level: str = "INFO"):
     root = logging.getLogger()
     root.handlers.clear()
     root.addHandler(handler)
-    
+
     # Устанавливаем уровень логирования
     log_level = getattr(logging, level.upper(), logging.INFO)
     root.setLevel(log_level)

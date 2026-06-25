@@ -1,17 +1,20 @@
 """Математика: Расчет протечек"""
 
-import os
 import json
+import os
 from pathlib import Path
+
 
 # настройки подключения специально для тестов из Windows
 os.environ["POSTGRES_SERVER"] = "localhost"
 os.environ["POSTGRES_PORT"] = "5254"
 
 from sqlalchemy import text
-from app.core.database import SessionLocal
+
 from app.adapters.calculation_adapter import CalculationAdapter
+from app.core.database import SessionLocal
 from app.schemas import CalculationParams
+
 
 class DummyValveInfo:
     def __init__(self, **kwargs):
@@ -26,18 +29,18 @@ def calculate_wrapper(payload: dict):
         "srk": {"total_g": 0.0, "mixed_h": 0.0}
     }
     globals_data = payload.get("globals", {})
-    
+
     db = SessionLocal()
     try:
         for group in payload.get("groups",[]):
             valve_id = group["valve_id"]
-            
+
             query = text("SELECT * FROM autocalc.stocks WHERE id = :vid")
             result = db.execute(query, {"vid": valve_id}).mappings().first()
-            
+
             if not result:
                 raise ValueError(f"Клапан с id={valve_id} не найден в таблице autocalc.stocks!")
-            
+
             raw_lengths =[
                 result.get('len_part1'),
                 result.get('len_part2'),
@@ -46,7 +49,7 @@ def calculate_wrapper(payload: dict):
                 result.get('len_part5')
             ]
             valid_lengths =[float(L) for L in raw_lengths if L is not None and float(L) > 0]
-            
+
             if len(valid_lengths) < 2:
                 raise ValueError(f"В БД у клапана id={valve_id} не заполнены длины участков! Значения: {raw_lengths}")
 
@@ -58,11 +61,11 @@ def calculate_wrapper(payload: dict):
                 round_radius=result.get('round_radius', 2.0),
                 section_lengths=valid_lengths
             )
-            
+
             p_ejector = group.get("p_leak_offs",[])
             if not p_ejector and "P_lst_leak_off" in globals_data:
                 p_ejector.append(globals_data["P_lst_leak_off"])
-                
+
             params = CalculationParams(
                 count_valves=group["quantity"],
                 p_values=group["p_values"],
@@ -78,7 +81,7 @@ def calculate_wrapper(payload: dict):
             )
 
             calc_res = CalculationAdapter.run_calculation(params, valve_info)
-            
+
             group_total_g = sum(calc_res.Gi) * group["quantity"]
             detail = {
                 "valve_id": valve_id,
@@ -94,13 +97,13 @@ def calculate_wrapper(payload: dict):
                 "group_total_g": group_total_g
             }
             details.append(detail)
-            
+
             v_type = detail["type"].lower()
             if v_type in summary:
                 summary[v_type]["total_g"] += group_total_g
                 if calc_res.Hi:
                     summary[v_type]["mixed_h"] = calc_res.Hi[0]
-                    
+
     finally:
         db.close()
 
@@ -126,13 +129,13 @@ file_prefixes =["1_st_stock", "2_nd_stock", "3_rd_stock"]
 for prefix in file_prefixes:
     data_file = data_dir / f"{prefix}_data.json"
     result_file = data_dir / f"{prefix}_result.json"
-    
+
     if data_file.exists() and result_file.exists():
-        with open(data_file, "r", encoding="utf-8") as f_in:
+        with open(data_file, encoding="utf-8") as f_in:
             input_payload = json.load(f_in)
-        with open(result_file, "r", encoding="utf-8") as f_out:
+        with open(result_file, encoding="utf-8") as f_out:
             expected_result = json.load(f_out)
-            
+
         tests.append({
             "id": f"valve_calc_{prefix}",
             "input": {"payload": input_payload},
