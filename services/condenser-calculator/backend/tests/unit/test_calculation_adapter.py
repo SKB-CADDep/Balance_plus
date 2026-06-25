@@ -2,13 +2,14 @@
 Юнит-тесты ядра калькулятора конденсаторов (Calculation Adapter).
 Проверка стратегий расчета, граничных условий, лимитов и обработки ошибок.
 """
-import pytest
-from unittest.mock import MagicMock, patch
 import time
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 from app.adapters.calculation_adapter import CondenserCalculationAdapter
 from app.core.exceptions import CalculationEngineError
-from app.schemas.calculation import CalculationInput, MatrixResult, EjectorResult
+from app.schemas.calculation import CalculationInput, EjectorResult, MatrixResult
 
 
 # ===================================================================
@@ -176,7 +177,7 @@ def test_w_builtin_none(adapter, mock_condenser, mock_material, input_berman):
     """Один пучок: W_builtin = None должно корректно обрабатываться"""
     input_berman.W_builtin = None
     input_berman.Z_builtin = None
-    
+
     with patch.object(adapter, '_run_berman') as mock_run:
         mock_run.return_value = ([create_mock_matrix()],[])
         result = adapter.calculate(input_berman, mock_condenser, mock_material)
@@ -187,7 +188,7 @@ def test_w_builtin_empty_array(adapter, mock_condenser, mock_material, input_ber
     """Один пучок: W_builtin =[] должно приравниваться к отсутствию встроенного пучка"""
     input_berman.W_builtin =[]
     input_berman.Z_builtin = None
-    
+
     with patch.object(adapter, '_run_berman') as mock_run:
         mock_run.return_value = ([create_mock_matrix()],[])
         result = adapter.calculate(input_berman, mock_condenser, mock_material)
@@ -198,7 +199,7 @@ def test_different_lengths_w_main_w_builtin(adapter, mock_condenser, mock_materi
     """Разные длины массивов W_main и W_builtin должны рассчитываться"""
     input_berman.W_main =[4000.0, 5000.0, 6000.0]
     input_berman.W_builtin = [2000.0]
-    
+
     with patch.object(adapter, '_run_berman') as mock_run:
         mock_run.return_value = ([create_mock_matrix()],[])
         adapter.calculate(input_berman, mock_condenser, mock_material)
@@ -238,10 +239,10 @@ def test_boundary_b_values(adapter, mock_condenser, mock_material, input_berman,
 def test_temperature_edge_cases(adapter, mock_condenser, mock_material, input_berman, temp, expected_warning):
     """Температурные граничные случаи (0°C, 45°C, 150°C)"""
     input_berman.t1_main = [temp]
-    
+
     with patch.object(adapter, '_run_berman') as mock_run:
         mock_run.return_value = ([create_mock_matrix(warnings=["Выход за диапазон"] if expected_warning else [])],[])
-        
+
         result = adapter.calculate(input_berman, mock_condenser, mock_material)
         if expected_warning:
             assert len(result.tables[0].warnings) > 0

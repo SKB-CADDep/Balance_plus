@@ -1,11 +1,14 @@
 """
 Тестирование бизнес-логики расчета теплопроводности (λ) материалов с мокированием Table1D
 """
-import pytest
-import numpy as np
 from unittest.mock import patch
-from app.core.material_lambda import build_lambda_interpolator, get_lambda
+
+import numpy as np
+import pytest
+
 from app.core.exceptions import MaterialPropertyError
+from app.core.material_lambda import build_lambda_interpolator, get_lambda
+
 
 # --- Вспомогательные классы для тестов ---
 class MockPoint:
@@ -89,10 +92,10 @@ def test_lambda_list_format(mock_table):
     """Тест обработки формата JSON: списка списков [[t, λ], ...]"""
     material = MockMaterial("TestList", [[20, 10], [100, 30]])
     interp = build_lambda_interpolator(material)
-    
+
     assert interp.min_t == 20.0
     assert interp.max_t == 100.0
-    
+
     result = get_lambda(interp, 60.0)
     assert result == 20.0
 

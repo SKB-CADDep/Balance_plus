@@ -1,32 +1,27 @@
-import time
 import logging
-from typing import Callable
+import time
+from collections.abc import Callable
 
 import numpy as np
 
+from app.core.condenser_validators import validate_temperature_ranges, validate_water_flow_limits
 from app.core.converter import converter
 from app.core.exceptions import (
+    CalculationEngineError,
     MaterialPropertyError,
     UnitConversionError,
-    CalculationEngineError,
+)
+from app.models.condenser import Condenser
+from app.models.material import Material
+from app.schemas.calculation import (
+    CalculationInput,
+    CalculationOutput,
+    EjectorResult,
+    MatrixResult,
 )
 from app.utils.berman_strategy import BermanStrategy
 from app.utils.metrovickers_strategy import MetroVickersStrategy
 from app.utils.table_models import Table1D
-from app.core.condenser_validators import (
-    validate_water_flow_limits,
-    validate_temperature_ranges
-)
-
-
-from app.schemas.calculation import (
-    CalculationInput,
-    CalculationOutput,
-    MatrixResult,
-    EjectorResult,
-)
-from app.models.condenser import Condenser
-from app.models.material import Material
 
 logger = logging.getLogger(__name__)
 

@@ -1,8 +1,10 @@
 import logging
-import numpy as np
 from dataclasses import dataclass
-from app.utils.table_models import Table1D
+
+import numpy as np
+
 from app.core.exceptions import MaterialPropertyError
+from app.utils.table_models import Table1D
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +71,7 @@ def get_lambda(interp: MaterialLambdaInterpolator, t_avg: float) -> float:
             f"для материала '{interp.material_name}': [{interp.min_t}; {interp.max_t}]"
         )
         logger.error(
-            msg, 
+            msg,
             extra={
                 "material_name": interp.material_name,
                 "t_avg": t_avg,

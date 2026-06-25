@@ -3,33 +3,33 @@
 """
 import pytest
 from fastapi.testclient import TestClient
+
 from app.main import app
 
-from sqlalchemy import create_engine
 
 def check_db_connection():
     print("\n[*] Проверка конфигурации...")
     from app.core.config import settings
-    
+
     # 1. Пытаемся найти URL под разными именами
     db_url = None
     possible_names = ["SQLALCHEMY_DATABASE_URI", "SQLALCHEMY_DATABASE_URL", "DATABASE_URL"]
-    
+
     for name in possible_names:
         if hasattr(settings, name):
             db_url = getattr(settings, name)
             print(f"[*] Найдено поле: {name}")
             break
-            
+
     if not db_url:
         # Если не нашли, выведем все доступные поля для отладки
         attrs = [a for a in dir(settings) if not a.startswith("_")]
-        print(f"[!] ОШИБКА: URL базы данных не найден в настройках.")
+        print("[!] ОШИБКА: URL базы данных не найден в настройках.")
         print(f"[*] Доступные поля в settings: {attrs}")
         pytest.exit("Завершение: не удалось определить URL базы данных")
 
     print(f"[*] Пытаюсь подключиться к: {db_url}")
-    
+
     try:
         from sqlalchemy import create_engine
         engine = create_engine(str(db_url), connect_args={'connect_timeout': 3})
@@ -78,7 +78,7 @@ def test_3_full_payload_success():
         "condenser_id": 1,
         "material_id": 1,
         "G_steam": [150000.0, 160000.0],
-        "H_steam": 2500.0, 
+        "H_steam": 2500.0,
         "t1_main": [15.5],
         "coefficient_b": [0.7, 0.85],
         "W_main": [5000.0, 10000.0],
@@ -104,13 +104,13 @@ def test_4_multiple_points_success():
 
 def test_5_multiple_coefficients_success():
     payload = {
-        "method": "berman", 
-        "condenser_id": 1, 
+        "method": "berman",
+        "condenser_id": 1,
         "material_id": 1,
         "G_steam": [120000.0],
         "H_steam": 2400.0,
         "t1_main": [20.0],
-        "coefficient_b": [0.5, 0.6, 0.7], 
+        "coefficient_b": [0.5, 0.6, 0.7],
         "W_main": [5000.0]
     }
     response = client.post(ENDPOINT, json=payload)
@@ -177,11 +177,11 @@ def test_18_val_non_numeric_coefficient():
 # ==========================================
 
 def test_19_not_found_condenser():
-    # Используем правильные данные, но плохой ID. 
+    # Используем правильные данные, но плохой ID.
     # Если вернется 422 - значит движок проверяет существование в БД до расчетов.
     payload = {"method": "berman", "condenser_id": 99999, "coefficient_b": [0.8], "W_main": [8000.0]}
     response = client.post(ENDPOINT, json=payload)
-    assert response.status_code in [404, 422] 
+    assert response.status_code in [404, 422]
 
 def test_20_not_found_material():
     payload = {"method": "berman", "condenser_id": 1, "material_id": 99999, "coefficient_b": [0.8], "W_main": [8000.0]}
@@ -291,7 +291,7 @@ def test_27_edge_boundary_b(b_val):
     }
     response = client.post(ENDPOINT, json=payload)
     # Если b=0.0 запрещен Pydantic-схемой, вернется 422, иначе 200 или 404
-    assert response.status_code in [200, 404, 422] 
+    assert response.status_code in [200, 404, 422]
 
 @pytest.mark.parametrize("temp, expected_warning",[
     (0.0, False),    # Граница Бермана
@@ -315,7 +315,7 @@ def test_28_edge_boundary_temperatures(temp, expected_warning):
         data = response.json()
         if expected_warning:
             has_warning = any(
-                len(table.get("warnings",[])) > 0 
+                len(table.get("warnings",[])) > 0
                 for table in data.get("tables",[])
             )
             assert has_warning, f"Ожидался warning (BR-10) для температуры {temp}"

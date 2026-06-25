@@ -1,6 +1,8 @@
 """Загружает базовые данные конденсаторов в PostgreSQL."""
 from sqlalchemy.orm import Session
+
 from app.models.condenser import Condenser
+
 
 def load_condensers(db: Session):
     # Создаем базовый конденсатор для тестов (ID = 1)
@@ -26,7 +28,7 @@ def load_condensers(db: Session):
         mass_flow_air=40.0,
         water_flow_limits=[4000.0, 20000.0]
     )
-    
+
     existing = db.query(Condenser).filter(Condenser.id == 1).first()
     if not existing:
         db.add(default_condenser)

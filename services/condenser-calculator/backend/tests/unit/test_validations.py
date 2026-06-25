@@ -1,7 +1,8 @@
 import pytest
+
 from app.core.condenser_validators import validate_condenser_for_method, validate_water_flow_limits
-from app.models import Condenser
 from app.core.exceptions import ValidationError
+from app.models import Condenser
 
 
 def test_validate_condenser_br02_berman_missing_aircooler():

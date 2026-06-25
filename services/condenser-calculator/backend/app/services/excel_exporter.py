@@ -1,5 +1,6 @@
 import io
 from typing import Any
+
 import openpyxl
 from openpyxl.styles import Font, PatternFill
 
@@ -64,7 +65,7 @@ class ExcelExporter:
 
                 ws.cell(row=current_row, column=1, value="t1 \\ G").font = header_font
                 ws.cell(row=current_row, column=1).fill = table_header_fill
-                
+
                 for c_idx, col_val in enumerate(cols, 2):
                     cell = ws.cell(row=current_row, column=c_idx, value=cls._format_value(col_val))
                     cell.font = header_font
@@ -75,12 +76,12 @@ class ExcelExporter:
                     cell = ws.cell(row=current_row, column=1, value=cls._format_value(row_val))
                     cell.font = header_font
                     cell.fill = table_header_fill
-                    
+
                     if r_idx < len(values):
                         for c_idx, val in enumerate(values[r_idx], 2):
                             ws.cell(row=current_row, column=c_idx, value=cls._format_value(val))
                     current_row += 1
-                
+
                 if warnings:
                     ws.cell(row=current_row, column=1, value="Предупреждения:").font = warning_font
                     current_row += 1
@@ -100,10 +101,10 @@ class ExcelExporter:
 
             first_ejector = ejector_results[0]
             first_dict = (
-                first_ejector.model_dump() if hasattr(first_ejector, "model_dump") 
+                first_ejector.model_dump() if hasattr(first_ejector, "model_dump")
                 else (first_ejector if isinstance(first_ejector, dict) else vars(first_ejector))
             )
-            
+
             headers = list(first_dict.keys())
 
             ws.cell(row=current_row, column=1, value="Отсос №").font = header_font
@@ -116,7 +117,7 @@ class ExcelExporter:
 
             for e_idx, ejector in enumerate(ejector_results, 1):
                 e_dict = (
-                    ejector.model_dump() if hasattr(ejector, "model_dump") 
+                    ejector.model_dump() if hasattr(ejector, "model_dump")
                     else (ejector if isinstance(ejector, dict) else vars(ejector))
                 )
                 ws.cell(row=current_row, column=1, value=e_idx)

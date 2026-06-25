@@ -1,9 +1,10 @@
 """
 Юнит-тест: Проверка правильности формирования Excel-отчета (матрицы, листы, округление).
 """
-import pytest
 from openpyxl import load_workbook
+
 from app.services.excel_exporter import ExcelExporter
+
 
 class MockMatrixResult:
     def __init__(self, meta, columns, rows, values, warnings=None):
@@ -41,7 +42,7 @@ def test_excel_structure_and_rounding():
 
     # 3. Открываем сгенерированный Excel
     wb = load_workbook(stream)
-    
+
     # ПРОВЕРКА 1: Только один лист
     assert len(wb.sheetnames) == 1
     ws = wb.active

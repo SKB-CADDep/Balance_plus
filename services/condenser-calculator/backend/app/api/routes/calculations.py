@@ -1,17 +1,22 @@
-import logging
 import datetime
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.adapters.calculation_adapter import CondenserCalculationAdapter
-from app.core.exceptions import EntityNotFoundError, ValidationError, UnitConversionError, CalculationEngineError
+from app.core.condenser_validators import validate_condenser_for_method
+from app.core.exceptions import (
+    CalculationEngineError,
+    EntityNotFoundError,
+    UnitConversionError,
+    ValidationError,
+)
 from app.crud.condensers import get_condenser_by_id
 from app.crud.materials import get_material_by_id
 from app.dependencies import get_db
 from app.schemas.calculation import CalculationInput, CalculationOutput
-from app.core.condenser_validators import validate_condenser_for_method
-
 from app.services.excel_exporter import ExcelExporter
 
 logger = logging.getLogger(__name__)
@@ -84,7 +89,7 @@ async def calculate(
         logger.error("Calculation engine error", extra={"error": str(e)})
         raise HTTPException(status_code=400, detail=str(e))
 
-    except Exception as e:
+    except Exception:
         logger.exception("Unexpected error during calculation")
         raise HTTPException(
             status_code=500,
@@ -150,7 +155,7 @@ async def calculate_excel(
     except CalculationEngineError as e:
         logger.error("Calculation engine error", extra={"error": str(e)})
         raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
+    except Exception:
         logger.exception("Unexpected error during calculation excel export")
         raise HTTPException(
             status_code=500,

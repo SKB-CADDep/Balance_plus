@@ -1,6 +1,7 @@
-from typing import Optional, List, Dict, Any
-from app.models.condenser import Condenser
+from typing import Any
+
 from app.core.exceptions import ValidationError
+from app.models.condenser import Condenser
 
 
 def validate_condenser_for_method(condenser: Condenser, method: str) -> None:
@@ -30,7 +31,7 @@ def validate_condenser_for_method(condenser: Condenser, method: str) -> None:
         )
 
 
-def _check_flow_limit(value: float, limits: dict, bundle_type: str, rule: str) -> List[str]:
+def _check_flow_limit(value: float, limits: dict, bundle_type: str, rule: str) -> list[str]:
     """Вспомогательный метод для проверки лимитов одного пучка."""
     warnings = []
     if not limits:
@@ -48,8 +49,8 @@ def _check_flow_limit(value: float, limits: dict, bundle_type: str, rule: str) -
 def validate_water_flow_limits(
     w_main: float,
     w_builtin: float,
-    limits: Optional[Dict[str, Any]]
-) -> List[str]:
+    limits: dict[str, Any] | None
+) -> list[str]:
     """
     BR-06 / BR-07: Валидация расходов охлаждающей воды для конкретной комбинации (цикла).
     Возвращает список сообщений-предупреждений.
@@ -84,7 +85,7 @@ def validate_water_flow_limits(
     return warnings
 
 
-def validate_temperature_ranges(method: str, t1_values: List[float]) -> List[str]:
+def validate_temperature_ranges(method: str, t1_values: list[float]) -> list[str]:
     """
     BR-10: Валидация температурных диапазонов для t1.
     Берман: 0..45

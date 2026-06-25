@@ -1,10 +1,9 @@
 import logging
 
-from fastapi import APIRouter
-from fastapi import FastAPI
+from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import calculations, condensers, materials, health
+from app.api.routes import calculations, condensers, health, materials
 from app.core.config import settings
 
 #Если вы хотите, чтобы таблицы создались мгновенно без настройки Alembic

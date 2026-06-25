@@ -1,6 +1,5 @@
-from pydantic import BaseModel, Field
-from pydantic import ConfigDict
-from typing import List
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class MaterialListItem(BaseModel):
@@ -13,7 +12,7 @@ class MaterialListItem(BaseModel):
 class MaterialDetail(BaseModel):
     id: int
     name: str
-    thermal_conductivity_points: List[List[float]] = Field(
+    thermal_conductivity_points: list[list[float]] = Field(
         description="Список точек [[t, λ], ...]"
     )
 

@@ -4,6 +4,7 @@
 """
 
 import pytest
+
 from app.core.range_parser import parse_range_input
 
 
