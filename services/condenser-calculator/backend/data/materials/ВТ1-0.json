@@ -1,0 +1,241 @@
+{
+  "material_id": "1cc1662a-a904-4055-ba28-2e66f9a090df",
+  "metadata": {
+    "name_material_standard": "ВТ1-0",
+    "name_material_alternative": [],
+    "application_area": [
+      "Конструкционные материалы"
+    ],
+    "comment": "",
+    "classification": {
+      "classification_category": "",
+      "classification_class": "",
+      "classification_subclass": ""
+    }
+  },
+  "physical_properties": {
+    "modulus_elasticity": {
+      "property_name": "Модуль упругости",
+      "property_unit": "МПа",
+      "property_source": "ОСТ 1 90173-75",
+      "property_subsource": "11",
+      "comment": "",
+      "temperature_value_pairs": [
+        [
+          20.0,
+          108000.0
+        ],
+        [
+          100.0,
+          102000.0
+        ],
+        [
+          200.0,
+          96000.0
+        ]
+      ],
+      "property_last_updated": "2025-07-16T08:12:25.616717"
+    },
+    "coefficient_linear_expansion": {
+      "property_name": "Коэффициент линейного расширения",
+      "property_unit": "1/°С",
+      "property_source": "ОСТ 1 90173-75",
+      "property_subsource": "13",
+      "comment": "",
+      "temperature_value_pairs": [
+        [
+          100.0,
+          8.2
+        ],
+        [
+          200.0,
+          8.6
+        ],
+        [
+          300.0,
+          8.8
+        ],
+        [
+          400.0,
+          9.1
+        ],
+        [
+          500.0,
+          9.3
+        ],
+        [
+          600.0,
+          9.5
+        ]
+      ],
+      "property_last_updated": "2025-07-16T08:12:25.616717"
+    },
+    "coefficient_thermal_conductivity": {
+      "property_name": "Коэффициент теплопроводности",
+      "property_unit": "Вт/(м·°С)",
+      "property_source": "ОСТ 1 90173-75",
+      "property_subsource": "13",
+      "comment": "",
+      "temperature_value_pairs": [
+        [
+          20.0,
+          19.3
+        ],
+        [
+          100.0,
+          18.9
+        ],
+        [
+          200.0,
+          18.4
+        ],
+        [
+          300.0,
+          18.0
+        ],
+        [
+          400.0,
+          18.0
+        ],
+        [
+          500.0,
+          18.0
+        ]
+      ],
+      "property_last_updated": "2025-07-16T08:12:25.616717"
+    },
+    "density": {
+      "property_name": "Плотность",
+      "property_unit": "кг/м³",
+      "property_source": "ОСТ 1 90173-75",
+      "property_subsource": "13",
+      "comment": "",
+      "temperature_value_pairs": [
+        [
+          20.0,
+          4500.0
+        ],
+        [
+          100.0,
+          4500.0
+        ]
+      ],
+      "property_last_updated": "2025-07-16T08:12:25.616717"
+    },
+    "specific_heat": {
+      "property_name": "Удельная теплоемкость",
+      "property_unit": "Дж/(кг·°С)",
+      "property_source": "ОСТ 1 90173-75",
+      "property_subsource": "13",
+      "comment": "",
+      "temperature_value_pairs": [
+        [
+          100.0,
+          503.0
+        ],
+        [
+          200.0,
+          545.0
+        ],
+        [
+          300.0,
+          566.0
+        ],
+        [
+          400.0,
+          587.0
+        ],
+        [
+          500.0,
+          628.0
+        ],
+        [
+          600.0,
+          670.0
+        ]
+      ],
+      "property_last_updated": "2025-07-16T08:12:25.616717"
+    }
+  },
+  "mechanical_properties": {
+    "strength_category": [
+      {
+        "value_strength_category": "-",
+        "hardness": [],
+        "yield_strength": {
+          "property_name": "Предел текучести",
+          "property_unit": "МПа",
+          "property_source": "ОСТ 1 90173-75",
+          "property_subsource": "13",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              -253.0,
+              1079.0
+            ],
+            [
+              -196.0,
+              735.0
+            ],
+            [
+              20.0,
+              343.0
+            ],
+            [
+              200.0,
+              206.0
+            ]
+          ],
+          "property_last_updated": "2025-07-16T08:12:25.616717"
+        },
+        "tensile_strength": {
+          "property_name": "Предел прочности",
+          "property_unit": "МПа",
+          "property_source": "ОСТ 1 90173-75",
+          "property_subsource": "13",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              -253.0,
+              1180.0
+            ],
+            [
+              -196.0,
+              951.0
+            ],
+            [
+              20.0,
+              392.0
+            ],
+            [
+              200.0,
+              294.0
+            ]
+          ],
+          "property_last_updated": "2025-07-16T08:12:25.616717"
+        },
+        "fatigue_limit_for_notched_specimen": {
+          "property_name": "Предел выносливости для образца с надрезом",
+          "property_unit": "МПа",
+          "property_source": "ОСТ 1 90173-75",
+          "property_subsource": "1",
+          "comment": "*Пределы выносливости посмотреть в 1 источнике\n",
+          "temperature_value_pairs": [],
+          "property_last_updated": "2025-07-16T08:12:25.616717"
+        },
+        "fatigue_limit_for_smooth_specimen": {
+          "property_source": "ОСТ 1 90173-75",
+          "property_subsource": "1",
+          "comment": "*Пределы выносливости посмотреть в 1 источнике\n",
+          "temperature_value_pairs": [],
+          "property_name": "Предел выносливости (гладкий образец, N=10e7)",
+          "property_unit": "МПа",
+          "property_last_updated": "2025-07-16T08:12:25.616717"
+        }
+      }
+    ]
+  },
+  "chemical_properties": {
+    "composition": []
+  }
+}

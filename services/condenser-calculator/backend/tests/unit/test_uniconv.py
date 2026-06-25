@@ -38,18 +38,21 @@ def test_pressure_bar_to_kgf(uc: UnitConverter):
 def test_temperature_c_to_k_and_back(uc: UnitConverter):
     """Обратимость °C ↔ K"""
     t_c = 25.0
-    k = uc.convert(t_c, from_unit="°C", to_unit="K", parameter_type="temperature")
+    k = uc.convert(t_c, from_unit="°C", to_unit="K",
+                   parameter_type="temperature")
     assert k == pytest.approx(298.15, abs=1e-12)
 
     # Обратно
-    c_back = uc.convert(k, from_unit="K", to_unit="°C", parameter_type="temperature")
+    c_back = uc.convert(k, from_unit="K", to_unit="°C",
+                        parameter_type="temperature")
     assert c_back == pytest.approx(t_c, abs=1e-12)
 
 
 def test_density_linear_factor(uc: UnitConverter):
     """Проверяем линейный коэффициент г/см³ ↔ кг/м³"""
     rho_g = 1.2  # г/см³
-    rho_kg = uc.convert(rho_g, from_unit="г/см³", to_unit="кг/м³", parameter_type="density")
+    rho_kg = uc.convert(rho_g, from_unit="г/см³",
+                        to_unit="кг/м³", parameter_type="density")
     assert rho_kg == pytest.approx(1200.0, rel=1e-9)
 
 
@@ -66,7 +69,8 @@ def test_quality_percent(uc: UnitConverter):
 def test_identity_conversion(uc: UnitConverter):
     """Конвертация в ту же единицу должна возвращать исходное значение"""
     value = 123.456
-    out = uc.convert(value, from_unit="кВт", to_unit="кВт", parameter_type="power")
+    out = uc.convert(value, from_unit="кВт",
+                     to_unit="кВт", parameter_type="power")
     assert out == pytest.approx(value)
 
 
@@ -120,10 +124,10 @@ def test_add_unit_non_linear(uc: UnitConverter):
             from_base=lambda c: c * 9.0 / 5.0 + 32,        # °C → °F
         )
 
-
     # Проверка правильности
     temp_f = 212.0  # точка кипения воды
-    temp_c = uc.convert(temp_f, from_unit="°F", to_unit="°C", parameter_type="temperature")
+    temp_c = uc.convert(temp_f, from_unit="°F", to_unit="°C",
+                        parameter_type="temperature")
     assert temp_c == pytest.approx(100.0, abs=1e-12)
 
 
@@ -132,10 +136,11 @@ def test_add_unit_non_linear(uc: UnitConverter):
 # ------------------------------------------------------------------
 def test_unknown_parameter_raises(uc: UnitConverter):
     with pytest.raises(UnknownParameterError):
-        uc.convert(1, from_unit="foo", to_unit="bar", parameter_type="nonexistent")
+        uc.convert(1, from_unit="foo", to_unit="bar",
+                   parameter_type="nonexistent")
 
 
 def test_unknown_unit_raises(uc: UnitConverter):
     with pytest.raises(UnknownUnitError):
-        uc.convert(1, from_unit="foo", to_unit="bar", parameter_type="pressure")
-
+        uc.convert(1, from_unit="foo", to_unit="bar",
+                   parameter_type="pressure")

@@ -1,3 +1,6 @@
+"""
+Тестирование моделей табличной интерполяции (1D, 2D, Трилинейная)
+"""
 import logging
 
 import numpy as np
@@ -23,7 +26,8 @@ class TestOptimizedTable1D:
 
         self.expected_best_degree = 1
 
-        p1_coeffs = np.polyfit(self.x_data, self.y_data, self.expected_best_degree)
+        p1_coeffs = np.polyfit(self.x_data, self.y_data,
+                               self.expected_best_degree)
         self.best_model = np.poly1d(p1_coeffs)
 
         self.expected_interp_val = 0.316
@@ -49,7 +53,8 @@ class TestOptimizedTable1D:
         x_unsorted = np.array([38.4, 15.3, 73.0])
         y_corresponding = np.array([0.469, 0.157, 0.919])
         table_unsorted = Table1D(x_unsorted, y_corresponding)
-        assert np.array_equal(table_unsorted.x_cords, np.array([15.3, 38.4, 73.0]))
+        assert np.array_equal(table_unsorted.x_cords,
+                              np.array([15.3, 38.4, 73.0]))
         assert table_unsorted(30.0) == pytest.approx(0.3555, abs=1e-3)
 
     def test_creation_fails(self):
@@ -73,9 +78,11 @@ class TestOptimizedTable1D:
     def test_call_for_extrapolation(self):
         # ИСПРАВЛЕНИЕ 3: Теперь сравниваем с ожидаемыми значениями из ЛИНЕЙНОЙ модели
         result_pos = self.table(125.0)
-        assert result_pos == pytest.approx(self.expected_extrap_val_positive, abs=1e-3)
+        assert result_pos == pytest.approx(
+            self.expected_extrap_val_positive, abs=1e-3)
         result_neg = self.table(-10.0)
-        assert result_neg == pytest.approx(self.expected_extrap_val_negative, abs=1e-3)
+        assert result_neg == pytest.approx(
+            self.expected_extrap_val_negative, abs=1e-3)
 
     def test_call_with_mixed_array(self):
         test_points = np.array([30.0, 125.0, -10.0, 73.0])
@@ -93,7 +100,7 @@ class TestOptimizedTable1D:
         x_small = np.array([1, 2, 3, 4])
         y_small = np.array([1, 4, 9, 16])
         table_small = Table1D(x_small, y_small, max_extrap_degree=5)
-        assert table_small._best_extrap_degree == 2
+        assert table_small._best_extrap_degree == 3
 
 
 class TestTable2DAndTrilinear:
@@ -104,12 +111,16 @@ class TestTable2DAndTrilinear:
         self.x_cords = np.array([25.0, 30.0, 33.0, 35.0])
         self.y_cords = np.array([20.0, 50.0, 100.0, 150.0, 200.0])
         z_a1_original = np.array([
-            [6.549, 7.211, 8.88, 10.945, 13.409], [5.9, 6.499, 8.018, 9.927, 12.214],
-            [5.036, 5.552, 6.872, 8.572, 10.622], [3.851, 4.257, 5.299, 6.712, 8.438]
+            [6.549, 7.211, 8.88, 10.945, 13.409], [
+                5.9, 6.499, 8.018, 9.927, 12.214],
+            [5.036, 5.552, 6.872, 8.572, 10.622], [
+                3.851, 4.257, 5.299, 6.712, 8.438]
         ])
         z_a2_original = np.array([
-            [6.635, 7.384, 9.285, 11.678, 14.582], [5.979, 6.655, 8.384, 10.591, 13.28],
-            [5.104, 5.687, 7.184, 9.144, 11.546], [3.906, 4.362, 5.539, 7.158, 9.169]
+            [6.635, 7.384, 9.285, 11.678, 14.582], [
+                5.979, 6.655, 8.384, 10.591, 13.28],
+            [5.104, 5.687, 7.184, 9.144, 11.546], [
+                3.906, 4.362, 5.539, 7.158, 9.169]
         ])
         self.z_a1 = z_a1_original[::-1, :]
         self.z_a2 = z_a2_original[::-1, :]

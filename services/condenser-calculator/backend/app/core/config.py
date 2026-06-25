@@ -1,20 +1,16 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
+from pydantic import Field
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Condenser Calculator API"
     API_V1_STR: str = "/api/v1"
 
-    # Настройки подключения к PostgreSQL
-    POSTGRES_SERVER: str = "db"
-    POSTGRES_USER: str = "condenser"
-    POSTGRES_PASSWORD: str = "password"
-    POSTGRES_DB: str = "condenser_calc"
-    POSTGRES_PORT: int = 5432
-
-    @property
-    def SQLALCHEMY_DATABASE_URI(self) -> str:
-        return f"postgresql+psycopg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+    # Теперь Pydantic будет искать DATABASE_URL в окружении. 
+    # Если не найдет - соберет дефолтную строку.
+    SQLALCHEMY_DATABASE_URI: str = Field(
+        default="postgresql+psycopg://condenser:password@db:5432/condenser_calc",
+        validation_alias="DATABASE_URL" 
+    )
 
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True, extra="ignore")
 

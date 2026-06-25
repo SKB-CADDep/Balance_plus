@@ -1,3 +1,6 @@
+"""
+Валидация математики: Расчет Бермана по эталонным сценариям из документации
+"""
 from app.utils.berman_strategy import BermanStrategy
 
 
