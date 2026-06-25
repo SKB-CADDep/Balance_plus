@@ -6,11 +6,11 @@ def dummy_thermal_calculation(pressure: float, temperature: float, flow_rate: fl
     """Простая формула для демонстрации работы тестов."""
     if flow_rate <= 0:
         return {"efficiency": 0.0, "power_output": 0.0}
-    
+
     # Искусственная логика расчета
     power = (pressure * 10) + (temperature * 0.5)
     efficiency = 0.85 if pressure > 3.0 else 0.50
-    
+
     return {
         "efficiency": efficiency,
         "power_output": power
@@ -24,7 +24,7 @@ tests =[
     {
         "id": "mode_1_normal_load",
         "input": {
-            "pressure": 4.5, 
+            "pressure": 4.5,
             "temperature": 120.0,
             "flow_rate": 500
         },
@@ -36,7 +36,7 @@ tests =[
     {
         "id": "mode_2_zero_flow",
         "input": {
-            "pressure": 4.5, 
+            "pressure": 4.5,
             "temperature": 120.0,
             "flow_rate": 0
         },
@@ -49,14 +49,14 @@ tests =[
         "id": "mode_3_intentional_error",
         # 🔥 СПЕЦИАЛЬНО ЛОМАЕМ ТЕСТ, чтобы проверить сохранение лог-файла!
         "input": {
-            "pressure": 5.0, 
+            "pressure": 5.0,
             "temperature": 100.0,
             "flow_rate": 500
         },
         "expected": {
             "efficiency": 0.85,
             # Реальный ответ будет 100.0, но мы ждем 999.0
-            "power_output": 999.0 
+            "power_output": 999.0
         }
     }
 ]
