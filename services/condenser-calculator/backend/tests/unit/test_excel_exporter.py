@@ -7,7 +7,7 @@ from app.services.excel_exporter import ExcelExporter
 
 
 class MockMatrixResult:
-    def __init__(self, meta, columns, rows, values, warnings=None):
+    def __init__(self, meta, columns, rows, values, warnings=None) -> None:
         self.meta = meta
         self.columns = columns
         self.rows = rows
@@ -15,12 +15,12 @@ class MockMatrixResult:
         self.warnings = warnings or[]
 
 class MockCalculationOutput:
-    def __init__(self, tables, ejector_results):
+    def __init__(self, tables, ejector_results) -> None:
         self.tables = tables
         self.ejector_results = ejector_results
 
 
-def test_excel_structure_and_rounding():
+def test_excel_structure_and_rounding() -> None:
     # 1. Подготавливаем фейковые входные данные (строго по структуре)
     tables =[
         MockMatrixResult(

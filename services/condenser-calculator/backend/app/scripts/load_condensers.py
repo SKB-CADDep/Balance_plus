@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.models.condenser import Condenser
 
 
-def load_condensers(db: Session):
+def load_condensers(db: Session) -> None:
     # Создаем базовый конденсатор для тестов (ID = 1)
     default_condenser = Condenser(
         id=1,

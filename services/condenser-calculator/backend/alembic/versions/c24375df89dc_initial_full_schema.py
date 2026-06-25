@@ -1,7 +1,7 @@
 """Initial full schema
 
 Revision ID: c24375df89dc
-Revises: 
+Revises:
 Create Date: 2026-04-21 08:32:08.073235
 
 """

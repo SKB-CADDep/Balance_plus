@@ -44,7 +44,7 @@ MONOREPO_ROOT = _find_monorepo_root(Path(__file__))
 VALIDATION_DATA_PATH = MONOREPO_ROOT / "validation_data"
 
 
-def pytest_configure(config):
+def pytest_configure(config) -> None:
     # Удобно видеть корень данных в отчёте (и отлаживать пути)
     config._condenser_validation_data_path = str(VALIDATION_DATA_PATH)
 
@@ -66,11 +66,11 @@ class DBTestSuite(BaseModel):
 
 # --- 2. ИСПОЛНИТЕЛЬ КОНКРЕТНОГО ТЕСТА ---
 class DBYamlItem(pytest.Item):
-    def __init__(self, name, parent, spec: DBTestStep):
+    def __init__(self, name, parent, spec: DBTestStep) -> None:
         super().__init__(name, parent)
         self.spec = spec
 
-    def runtest(self):
+    def runtest(self) -> None:
         # Берем URL базы из переменных окружения (по умолчанию - тестовая БД)
         db_url = os.getenv(
             "TEST_DATABASE_URL", "postgresql+psycopg://postgres:postgres@localhost:5432/test_db")
@@ -96,7 +96,7 @@ class DBYamlItem(pytest.Item):
                     assert len(rows) == len(self.spec.expected_rows), \
                         f"Ожидалось {len(self.spec.expected_rows)} записей, получено {len(rows)}"
 
-                    for expected_row, actual_row in zip(self.spec.expected_rows, rows):
+                    for expected_row, actual_row in zip(self.spec.expected_rows, rows, strict=False):
                         for key, expected_val in expected_row.items():
                             assert key in actual_row, f"Колонка '{key}' отсутствует в результате"
                             assert actual_row[key] == expected_val, \
@@ -127,19 +127,19 @@ class DBYamlFile(pytest.File):
 
 # --- ПЛАГИН ДЛЯ ТЕСТИРОВАНИЯ МАТЕМАТИКИ И СТРАТЕГИЙ (*.calc.py) ---
 class CalcItem(pytest.Item):
-    def __init__(self, name, parent, spec, target_func):
+    def __init__(self, name, parent, spec, target_func) -> None:
         super().__init__(name, parent)
         self.spec = spec
         self.target_func = target_func
 
-    def runtest(self):
+    def runtest(self) -> None:
         input_data = self.spec.get("input", {})
         expected = self.spec.get("expected")
 
         result = self.target_func(**input_data)
 
         # РЕКУРСИВНАЯ ФУНКЦИЯ ДЛЯ ГЛУБОКОГО СРАВНЕНИЯ С УЧЕТОМ ПОГРЕШНОСТИ
-        def assert_dicts_approx(exp, act, path=""):
+        def assert_dicts_approx(exp, act, path="") -> None:
             if isinstance(exp, dict) and isinstance(act, dict):
                 for k, v in exp.items():
                     assert k in act, f"Ключ '{path}{k}' отсутствует в результате"
@@ -147,7 +147,7 @@ class CalcItem(pytest.Item):
             elif isinstance(exp, list) and isinstance(act, list):
                 assert len(exp) == len(
                     act), f"Массив '{path}': ожидалась длина {len(exp)}, получено {len(act)}"
-                for i, (e_val, a_val) in enumerate(zip(exp, act)):
+                for i, (e_val, a_val) in enumerate(zip(exp, act, strict=False)):
                     assert_dicts_approx(e_val, a_val, path + f"[{i}].")
             elif isinstance(exp, (float, int)) and isinstance(act, (float, int)):
                 # Сравниваем числа с погрешностью 1e-5 (0.00001)

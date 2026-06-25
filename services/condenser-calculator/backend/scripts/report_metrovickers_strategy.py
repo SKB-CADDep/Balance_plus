@@ -5,7 +5,7 @@ setup_path()
 from app.utils.metrovickers_strategy import MetroVickersStrategy
 
 
-def print_beautifully(data_dict, friendly_names, title, keys_to_print):
+def print_beautifully(data_dict, friendly_names, title, keys_to_print) -> None:
     """
     Вспомогательная функция для красивой печати данных.
     """
@@ -24,7 +24,7 @@ def print_beautifully(data_dict, friendly_names, title, keys_to_print):
                 print(f"{label}: {value}")
 
 
-def generate_and_print_tables(strategy, base_params):
+def generate_and_print_tables(strategy, base_params) -> None:
     """
     Генерирует данные и выводит их в виде таблиц, аналогичных скриншоту.
     """
@@ -74,7 +74,7 @@ def generate_and_print_tables(strategy, base_params):
             print("".join(result_row))
 
 
-def main():
+def main() -> None:
     strategy = MetroVickersStrategy()
 
     # --- Входные параметры для единичного расчета ---

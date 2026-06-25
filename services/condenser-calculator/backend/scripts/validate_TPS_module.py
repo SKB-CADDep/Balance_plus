@@ -7,7 +7,7 @@ from pprint import pprint
 from app.utils.TPS_module import TablePressureStrategy
 
 
-def run_validation_case(strategy: TablePressureStrategy, params: dict, title: str, tolerance_percent: float):
+def run_validation_case(strategy: TablePressureStrategy, params: dict, title: str, tolerance_percent: float) -> None:
     """
     Выполняет один тестовый случай: запускает расчет, сравнивает с эталоном и печатает отчет.
     """

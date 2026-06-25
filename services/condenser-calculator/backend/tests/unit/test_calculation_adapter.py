@@ -104,7 +104,7 @@ def input_metrovickers(input_berman):
 ])
 def test_calculate_different_methods(
     adapter, mock_condenser, mock_material, method, h_steam, x_steam, engine_mock_name
-):
+) -> None:
     """Базовая маршрутизация для обеих методик расчета"""
     input_data = CalculationInput(
         condenser_id=42,
@@ -136,7 +136,7 @@ def test_calculate_different_methods(
 # ТЕСТЫ НА WARNINGS (BR-06, BR-10, BR-11)
 # ===================================================================
 
-def test_berman_warning_water_flow_limits(adapter, mock_condenser, mock_material, input_berman):
+def test_berman_warning_water_flow_limits(adapter, mock_condenser, mock_material, input_berman) -> None:
     """BR-06: Превышение паспортного расхода охлаждающей воды должно генерировать warning"""
     input_berman.W_main = [30000.0]  # Выше лимита (20000.0)
 
@@ -147,7 +147,7 @@ def test_berman_warning_water_flow_limits(adapter, mock_condenser, mock_material
         assert any("расход" in w.lower() for w in result.tables[0].warnings)
 
 
-def test_berman_warning_temperature_range_high(adapter, mock_condenser, mock_material, input_berman):
+def test_berman_warning_temperature_range_high(adapter, mock_condenser, mock_material, input_berman) -> None:
     """BR-10: t1 > 45°C для Бермана должно генерировать warning"""
     input_berman.t1_main = [50.0]
 
@@ -158,7 +158,7 @@ def test_berman_warning_temperature_range_high(adapter, mock_condenser, mock_mat
         assert any("50.0" in w for w in result.tables[0].warnings)
 
 
-def test_metrovickers_warning_extrapolation(adapter, mock_condenser, mock_material, input_metrovickers):
+def test_metrovickers_warning_extrapolation(adapter, mock_condenser, mock_material, input_metrovickers) -> None:
     """BR-11: Экстраполяция в MetroVickers при выходе за пределы номограммы"""
     input_metrovickers.t1_main = [160.0]
 
@@ -173,7 +173,7 @@ def test_metrovickers_warning_extrapolation(adapter, mock_condenser, mock_materi
 # EDGE CASES: МАССИВЫ И КОНФИГУРАЦИЯ ПУЧКОВ
 # ===================================================================
 
-def test_w_builtin_none(adapter, mock_condenser, mock_material, input_berman):
+def test_w_builtin_none(adapter, mock_condenser, mock_material, input_berman) -> None:
     """Один пучок: W_builtin = None должно корректно обрабатываться"""
     input_berman.W_builtin = None
     input_berman.Z_builtin = None
@@ -184,7 +184,7 @@ def test_w_builtin_none(adapter, mock_condenser, mock_material, input_berman):
         assert result.total_tables == 1
 
 
-def test_w_builtin_empty_array(adapter, mock_condenser, mock_material, input_berman):
+def test_w_builtin_empty_array(adapter, mock_condenser, mock_material, input_berman) -> None:
     """Один пучок: W_builtin =[] должно приравниваться к отсутствию встроенного пучка"""
     input_berman.W_builtin =[]
     input_berman.Z_builtin = None
@@ -195,7 +195,7 @@ def test_w_builtin_empty_array(adapter, mock_condenser, mock_material, input_ber
         assert result.total_tables == 1
 
 
-def test_different_lengths_w_main_w_builtin(adapter, mock_condenser, mock_material, input_berman):
+def test_different_lengths_w_main_w_builtin(adapter, mock_condenser, mock_material, input_berman) -> None:
     """Разные длины массивов W_main и W_builtin должны рассчитываться"""
     input_berman.W_main =[4000.0, 5000.0, 6000.0]
     input_berman.W_builtin = [2000.0]
@@ -206,7 +206,7 @@ def test_different_lengths_w_main_w_builtin(adapter, mock_condenser, mock_materi
         assert mock_run.called
 
 
-def test_empty_coefficient_b_uses_default(adapter, mock_condenser, mock_material, input_berman):
+def test_empty_coefficient_b_uses_default(adapter, mock_condenser, mock_material, input_berman) -> None:
     """Пустой coefficient_b -> система должна использовать значение по умолчанию [1.0]"""
     input_berman.coefficient_b =[]
     with patch.object(adapter, '_run_berman') as mock_run:
@@ -220,7 +220,7 @@ def test_empty_coefficient_b_uses_default(adapter, mock_condenser, mock_material
 # ===================================================================
 
 @pytest.mark.parametrize("b_val",[0.0, 0.75, 0.999, 1.0])
-def test_boundary_b_values(adapter, mock_condenser, mock_material, input_berman, b_val):
+def test_boundary_b_values(adapter, mock_condenser, mock_material, input_berman, b_val) -> None:
     """Граничные значения коэффициента загрязнения b (от абсолютного загрязнения до чистого)"""
     input_berman.coefficient_b = [b_val]
     with patch.object(adapter, '_run_berman') as mock_run:
@@ -236,7 +236,7 @@ def test_boundary_b_values(adapter, mock_condenser, mock_material, input_berman,
     (45.0, False),   # Верхняя граница Бермана, норм
     (150.0, True),   # Экстремально высокая температура
 ])
-def test_temperature_edge_cases(adapter, mock_condenser, mock_material, input_berman, temp, expected_warning):
+def test_temperature_edge_cases(adapter, mock_condenser, mock_material, input_berman, temp, expected_warning) -> None:
     """Температурные граничные случаи (0°C, 45°C, 150°C)"""
     input_berman.t1_main = [temp]
 
@@ -254,14 +254,14 @@ def test_temperature_edge_cases(adapter, mock_condenser, mock_material, input_be
 # EDGE CASES: ИСКЛЮЧЕНИЯ И ВАЛИДАЦИИ (Перехватываемые ошибки)
 # ===================================================================
 
-def test_invalid_method(adapter, mock_condenser, mock_material, input_berman):
+def test_invalid_method(adapter, mock_condenser, mock_material, input_berman) -> None:
     """Передача несуществующего метода расчета обрубается Pydantic или адаптером"""
     input_berman.method = "unknown_magic_method"
     with pytest.raises(CalculationEngineError):
         adapter.calculate(input_berman, mock_condenser, mock_material)
 
 
-def test_engine_errors_are_wrapped(adapter, mock_condenser, mock_material, input_berman):
+def test_engine_errors_are_wrapped(adapter, mock_condenser, mock_material, input_berman) -> None:
     """Сбой внутри физического движка (например, деление на ноль) должен оборачиваться адаптером в CalculationEngineError"""
     with patch.object(adapter, '_run_berman', side_effect=Exception("Internal physics division by zero")):
         with pytest.raises(CalculationEngineError, match="Ошибка при выполнении расчёта"):
@@ -272,7 +272,7 @@ def test_engine_errors_are_wrapped(adapter, mock_condenser, mock_material, input
 # ТЕСТ ПРОИЗВОДИТЕЛЬНОСТИ
 # ===================================================================
 
-def test_performance_under_500ms(adapter, mock_condenser, mock_material, input_berman):
+def test_performance_under_500ms(adapter, mock_condenser, mock_material, input_berman) -> None:
     """Расчёт должен укладываться в 500 мс (неблокирующий event-loop)"""
     MAX_ALLOWED_MS = 500
     with patch.object(adapter, '_run_berman') as mock_run:

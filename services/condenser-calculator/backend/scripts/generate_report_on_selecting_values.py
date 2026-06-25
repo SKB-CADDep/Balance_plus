@@ -33,7 +33,7 @@ def create_markdown_table(results):
 
     return "\n".join([header, separator, *rows])
 
-def generate_report_file(results, filename="report.md"):
+def generate_report_file(results, filename="report.md") -> None:
     """Генерирует полный файл отчета в формате Markdown."""
     table_md = create_markdown_table(results)
 

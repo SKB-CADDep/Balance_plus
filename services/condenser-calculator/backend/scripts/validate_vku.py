@@ -7,7 +7,7 @@ import pandas as pd
 from app.utils.VKU_strategy import VKUStrategy
 
 
-def run_validation():
+def run_validation() -> None:
     """
     Скрипт для валидации класса VKUStrategy на предоставленном наборе данных.
     """

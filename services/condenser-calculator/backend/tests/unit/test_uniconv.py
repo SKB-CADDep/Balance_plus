@@ -27,7 +27,7 @@ def uc() -> UnitConverter:
 # ------------------------------------------------------------------
 # 1. Базовые «счастливые» сценарии
 # ------------------------------------------------------------------
-def test_pressure_bar_to_kgf(uc: UnitConverter):
+def test_pressure_bar_to_kgf(uc: UnitConverter) -> None:
     """10 бар ≈ 10.204 кгс/см²"""
     result = uc.convert(
         10, from_unit="бар", to_unit="кгс/см²", parameter_type="pressure"
@@ -35,7 +35,7 @@ def test_pressure_bar_to_kgf(uc: UnitConverter):
     assert result == pytest.approx(10 * 100_000 / 98_066.5, rel=1e-6)
 
 
-def test_temperature_c_to_k_and_back(uc: UnitConverter):
+def test_temperature_c_to_k_and_back(uc: UnitConverter) -> None:
     """Обратимость °C ↔ K"""
     t_c = 25.0
     k = uc.convert(t_c, from_unit="°C", to_unit="K", parameter_type="temperature")
@@ -46,14 +46,14 @@ def test_temperature_c_to_k_and_back(uc: UnitConverter):
     assert c_back == pytest.approx(t_c, abs=1e-12)
 
 
-def test_density_linear_factor(uc: UnitConverter):
+def test_density_linear_factor(uc: UnitConverter) -> None:
     """Проверяем линейный коэффициент г/см³ ↔ кг/м³"""
     rho_g = 1.2  # г/см³
     rho_kg = uc.convert(rho_g, from_unit="г/см³", to_unit="кг/м³", parameter_type="density")
     assert rho_kg == pytest.approx(1200.0, rel=1e-9)
 
 
-def test_quality_percent(uc: UnitConverter):
+def test_quality_percent(uc: UnitConverter) -> None:
     """85 % → 0.85 и обратно"""
     quality_percent = 85.0
     frac = uc.to_base(quality_percent, from_unit="%", parameter_type="quality")
@@ -63,7 +63,7 @@ def test_quality_percent(uc: UnitConverter):
     assert perc_back == pytest.approx(quality_percent)
 
 
-def test_identity_conversion(uc: UnitConverter):
+def test_identity_conversion(uc: UnitConverter) -> None:
     """Конвертация в ту же единицу должна возвращать исходное значение"""
     value = 123.456
     out = uc.convert(value, from_unit="кВт", to_unit="кВт", parameter_type="power")
@@ -73,7 +73,7 @@ def test_identity_conversion(uc: UnitConverter):
 # ------------------------------------------------------------------
 # 2. Метаданные
 # ------------------------------------------------------------------
-def test_get_base_and_available_units(uc: UnitConverter):
+def test_get_base_and_available_units(uc: UnitConverter) -> None:
     base = uc.get_base_unit("pressure")
     assert base == "кгс/см²"
 
@@ -86,7 +86,7 @@ def test_get_base_and_available_units(uc: UnitConverter):
 # ------------------------------------------------------------------
 # 3. Динамическое расширение API
 # ------------------------------------------------------------------
-def test_add_new_parameter_and_unit(uc: UnitConverter):
+def test_add_new_parameter_and_unit(uc: UnitConverter) -> None:
     """Добавляем 'length' c базовой единицей 'м' и проверяем конвертацию."""
     # Добавляем параметр (если он вдруг существует — пропускаем)
     with contextlib.suppress(ValueError):
@@ -108,7 +108,7 @@ def test_add_new_parameter_and_unit(uc: UnitConverter):
     assert meters_back == pytest.approx(50)
 
 
-def test_add_unit_non_linear(uc: UnitConverter):
+def test_add_unit_non_linear(uc: UnitConverter) -> None:
     """Пример добавления нелинейной конверсии: °F ↔ °C."""
     # Возможно, unit уже добавлен в ранних запусках — тогда пропустится.
     with contextlib.suppress(ValueError):
@@ -130,12 +130,12 @@ def test_add_unit_non_linear(uc: UnitConverter):
 # ------------------------------------------------------------------
 # 4. Обработка ошибок
 # ------------------------------------------------------------------
-def test_unknown_parameter_raises(uc: UnitConverter):
+def test_unknown_parameter_raises(uc: UnitConverter) -> None:
     with pytest.raises(UnknownParameterError):
         uc.convert(1, from_unit="foo", to_unit="bar", parameter_type="nonexistent")
 
 
-def test_unknown_unit_raises(uc: UnitConverter):
+def test_unknown_unit_raises(uc: UnitConverter) -> None:
     with pytest.raises(UnknownUnitError):
         uc.convert(1, from_unit="foo", to_unit="bar", parameter_type="pressure")
 

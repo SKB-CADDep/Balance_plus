@@ -28,7 +28,7 @@ class TestPressureMatrixMode3:
     """Полная проверка матрицы давлений для режима 'только ОП'."""
 
     @pytest.mark.parametrize("case", _test_cases, ids=[c["id"] for c in _test_cases])
-    def test_pressure_calculation(self, strategy, case):
+    def test_pressure_calculation(self, strategy, case) -> None:
         assert case["W_builtin"] == 0.0, "Mode 3 должен иметь W_builtin = 0"
 
         params = build_calculation_params(
@@ -58,7 +58,7 @@ class TestMainBundleOnlyVsBothBundles:
     def results_1(self):
         return load_results(1)
 
-    def test_pressure_higher_without_builtin(self, strategy, results_1):
+    def test_pressure_higher_without_builtin(self, strategy, results_1) -> None:
         params_main_only = build_calculation_params(
             geometry=_geometry,
             mode=_mode,
@@ -96,7 +96,7 @@ class TestMainBundleOnlyVsBothBundles:
         print(f"\nУвеличение давления при отключении ВП: {increase:.1f}%")
 
     @pytest.mark.parametrize("W_main", [8000.0, 12000.0, 15000.0])
-    def test_pressure_comparison_multiple_flows(self, strategy, results_1, W_main):
+    def test_pressure_comparison_multiple_flows(self, strategy, results_1, W_main) -> None:
         mode_3_data = find_mode_in_results(_results, W_main=W_main, W_builtin=0.0, coefficient_b=1.0)
         P_mode_3 = get_expected_pressure(mode_3_data, t1_idx=3, G_steam_idx=4)
 
@@ -116,7 +116,7 @@ class TestMainBundleOnlyVsBothBundles:
 class TestVerificationScenario1:
     """Контрольный пример: сценарий 1 (только ОП)."""
 
-    def test_saturation_temperature(self, strategy):
+    def test_saturation_temperature(self, strategy) -> None:
         params = build_calculation_params(
             geometry=_geometry,
             mode=_mode,

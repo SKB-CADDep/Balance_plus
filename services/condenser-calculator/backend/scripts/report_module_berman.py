@@ -27,7 +27,7 @@ def create_markdown_table(headers, data_rows):
     return "\n".join([header_line, separator_line, *row_lines])
 
 
-def run_berman_simulation(main_water_flow, built_in_water_flow, num_bundles_label, fouling_factor_raw, include_ejector_data):
+def run_berman_simulation(main_water_flow, built_in_water_flow, num_bundles_label, fouling_factor_raw, include_ejector_data) -> None:
     """
     Настраивает параметры, запускает симуляцию по методу Бермана и форматирует результаты.
 

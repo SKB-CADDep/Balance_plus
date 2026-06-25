@@ -312,7 +312,7 @@ def assert_pressure_approx(
     expected: float,
     rel_tolerance: float = 0.001,
     context: str = "",
-):
+) -> None:
     """Проверка давления с информативным сообщением об ошибке."""
     assert calculated == pytest.approx(expected, rel=rel_tolerance), (
         f"{context}\n"

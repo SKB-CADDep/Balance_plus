@@ -9,7 +9,7 @@ def report_condenser_pressure(
     pressure_condenser: float | None,
     temperature_cooling_water_1: float | None,
     pif: float | None,
-):
+) -> None:
     """
     Создает отчет по расчету давления P1 для участка конденсатора.
 

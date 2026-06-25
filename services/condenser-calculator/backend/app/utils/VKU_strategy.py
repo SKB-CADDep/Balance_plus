@@ -29,7 +29,7 @@ class VKUStrategy:
         ]
     ]
 
-    def __init__(self, mass_flow_steam_nom: float, degree_dryness_steam_nom: float):
+    def __init__(self, mass_flow_steam_nom: float, degree_dryness_steam_nom: float) -> None:
         if mass_flow_steam_nom <= 0:
             raise ValueError("Номинальный расход пара (mass_flow_steam_nom) должен быть больше нуля.")
         if not (0 < degree_dryness_steam_nom <= 1):

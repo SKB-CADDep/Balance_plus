@@ -12,7 +12,7 @@ class TestBermanStrategy:
     """Базовые тесты BermanStrategy."""
 
     @pytest.fixture(autouse=True)
-    def setup(self):
+    def setup(self) -> None:
         """Инициализация стратегии и базовых параметров."""
         self.strategy = BermanStrategy()
 
@@ -43,12 +43,12 @@ class TestBermanStrategy:
             'G_air': 0.0,
         }
 
-    def test_strategy_instantiation(self):
+    def test_strategy_instantiation(self) -> None:
         """Проверка создания экземпляра."""
         assert self.strategy is not None
         assert hasattr(self.strategy, 'calculate')
 
-    def test_calculate_returns_dict(self):
+    def test_calculate_returns_dict(self) -> None:
         """Проверка что calculate возвращает словарь."""
         result = self.strategy.calculate(self.base_params)
 
@@ -56,13 +56,13 @@ class TestBermanStrategy:
         assert 'main_results' in result
         assert 'ejector_results' in result
 
-    def test_calculate_returns_results(self):
+    def test_calculate_returns_results(self) -> None:
         """Проверка что результаты не пустые."""
         result = self.strategy.calculate(self.base_params)
 
         assert len(result['main_results']) > 0
 
-    def test_result_contains_required_fields(self):
+    def test_result_contains_required_fields(self) -> None:
         """Проверка наличия обязательных полей в результате."""
         result = self.strategy.calculate(self.base_params)
 
@@ -79,7 +79,7 @@ class TestBermanStrategy:
         for field in required_fields:
             assert field in main_result, f"Поле '{field}' отсутствует в результате"
 
-    def test_saturation_temperature_positive(self):
+    def test_saturation_temperature_positive(self) -> None:
         """Проверка что температура насыщения положительная."""
         result = self.strategy.calculate(self.base_params)
 
@@ -87,7 +87,7 @@ class TestBermanStrategy:
 
         assert t_sat > 0, f"t_sat должна быть > 0, получено {t_sat}"
 
-    def test_pressure_positive(self):
+    def test_pressure_positive(self) -> None:
         """Проверка что давление положительное."""
         result = self.strategy.calculate(self.base_params)
 
@@ -100,7 +100,7 @@ class TestBermanEjectorPressure:
     """Тесты расчёта эжекторов."""
 
     @pytest.fixture(autouse=True)
-    def setup(self):
+    def setup(self) -> None:
         """Инициализация."""
         self.strategy = BermanStrategy()
 
@@ -125,14 +125,14 @@ class TestBermanEjectorPressure:
             'G_air': 16.5,  # Включаем расчёт эжекторов
         }
 
-    def test_ejector_pressure_calculation(self):
+    def test_ejector_pressure_calculation(self) -> None:
         """Проверка расчёта давления эжекторов."""
         result = self.strategy.calculate(self.params_with_ejector)
 
         assert 'ejector_results' in result
         assert len(result['ejector_results']) > 0
 
-    def test_ejector_results_structure(self):
+    def test_ejector_results_structure(self) -> None:
         """Проверка структуры результатов эжекторов."""
         result = self.strategy.calculate(self.params_with_ejector)
 
@@ -142,14 +142,14 @@ class TestBermanEjectorPressure:
         assert 'P_ejector_kPa' in ejector_result
         assert 'P_ejector_atm' in ejector_result
 
-    def test_ejector_pressure_positive(self):
+    def test_ejector_pressure_positive(self) -> None:
         """Проверка что давление эжектора положительное."""
         result = self.strategy.calculate(self.params_with_ejector)
 
         for ejector_result in result['ejector_results']:
             assert ejector_result['P_ejector_atm'] > 0
 
-    def test_no_ejector_when_g_air_zero(self):
+    def test_no_ejector_when_g_air_zero(self) -> None:
         """Проверка что эжекторы не рассчитываются при G_air=0."""
         params = self.params_with_ejector.copy()
         params['G_air'] = 0
@@ -163,7 +163,7 @@ class TestBermanEdgeCases:
     """Тесты граничных условий."""
 
     @pytest.fixture(autouse=True)
-    def setup(self):
+    def setup(self) -> None:
         """Инициализация."""
         self.strategy = BermanStrategy()
 
@@ -188,7 +188,7 @@ class TestBermanEdgeCases:
             'G_air': 0.0,
         }
 
-    def test_main_bundle_only(self):
+    def test_main_bundle_only(self) -> None:
         """Тест режима только ОП (W_builtin=0)."""
         params = self.base_params.copy()
         params['W_builtin_list'] = [0.0]
@@ -198,7 +198,7 @@ class TestBermanEdgeCases:
         assert len(result['main_results']) > 0
         assert result['main_results'][0]['t_sat'] > 0
 
-    def test_low_steam_flow(self):
+    def test_low_steam_flow(self) -> None:
         """Тест при низком расходе пара."""
         params = self.base_params.copy()
         params['G_steam_list'] = [5.0]
@@ -207,7 +207,7 @@ class TestBermanEdgeCases:
 
         assert len(result['main_results']) > 0
 
-    def test_high_steam_flow(self):
+    def test_high_steam_flow(self) -> None:
         """Тест при высоком расходе пара."""
         params = self.base_params.copy()
         params['G_steam_list'] = [400.0]
@@ -216,7 +216,7 @@ class TestBermanEdgeCases:
 
         assert len(result['main_results']) > 0
 
-    def test_dirty_tubes(self):
+    def test_dirty_tubes(self) -> None:
         """Тест при загрязнённых трубках."""
         params = self.base_params.copy()
         params['coefficient_b_list'] = [0.75]
@@ -225,7 +225,7 @@ class TestBermanEdgeCases:
 
         assert len(result['main_results']) > 0
 
-    def test_multiple_temperatures(self):
+    def test_multiple_temperatures(self) -> None:
         """Тест с несколькими температурами."""
         params = self.base_params.copy()
         params['t1_main_list'] = [10.0, 20.0, 30.0]

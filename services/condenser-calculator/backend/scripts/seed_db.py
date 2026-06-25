@@ -9,7 +9,7 @@ from app.models.material import Material
 logger = logging.getLogger(__name__)
 
 
-def seed_data(db: Session):
+def seed_data(db: Session) -> None:
     # 1. Добавляем материалы
     materials = [
         {

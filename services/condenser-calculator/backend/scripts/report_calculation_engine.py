@@ -14,7 +14,7 @@ def power_law_model(v, a, b, c):
     return a * np.power(v, b) + c
 
 
-def plot_hybrid_extrapolation():
+def plot_hybrid_extrapolation() -> None:
     speeds = np.array(k_interpolation_data["speed_points"])
     temperatures = np.array(k_interpolation_data["temperature_points"])
     k_values_matrix = np.array(k_interpolation_data["k_values_matrix"])

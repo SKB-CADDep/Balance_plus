@@ -6,7 +6,7 @@ from .base_for_selection import ProblemDefinition
 class AnalyticalSolver:  # Аналитически!
     """Решает задачу аналитически. Максимальная скорость, но не универсален."""
 
-    def __init__(self, problem: ProblemDefinition):
+    def __init__(self, problem: ProblemDefinition) -> None:
         self.problem = problem
         self.iterations = 0
         self._inv_power = 1.0 / problem.power_minus_1
@@ -22,7 +22,7 @@ class AnalyticalSolver:  # Аналитически!
 class BisectionSolver:  # Дихотомии!
     """Решает задачу методом дихотомии. Надежен, но медленнее сходится."""
 
-    def __init__(self, problem: ProblemDefinition, max_iter=100, tol=1e-7):
+    def __init__(self, problem: ProblemDefinition, max_iter=100, tol=1e-7) -> None:
         self.problem = problem
         self.max_iter = max_iter
         self.tol = tol
@@ -56,7 +56,7 @@ class BisectionSolver:  # Дихотомии!
 class NewtonSolver:  # Ньютоном!
     """Решает задачу методом Ньютона. Быстрая сходимость, но требует производную."""
 
-    def __init__(self, problem: ProblemDefinition, max_iter=20, tol=1e-9):
+    def __init__(self, problem: ProblemDefinition, max_iter=20, tol=1e-9) -> None:
         self.problem = problem
         self.max_iter = max_iter
         self.tol = tol

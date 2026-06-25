@@ -8,7 +8,7 @@ class TestMetroVickersStrategy:
     Набор тестов для проверки корректности расчетов по методике Metro-Vickers.
     """
 
-    def test_calculation_against_known_value(self):
+    def test_calculation_against_known_value(self) -> None:
         """
         Проверяет результат расчета по одному набору данных с известным эталонным значением.
         """

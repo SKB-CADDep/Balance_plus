@@ -27,7 +27,7 @@ class TestPressureMatrixMode4:
     """Полная проверка матрицы давлений из results_4.json."""
 
     @pytest.mark.parametrize("case", _test_cases, ids=[c["id"] for c in _test_cases])
-    def test_pressure_calculation(self, strategy, case):
+    def test_pressure_calculation(self, strategy, case) -> None:
         params = build_calculation_params(
             geometry=_geometry,
             mode=_mode,
@@ -53,7 +53,7 @@ class TestEjectorsMode4:
     """Тесты эжекторов с увеличенным расходом воздуха."""
 
     @pytest.mark.parametrize("case", _ejector_cases, ids=[c["id"] for c in _ejector_cases])
-    def test_ejector_pressure(self, strategy, case):
+    def test_ejector_pressure(self, strategy, case) -> None:
         params = build_calculation_params(
             geometry=_geometry,
             mode=_mode,
@@ -82,7 +82,7 @@ class TestEjectorsMode4:
             f"  Рассчитанное = {calculated:.6f}"
         )
 
-    def test_higher_air_flow_increases_ejector_pressure(self, strategy):
+    def test_higher_air_flow_increases_ejector_pressure(self, strategy) -> None:
         base_params = {
             "W_main": 12000.0,
             "W_builtin": 0.0,
@@ -108,7 +108,7 @@ class TestEjectorsMode4:
 class TestExtendedWaterFlowRange:
     """Проверка расширенного диапазона расхода воды (8000-16000 м³/ч)."""
 
-    def test_w16000_lower_pressure_than_w8000(self):
+    def test_w16000_lower_pressure_than_w8000(self) -> None:
         mode_8000 = find_mode_in_results(_results, W_main=8000.0, W_builtin=0.0, coefficient_b=1.0)
         mode_16000 = find_mode_in_results(_results, W_main=16000.0, W_builtin=0.0, coefficient_b=1.0)
 
@@ -121,7 +121,7 @@ class TestExtendedWaterFlowRange:
                     f"t_idx={t_idx}, g_idx={g_idx}: P(16000)={P_16000:.6f} должно быть < P(8000)={P_8000:.6f}"
                 )
 
-    def test_pressure_reduction_quantification(self):
+    def test_pressure_reduction_quantification(self) -> None:
         mode_8000 = find_mode_in_results(_results, W_main=8000.0, W_builtin=0.0, coefficient_b=1.0)
         mode_16000 = find_mode_in_results(_results, W_main=16000.0, W_builtin=0.0, coefficient_b=1.0)
 
@@ -145,7 +145,7 @@ class TestMode4VsMode3:
     def results_3(self):
         return load_results(3)
 
-    def test_w8000_matches_mode3(self, results_3):
+    def test_w8000_matches_mode3(self, results_3) -> None:
         mode_3 = find_mode_in_results(results_3, W_main=8000.0, W_builtin=0.0, coefficient_b=1.0)
         mode_4 = find_mode_in_results(_results, W_main=8000.0, W_builtin=0.0, coefficient_b=1.0)
 

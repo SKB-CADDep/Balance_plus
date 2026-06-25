@@ -1,5 +1,5 @@
 class CondenserExceptions:
-    def __init__(self, pressure_condenser: float | None, temperature_cooling_water_1: float | None, pif: float | None):
+    def __init__(self, pressure_condenser: float | None, temperature_cooling_water_1: float | None, pif: float | None) -> None:
         self.pressure_condenser = pressure_condenser
         self.temperature_cooling_water_1 = temperature_cooling_water_1
         self.pif = pif

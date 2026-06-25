@@ -66,7 +66,7 @@ def run_comparison():
     return results
 
 
-def print_results_to_console(results):
+def print_results_to_console(results) -> None:
     """Выводит результаты в консоль в виде таблицы."""
     print("Цель: подобрать X, чтобы A3_delt был равен 0.001")
     print("-" * 80)

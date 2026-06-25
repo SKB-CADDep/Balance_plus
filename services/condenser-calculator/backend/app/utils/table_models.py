@@ -60,7 +60,7 @@ class Table1D:
         # Шаг 2: Подбор и кэширование лучшей модели для экстраполяции
         self._fit_extrapolation_model()
 
-    def _fit_extrapolation_model(self):
+    def _fit_extrapolation_model(self) -> None:
         """
         Находит лучшую полиномиальную модель и сохраняет ее в self._extrap_model.
         Вызывается один раз из __post_init__.

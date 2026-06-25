@@ -25,7 +25,7 @@ from app.scripts.load_condensers import load_condensers
 from app.scripts.load_materials import load_materials
 
 
-def main():
+def main() -> None:
     print(f"[*] Подключение к БД на {os.environ.get('POSTGRES_SERVER')}:{os.environ.get('POSTGRES_PORT')}...")
     print("[1/3] Создание таблиц в базе данных...")
     Base.metadata.create_all(bind=engine)

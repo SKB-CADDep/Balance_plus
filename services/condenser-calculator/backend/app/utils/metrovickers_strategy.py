@@ -15,7 +15,7 @@ from .uniconv import UnitConverter
 
 
 class MetroVickersStrategy:
-    def __init__(self):
+    def __init__(self) -> None:
         self._get_k_from_table_temp = RegularGridInterpolator(
             (k_interpolation_data["speed_points"],
              k_interpolation_data["temperature_points"]),

@@ -9,7 +9,7 @@ class TestSplitIntoParts:
     Набор тестов для функции split_into_parts.
     """
 
-    def test_basic_functionality(self):
+    def test_basic_functionality(self) -> None:
         """
         Тестирует базовый случай: деление числа на несколько частей.
         """
@@ -19,7 +19,7 @@ class TestSplitIntoParts:
         result = split_into_parts(number, n_parts)
         assert np.array_equal(result, expected)  # проверка идентичности
 
-    def test_output_properties(self):
+    def test_output_properties(self) -> None:
         """
         Проверяет ключевые свойства выходного массива: длину, начальную и конечную точки.
         """
@@ -33,7 +33,7 @@ class TestSplitIntoParts:
 
         assert result[-1] == number  # конечная точка
 
-    def test_edge_case_one_part(self):
+    def test_edge_case_one_part(self) -> None:
         """
         Тестирует граничный случай, когда число делится всего на одну часть.
         """
@@ -43,7 +43,7 @@ class TestSplitIntoParts:
         result = split_into_parts(number, n_parts)
         assert np.array_equal(result, expected)
 
-    def test_edge_case_zero_number(self):
+    def test_edge_case_zero_number(self) -> None:
         """
         Тестирует граничный случай, когда делится ноль.
         """
@@ -54,7 +54,7 @@ class TestSplitIntoParts:
         assert np.array_equal(result, expected)
         assert len(result) == 11
 
-    def test_float_number_input(self):
+    def test_float_number_input(self) -> None:
         """
         Проверяет корректность работы с числом с плавающей точкой.
         """
@@ -64,7 +64,7 @@ class TestSplitIntoParts:
         result = split_into_parts(number, n_parts)
         assert np.allclose(result, expected)
 
-    def test_invalid_input_negative_parts(self):
+    def test_invalid_input_negative_parts(self) -> None:
         """
         Проверяет, что функция вызывает ошибку при отрицательном количестве частей.
         `np.linspace` должен вызвать ValueError, если `num` < 0.
@@ -72,7 +72,7 @@ class TestSplitIntoParts:
         with pytest.raises(ValueError):
             split_into_parts(100, -5)
 
-    def test_invalid_input_zero_parts(self):
+    def test_invalid_input_zero_parts(self) -> None:
         """
         Проверяет поведение при n_parts=0. np.linspace(start, stop, 1) вернет массив [stop].
         Наша функция вернет [number]. Это не ошибка, но поведение стоит задокументировать тестом.

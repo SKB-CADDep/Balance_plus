@@ -42,7 +42,7 @@ class TestDocumentationVerification:
         W_main,
         W_builtin,
         expected_t_sat,
-    ):
+    ) -> None:
         params = build_calculation_params(
             geometry=verification_geometry,
             mode=verification_mode,
@@ -81,7 +81,7 @@ class TestDocumentationVerification:
         verification_mode,
         num_ejectors,
         expected_pressure_atm,
-    ):
+    ) -> None:
         params = build_calculation_params(
             geometry=verification_geometry,
             mode=verification_mode,
