@@ -1,3 +1,11 @@
+"""
+Скрипт автоматизированной валидации табличного метода расчета (TPS).
+
+Модуль предназначен для проверки точности билинейной и линейной интерполяции 
+стратегии `TablePressureStrategy` путем сравнения расчетных значений 
+давления с заданными эталонами. Выводит процентное расхождение и статус успешности.
+"""
+
 from _common import setup_path
 
 setup_path()
@@ -10,6 +18,20 @@ from app.utils.TPS_module import TablePressureStrategy
 def run_validation_case(strategy: TablePressureStrategy, params: dict, title: str, tolerance_percent: float):
     """
     Выполняет один тестовый случай: запускает расчет, сравнивает с эталоном и печатает отчет.
+
+    [ENGINEERING CONTEXT]
+    Почему используется проверка `expected_value != 0`:
+    В формуле процентного расхождения `(abs_diff / abs(expected)) * 100` 
+    эталонное значение находится в знаменателе. Эта проверка защищает 
+    скрипт от ошибки деления на ноль (ZeroDivisionError), если когда-нибудь 
+    в будущем появится тест с ожидаемым давлением равным 0.0.
+
+    Args:
+        strategy (TablePressureStrategy): Экземпляр стратегии расчета.
+        params (dict): Входные параметры для расчета, включая NAMET, NAMED и expected_pressure.
+        title (str): Название тестового случая для вывода в консоль.
+        tolerance_percent (float): Допустимая погрешность в процентах (%). 
+            Если расхождение меньше или равно этому числу, тест считается пройденным.
     """
     print("=" * 25 + f" {title} " + "=" * 25)
     print("Входные параметры:")
@@ -55,6 +77,11 @@ if __name__ == "__main__":
     }
     NAMED_DATA = {"data": [[15.3, 26.8, 38.4, 49.9, 61.5, 73], [0.157, 0.258, 0.469, 0.607, 0.763, 0.919]]}
 
+    # [ENGINEERING CONTEXT]
+    # Тест 1 намеренно сделан провальным (Negative test case).
+    # Это позволяет убедиться, что логика сравнения (tolerance_percent) работает корректно
+    # и система действительно способна отлавливать ошибки. Исправлять этот тест на успешный не нужно.
+    
     # Тест 1: ПРОВАЛЬНЫЙ. Сравниваем верный расчет (6.295) с неверным эталоном (7.758).
     params_fail = {
         "NAMET": NAMET_DATA,
@@ -81,4 +108,4 @@ if __name__ == "__main__":
 
     run_validation_case(calculation_strategy, params_fail, "Тест 1: Неверный эталон", tolerance_percent=5.0)
     run_validation_case(calculation_strategy, params_pass, "Тест 2: Корректный эталон", tolerance_percent=1.0)
-
+    

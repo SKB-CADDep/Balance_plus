@@ -1,8 +1,21 @@
+"""
+Схемы ошибок (Error Schemas).
+
+Описывает стандартную структуру (контракт) возврата ошибок из API.
+Обеспечивает предсказуемый формат для фронтенда и помогает отслеживать 
+проблемы благодаря полю request_id.
+"""
+
 from pydantic import BaseModel
 
 
 class ErrorResponse(BaseModel):
-    error: str  # Кодовое название ошибки
-    message: str  # Текст сообщения
-    details: str | None = None  # Технические детали
-    request_id: str | None = None
+    """
+    Единая модель ответа при возникновении ошибки (4xx, 500).
+    """
+    
+    error: str                  # Кодовое название ошибки (например, "VALIDATION_ERROR" или "NOT_FOUND")
+    message: str                # Человекочитаемый текст сообщения для показа пользователю
+    details: str | None = None  # Технические детали (параметры, вызвавшие ошибку)
+    request_id: str | None = None # Уникальный ID запроса для поиска в логах (Tracing)
+    

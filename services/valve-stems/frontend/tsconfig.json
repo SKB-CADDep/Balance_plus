@@ -1,37 +1,48 @@
 {
   "compilerOptions": {
+    /* Базовые настройки компилятора */
     "target": "ES2020",
     "useDefineForClassFields": true,
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "skipLibCheck": true,
 
-    /* Bundler mode */
+    /* Режим сборщика (Bundler mode) - Оптимизация под Vite */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
+    
+    /* Настройка для работы с React (преобразование JSX без импорта React) */
     "jsx": "react-jsx",
 
-    /* Linting */
+    /* Строгие проверки кода (Linting) */
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
 
-    /* Vite config */
-    "types": ["vite/client"],
+    /* Интеграция с Vite (типизация переменных окружения import.meta.env) */
+    "types": ["vite/client"]
   },
+  
+  /* Файлы, которые должны обрабатываться компилятором TypeScript */
   "include": [
     "src/**/*.ts",
     "src/**/*.tsx",
     "src/**/*.d.ts"
   ],
+  
+  /* Исключения (не проверяем конфиги и сторонние модули) */
   "exclude": [
     "vite.config.ts",
     "playwright.config.ts",
     "node_modules"
   ],
-  "references": [{ "path": "./tsconfig.node.json" }]
+  
+  /* Связь с конфигом для Node.js среды (Vite-скрипты) */
+  "references": [
+    { "path": "./tsconfig.node.json" }
+  ]
 }

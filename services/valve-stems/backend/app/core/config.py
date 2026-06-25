@@ -1,3 +1,10 @@
+"""
+Модуль конфигурации приложения (Pydantic Settings).
+
+Отвечает за загрузку переменных окружения из .env файлов и системного окружения,
+их строгую типизацию и валидацию перед запуском сервиса 'Valve Stems'.
+"""
+
 from typing import Annotated, Any, Literal
 from urllib.parse import quote_plus
 
@@ -11,6 +18,10 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 def parse_cors(v: Any) -> list[str] | str:
+    """
+    Парсер для списка разрешенных CORS-доменов.
+    Преобразует строку (например, "http://localhost,http://test") в список строк.
+    """
     if isinstance(v, str) and not v.startswith("["):
         return [i.strip() for i in v.split(",")]
     elif isinstance(v, list | str):
@@ -19,6 +30,15 @@ def parse_cors(v: Any) -> list[str] | str:
 
 
 class Settings(BaseSettings):
+    """
+    Глобальные настройки приложения.
+    Значения по умолчанию могут быть переопределены переменными окружения 
+    или через файл, указанный в env_file.
+    """
+    
+    # WARNING (Архитектурный долг):
+    # Жесткая привязка к .env.local может вызвать предупреждения в CI/CD (production среде),
+    # если этот файл отсутствует. Обычно используют env_file=".env" или передают динамически.
     model_config = SettingsConfigDict(
         env_file=".env.local",
         env_file_encoding='utf-8',
@@ -30,6 +50,10 @@ class Settings(BaseSettings):
 
     ENVIRONMENT: Literal["local", "staging", "production"] = "local"
 
+    # WARNING (MyPy / Статический анализатор):
+    # Функция parse_cors возвращает list[str] | str, но аннотация здесь ожидает list[AnyUrl] | str.
+    # Во время выполнения Pydantic V2 автоматически скастит строки в валидные AnyUrl, 
+    # но строгие линтеры кода могут выдать ошибку несоответствия типов.
     BACKEND_CORS_ORIGINS: Annotated[
         list[AnyUrl] | str, BeforeValidator(parse_cors)
     ] = []
@@ -46,6 +70,10 @@ class Settings(BaseSettings):
     @computed_field
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> MultiHostUrl:
+        """
+        Автоматически собирает URI для подключения к БД на основе заданных параметров.
+        Использует современный драйвер psycopg (psycopg3) для SQLAlchemy 2.0.
+        """
         return MultiHostUrl.build(
             scheme="postgresql+psycopg",
             username=self.POSTGRES_USER,

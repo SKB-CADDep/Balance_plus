@@ -1,3 +1,12 @@
+"""
+ETL-скрипт для парсинга и загрузки данных из инженерных Excel-справочников в БД.
+
+Скрипт читает два файла (проекты турбин и геометрию клапанов), очищает данные 
+(Transformation) и загружает их в реляционную базу данных (Load).
+Реализует связи "Многие ко Многим" (Many-to-Many), позволяя одной турбине 
+содержать множество клапанов, а одному типу клапана применяться на разных турбинах.
+"""
+
 import logging
 import os
 import sys
@@ -5,7 +14,11 @@ from pathlib import Path
 
 import pandas as pd
 
-
+# [ENGINEERING CONTEXT]
+# Модификация sys.path:
+# При запуске скрипта напрямую из консоли Docker-контейнера (например, `docker exec ... python scripts/load_from_excel.py`)
+# интерпретатор может не найти корневой модуль `app`. Добавление текущей рабочей 
+# директории (os.getcwd()) в пути импорта решает эту проблему без настройки PYTHONPATH.
 sys.path.append(os.getcwd())
 
 from app.core.database import Base, SessionLocal, engine
@@ -20,11 +33,37 @@ PROJECTS_FILE = Path("/app/Data.xlsx")
 GEOMETRY_FILE = Path("/app/Data_1.xlsx")
 
 def clean_value(val):
+    """
+    Очищает и нормализует текстовые значения из ячеек Excel.
+
+    Args:
+        val: Сырое значение ячейки (строка, число, NaN).
+
+    Returns:
+        str | None: Очищенная строка или None, если ячейка пуста.
+    """
     if pd.isna(val): return None
     if isinstance(val, float) and val.is_integer(): return str(int(val))
     return str(val).strip()
 
 def to_float(val, default=None):
+    """
+    Безопасно конвертирует значение ячейки Excel в число с плавающей точкой (float).
+
+    [ENGINEERING CONTEXT]
+    Зачем нужна замена запятой: 
+    В русскоязычном Excel инженеры часто используют запятую как разделитель 
+    дробной части (например, "22,4"). Библиотека pandas при чтении таких ячеек 
+    оставляет их строками, поэтому перед преобразованием во float запятая 
+    заменяется на системную точку.
+
+    Args:
+        val: Сырое значение ячейки.
+        default: Значение по умолчанию, возвращаемое при ошибке парсинга.
+
+    Returns:
+        float | None: Конвертированное число или значение default.
+    """
     if pd.isna(val): return default
     if isinstance(val, str):
         val = val.replace(',', '.').strip()
@@ -33,11 +72,32 @@ def to_float(val, default=None):
     except ValueError: return default
 
 def extract_valves(cell_value):
+    """
+    Парсит список клапанов из одной ячейки Excel.
+
+    Args:
+        cell_value: Содержимое ячейки, где названия клапанов могут быть 
+            разделены запятыми или переносами строк (Alt+Enter).
+
+    Returns:
+        list[str]: Плоский список очищенных названий клапанов.
+    """
     if pd.isna(cell_value) or str(cell_value).strip() == "": return []
     raw_str = str(cell_value).replace('\n', ',')
     return [v.strip() for v in raw_str.split(',') if v.strip()]
 
 def init_db():
+    """
+    Основная логика очистки БД, парсинга Excel и загрузки данных.
+    
+    [ENGINEERING CONTEXT]
+    Почему используется деструктивный метод Base.metadata.drop_all:
+    Этот скрипт спроектирован как "Hard Reset" (жесткий сброс) справочной 
+    базы данных при обновлении исходных Excel-файлов. Он полностью стирает 
+    старые таблицы и воссоздает их заново, чтобы избежать дублирования 
+    и рассинхронизации связей Many-to-Many. Не предназначен для использования 
+    на production-серверах с пользовательскими данными!
+    """
     if not PROJECTS_FILE.exists() or not GEOMETRY_FILE.exists():
         logger.error("Один из Excel файлов не найден!")
         return
@@ -107,6 +167,13 @@ def init_db():
             all_valves_for_turbine.extend([(v, "Регулирующий (РК)") for v in extract_valves(row.get('РК'))])
             all_valves_for_turbine.extend([(v, "Стопорно-регулирующий (СРК)") for v in extract_valves(row.get('СРК'))])
 
+            # [ENGINEERING CONTEXT]
+            # Защита от неполноты инженерных данных (Data Integrity Fallback):
+            # В Excel-файле Data.xlsx (Проекты) турбина может ссылаться на чертеж клапана, 
+            # которого физически нет в файле Data_1.xlsx (Геометрии). 
+            # Чтобы скрипт не упал с ошибкой внешнего ключа (Foreign Key Constraint), 
+            # мы на лету создаем "пустой" объект клапана (содержащий только имя и тип). 
+            # Позже инженер сможет найти его в интерфейсе и заполнить размеры вручную.
             for v_name, v_type in all_valves_for_turbine:
                 # Если клапан есть в базе — берем его. Если нет — создаем пустую геометрию на лету!
                 if v_name in valve_cache:
@@ -134,3 +201,4 @@ def init_db():
 
 if __name__ == "__main__":
     init_db()
+    

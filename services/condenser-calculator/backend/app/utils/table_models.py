@@ -1,3 +1,13 @@
+"""
+Инфраструктура для математической интерполяции и экстраполяции.
+
+Модуль предоставляет замороженные датаклассы (DataClasses) для работы с 
+одномерными и многомерными табличными данными. Реализует паттерн ленивой 
+инициализации сложных математических объектов (интерполяторов SciPy), 
+что обеспечивает максимальную производительность при их последующем 
+многократном вызове.
+"""
+
 from __future__ import annotations
 
 import logging
@@ -13,24 +23,29 @@ logger = logging.getLogger(__name__)
 @dataclass(frozen=True)
 class Table1D:
     """
-    Представляет 1D таблицу для быстрой интерполяции и экстраполяции.
+    Класс-обертка для одномерной интерполяции и автоматической экстраполяции.
 
-    При создании объекта выполняются все "дорогие" вычисления:
-    1. Данные сортируются и валидируются.
-    2. Создается объект для быстрой линейной интерполяции.
-    3. Подбирается и сохраняется наилучшая полиномиальная модель для экстраполяции.
+    При создании объекта выполняются ресурсоемкие операции:
+    1. Данные сортируются и валидируются (защита от дубликатов).
+    2. Создается инстанс `scipy.interpolate.interp1d`.
+    3. Автоматически подбирается оптимальная полиномиальная модель 
+       для экстраполяции на основе информационного критерия Акаике (AIC).
+
+    Note:
+        Класс заморожен (frozen=True) для иммутабельности и потокобезопасности. 
+        Поэтому инициализация внутренних полей идет через `object.__setattr__`.
     """
     x_cords: np.ndarray
     y_cords: np.ndarray
     max_extrap_degree: int = 3
 
-    # Приватные поля для хранения "дорогих" объектов
+    # Приватные поля для хранения "дорогих" математических объектов (не участвуют в __init__)
     _interp: interp1d = field(init=False, repr=False)
     _extrap_model: np.poly1d = field(init=False, repr=False)
     _best_extrap_degree: int = field(init=False, repr=False)
 
     def __post_init__(self):
-        # Валидация входных данных
+        """Валидирует входные массивы и инициализирует интерполяторы."""
         if not isinstance(self.x_cords, np.ndarray) or not isinstance(self.y_cords, np.ndarray):
             raise TypeError("x_cords и y_cords должны быть экземплярами np.ndarray.")
         if self.x_cords.ndim != 1 or self.y_cords.ndim != 1:
@@ -62,8 +77,13 @@ class Table1D:
 
     def _fit_extrapolation_model(self):
         """
-        Находит лучшую полиномиальную модель и сохраняет ее в self._extrap_model.
-        Вызывается один раз из __post_init__.
+        Ищет оптимальный полином для экстраполяции за пределы известных точек.
+        
+        Вычисляет критерий Акаике (AIC) для полиномов разных степеней 
+        (от 1 до `max_extrap_degree`) и сохраняет модель с наименьшим значением AIC.
+        
+        Raises:
+            RuntimeError: Если алгоритм не смог построить ни одной модели.
         """
         best_model = None
         best_aic = float('inf')
@@ -104,9 +124,16 @@ class Table1D:
 
     def __call__(self, target_x: float | np.ndarray) -> float | np.ndarray:
         """
-        Выполняет интерполяцию или экстраполяцию для target_x.
-        Метод сам решает, какой инструмент использовать.
-        Поддерживает как скалярные значения, так и массивы NumPy.
+        Перегрузка оператора вызова объекта `()`. 
+        
+        Выполняет интерполяцию для входной точки. Если точка выходит за пределы 
+        исходных массивов, автоматически задействует полиномиальную экстраполяцию.
+
+        Args:
+            target_x (float | np.ndarray): Значение (или массив значений) оси X.
+
+        Returns:
+            float | np.ndarray: Вычисленное значение Y.
         """
         interpolated_values = self._interp(target_x)
 
@@ -133,8 +160,9 @@ class Table1D:
 @dataclass(frozen=True)
 class Table2D:
     """
-    Представляет 2D таблицу для билинейной интерполяции.
-    Координаты x и y должны быть 1D массивами, строго возрастающими.
+    Класс-обертка для двумерной (билинейной) интерполяции таблиц.
+
+    Создает и хранит объект `RegularGridInterpolator` из SciPy.
     """
     x_cords: np.ndarray
     y_cords: np.ndarray
@@ -142,6 +170,7 @@ class Table2D:
     _rgi: RegularGridInterpolator = field(init=False, repr=False)
 
     def __post_init__(self):
+        """Валидирует сетку координат и матрицу значений Z."""
         if not all(isinstance(arr, np.ndarray) for arr in [self.x_cords, self.y_cords, self.z_values]):
             raise TypeError("x_cords, y_cords, и z_values должны быть экземплярами np.ndarray.")
         if self.x_cords.ndim != 1 or self.y_cords.ndim != 1 or self.z_values.ndim != 2:
@@ -160,6 +189,16 @@ class Table2D:
 
     def __call__(self, target_x: float | np.ndarray,
                  target_y: float | np.ndarray) -> float | np.ndarray:
+        """
+        Перегрузка оператора вызова `()`. Вычисляет Z = f(X, Y).
+        
+        Args:
+            target_x (float | np.ndarray): Координата(ы) X.
+            target_y (float | np.ndarray): Координата(ы) Y.
+            
+        Returns:
+            float | np.ndarray: Вычисленное значение оси Z.
+        """
         points_x = np.ravel(target_x)
         points_y = np.ravel(target_y)
         points_to_interpolate = np.column_stack((points_x, points_y))
@@ -173,21 +212,25 @@ def interpolate_trilinear(
         target_x: float, target_y: float, target_a: float) -> float:
     """
     Выполняет линейно-билинейную (трилинейную) интерполяцию.
-    Сначала выполняется билинейная интерполяция для target_x, target_y
-    в table_low_a и table_high_a.
-    Затем выполняется линейная интерполяция по target_a между полученными значениями.
+    
+    Алгоритм:
+    Сначала выполняется билинейная интерполяция точки (target_x, target_y)
+    внутри двух "слоев" (table_low_a и table_high_a).
+    Затем выполняется линейная интерполяция по оси target_a между этими 
+    полученными значениями Z_low и Z_high.
 
     Args:
-        table_low_a: Объект Table2D для нижнего значения параметра A.
-        a_low: Значение параметра A, соответствующее table_low_a.
-        table_high_a: Объект Table2D для верхнего значения параметра A.
-        a_high: Значение параметра A, соответствующее table_high_a.
-        target_x: Целевое значение X.
-        target_y: Целевое значение Y.
-        target_a: Целевое значение A.
+        table_low_a (Table2D): Объект 2D-таблицы для нижней границы параметра A.
+        a_low (float): Физическое значение параметра A нижней таблицы.
+        table_high_a (Table2D): Объект 2D-таблицы для верхней границы параметра A.
+        a_high (float): Физическое значение параметра A верхней таблицы.
+        target_x (float): Искомое значение X.
+        target_y (float): Искомое значение Y.
+        target_a (float): Искомое значение (глубина) A, для которого нужен ответ.
 
     Returns:
-        Интерполированное значение Z.
+        float: Итоговое интерполированное значение Z. Возвращает NaN, 
+            если промежуточная интерполяция не удалась.
     """
     z_at_a_low = table_low_a(target_x, target_y)
     z_at_a_high = table_high_a(target_x, target_y)

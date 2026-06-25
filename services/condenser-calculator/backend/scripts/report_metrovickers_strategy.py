@@ -1,13 +1,33 @@
+"""
+Скрипт профилирования и генерации отчетов по расчету конденсатора.
+
+Использует методику Метро-Виккерса (Metro-Vickers) для расчета 
+тепло-гидравлических характеристик. Позволяет выполнить единичный 
+поверочный расчет, а также сгенерировать сетку режимных характеристик 
+(зависимость давления пара от температуры и расхода охлаждающей воды).
+"""
+
 from _common import setup_path
 
 setup_path()
 
+from typing import Any
+
 from app.utils.metrovickers_strategy import MetroVickersStrategy
 
 
-def print_beautifully(data_dict, friendly_names, title, keys_to_print):
+def print_beautifully(data_dict: dict[str, Any], friendly_names: dict[str, tuple[str, str]], title: str, keys_to_print: list[str]) -> None:
     """
-    Вспомогательная функция для красивой печати данных.
+    Вспомогательная функция для форматированного вывода словарей в консоль.
+
+    Выравнивает названия параметров по левому краю для удобства чтения,
+    автоматически подставляя единицы измерения.
+
+    Args:
+        data_dict (dict[str, Any]): Словарь с данными (входные параметры или результаты).
+        friendly_names (dict[str, tuple[str, str]]): Словарь маппинга (ключ -> (Название, Ед. изм.)).
+        title (str): Заголовок блока данных.
+        keys_to_print (list[str]): Список ключей, которые необходимо вывести.
     """
     print(f"\n--- {title} ---")
     max_len = max(
@@ -24,16 +44,27 @@ def print_beautifully(data_dict, friendly_names, title, keys_to_print):
                 print(f"{label}: {value}")
 
 
-def generate_and_print_tables(strategy, base_params):
+def generate_and_print_tables(strategy: MetroVickersStrategy, base_params: dict[str, Any]) -> None:
     """
-    Генерирует данные и выводит их в виде таблиц, аналогичных скриншоту.
+    Генерирует сетку расчетных данных (режимную характеристику) и выводит её в виде ASCII-таблиц.
+
+    [ENGINEERING CONTEXT]
+    Зачем нужны эти вложенные циклы: Инженерам-теплотехникам для оценки эффективности 
+    турбоустановки недостаточно одной точки. Им нужна матрица давлений пара 
+    в зависимости от сезонных изменений (температура воды: 35, 37, 40) и 
+    нагрузок циркуляционных насосов (расход воды от 1200 до 2500 т/ч). 
+    Этот метод автоматизирует создание таких матриц для построения номограмм.
+
+    Args:
+        strategy (MetroVickersStrategy): Экземпляр расчетной стратегии.
+        base_params (dict[str, Any]): Базовый словарь геометрических параметров аппарата.
     """
     print("\n" + "#" * 60)
     print("###      Генерация сводных таблиц с результатами      ###")
     print("#" * 60)
 
     # --- Параметры, которые будут меняться в циклах ---
-    beta_values = [1.0, 0.75]  # Коэффициент b
+    beta_values = [1.0, 0.75]  # Коэффициент b (чистота трубок)
     temp_values = [35, 37, 40]  # Температура t_ср (используется как t_ов1)
     flow_values = [1200, 1250, 1500, 1750, 2000, 2250, 2500]  # Расход воды
 
@@ -74,7 +105,10 @@ def generate_and_print_tables(strategy, base_params):
             print("".join(result_row))
 
 
-def main():
+def main() -> None:
+    """
+    Точка входа. Выполняет базовый расчет конденсатора и опционально генерирует таблицы.
+    """
     strategy = MetroVickersStrategy()
 
     # --- Входные параметры для единичного расчета ---
@@ -93,7 +127,13 @@ def main():
         "degree_dryness_flow_path_1": 0.95,
     }
 
-    # --- Словарь для перевода имен ---
+    # [ENGINEERING CONTEXT]
+    # Почему используется маппинг `friendly_names`: 
+    # API, микросервисы и код обязаны использовать английские переменные в стиле snake_case 
+    # для сериализации (например, в JSON). Однако инженеры-теплотехники привыкли к 
+    # советским/российским ГОСТовским аббревиатурам (Z - число ходов, β - коэффициент чистоты) 
+    # и неметрическим размерностям (т/ч, кгс/см²). Этот словарь работает как "переводчик" 
+    # между миром программистов и миром инженеров для генерации понятных отчетов.
     friendly_names = {
         "diameter_inside_of_pipes": ("Внутренний диаметр трубок", "мм"),
         "thickness_pipe_wall": ("Толщина стенки трубок", "мм"),
@@ -126,7 +166,7 @@ def main():
     }
 
     # === ЧАСТЬ 1: Расчет и вывод для одного набора параметров ===
-    print_beautifully(input_params, friendly_names, "Входные параметры для единичного расчета", input_params.keys())
+    print_beautifully(input_params, friendly_names, "Входные параметры для единичного расчета", list(input_params.keys()))
     try:
         results = strategy.calculate(input_params)
         intermediate_keys = [
@@ -146,6 +186,13 @@ def main():
     except Exception as e:
         print(f"\n--- ОШИБКА ПРИ РАСЧЕТЕ --- \n{e}")
 
+    # [ENGINEERING CONTEXT]
+    # Почему эта часть закомментирована:
+    # Метод генерации матриц generate_and_print_tables выполняет десятки ресурсоемких 
+    # расчетов в цикле. Чтобы скрипт быстро отрабатывал при базовом запуске 
+    # (как unit-тест), тяжелый табличный рендеринг по умолчанию отключен.
+    # Раскомментируйте блок ниже для получения полного отчета.
+    
     # === ЧАСТЬ 2: Генерация и печать таблиц ===
     # base_params_for_tables = input_params.copy()
     # del base_params_for_tables['mass_flow_cooling_water']
@@ -157,4 +204,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-
+    

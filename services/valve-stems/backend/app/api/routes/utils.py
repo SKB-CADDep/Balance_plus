@@ -1,10 +1,18 @@
+"""
+Вспомогательные маршруты (Utils).
+
+Предоставляет эндпоинты для получения метаинформации о сервисе,
+например, справочников единиц измерения для фронтенда.
+"""
+
 import logging
 
 from fastapi import APIRouter
+
 from app.core.converter import converter
 
-
-router = APIRouter()
+# Выделяем утилиты в отдельный тег для Swagger UI
+router = APIRouter(tags=["Utils"])
 logger = logging.getLogger(__name__)
 
 
@@ -12,7 +20,10 @@ logger = logging.getLogger(__name__)
 def get_units_dictionary() -> dict:
     """
     Возвращает список всех доступных физических параметров
-    и их единиц измерения из конвертера.
+    и их единиц измерения из глобального конвертера (uniconv).
+    
+    Используется фронтендом для динамического построения
+    выпадающих списков (селекторов) выбора размерностей.
     """
     result = {}
 
@@ -24,3 +35,4 @@ def get_units_dictionary() -> dict:
         }
 
     return result
+    

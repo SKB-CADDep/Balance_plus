@@ -1,3 +1,13 @@
+"""
+Адаптер расчетного ядра конденсаторов.
+
+Выступает связующим звеном (мостом) между HTTP-слоем (API, схемы Pydantic, ORM) 
+и математическим ядром (стратегии Бермана и Метро-Виккерса). 
+Отвечает за подготовку физических данных, диспетчеризацию расчетов, 
+итерационное уточнение теплофизических свойств (BR-12) и форматирование 
+результатов в стандартизированные матрицы.
+"""
+
 import time
 import logging
 from typing import Callable
@@ -9,15 +19,16 @@ from app.core.exceptions import (
     MaterialPropertyError,
     UnitConversionError,
     CalculationEngineError,
+    ValidationError,
 )
 from app.utils.berman_strategy import BermanStrategy
 from app.utils.metrovickers_strategy import MetroVickersStrategy
 from app.utils.table_models import Table1D
+
 from app.core.condenser_validators import (
     validate_water_flow_limits,
     validate_temperature_ranges
 )
-
 
 from app.schemas.calculation import (
     CalculationInput,
@@ -33,7 +44,7 @@ logger = logging.getLogger(__name__)
 
 class CondenserCalculationAdapter:
     """
-    Адаптер — мост между API и математическим ядром.
+    Класс-адаптер для управления процессом расчета конденсатора.
     """
 
     def calculate(
@@ -42,6 +53,7 @@ class CondenserCalculationAdapter:
         condenser: Condenser,
         material: Material,
     ) -> CalculationOutput:
+        """Основной метод запуска и маршрутизации расчета."""
         start = time.perf_counter()
 
         logger.info(
@@ -55,16 +67,12 @@ class CondenserCalculationAdapter:
         )
 
         try:
-            # 1. Интерполятор λ(t)
             lambda_interp = self._build_lambda_interpolator(material)
 
-            # 2. Диспетчеризация
             if input_data.method == "berman":
-                tables, ejector_results = self._run_berman(
-                    input_data, condenser, lambda_interp)
+                tables, ejector_results = self._run_berman(input_data, condenser, lambda_interp)
             else:
-                tables = self._run_metrovickers(
-                    input_data, condenser, lambda_interp)
+                tables = self._run_metrovickers(input_data, condenser, lambda_interp)
                 ejector_results = []
 
             elapsed_ms = (time.perf_counter() - start) * 1000
@@ -89,7 +97,6 @@ class CondenserCalculationAdapter:
             )
 
         except Exception as e:
-            # Убрали extra, добавили exc_info=True для 100% гарантии вывода Traceback
             logger.error(
                 f"Calculation failed for Method: {input_data.method}, "
                 f"Condenser: {condenser.id}, Material: {material.id}. Error: {str(e)}", 
@@ -100,12 +107,7 @@ class CondenserCalculationAdapter:
                 details=str(e)
             ) from e
 
-    # ===================================================================
-    # ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ
-    # ===================================================================
-
     def _build_lambda_interpolator(self, material: Material) -> Table1D:
-        """Создаёт Table1D для λ = f(t)"""
         points = material.thermal_conductivity_points
 
         if not points or len(points) < 2:
@@ -117,11 +119,7 @@ class CondenserCalculationAdapter:
         x = np.array([p[0] for p in points])
         y = np.array([p[1] for p in points])
 
-        logger.debug(
-            "Created lambda interpolator",
-            extra={"material": material.name, "points_count": len(points)}
-        )
-
+        logger.debug("Создан интерполятор теплопроводности (точек: %d)", len(x))
         return Table1D(x_cords=x, y_cords=y)
 
     def _get_lambda_iterative(
@@ -132,20 +130,17 @@ class CondenserCalculationAdapter:
         max_iter: int = 8,
         tol: float = 0.01,
     ) -> float:
-        """BR-12: Итерационное уточнение λ"""
         t_avg = float(t_avg_initial)
         for i in range(max_iter):
             lam = float(lambda_interp(t_avg))
             new_t_avg = single_calc_func(lam)
 
+            logger.debug("Итерация %d: t_avg=%.2f, lambda=%.4f, new_t_avg=%.2f", i, t_avg, lam, new_t_avg)
+
             if abs(new_t_avg - t_avg) < tol:
-                logger.debug("Lambda iteration converged", extra={
-                             "iterations": i + 1, "lam": lam})
                 return lam
             t_avg = new_t_avg
 
-        logger.warning("Lambda iteration did not converge fully",
-                       extra={"final_t_avg": t_avg})
         return float(lambda_interp(t_avg))
 
     # ===================================================================
@@ -158,10 +153,10 @@ class CondenserCalculationAdapter:
         condenser: Condenser,
         lambda_interp: Table1D,
     ):
-        """Расчёт по Бермана"""
         logger.info("Running Berman strategy")
 
-        t_avg_est = sum(input_data.t1_main) / len(input_data.t1_main) + 5.0
+        # Получаем базовую среднюю температуру через метод, в котором уже вшита проверка if not input_data.t1_main
+        t_avg_est = self._estimate_t_avg_berman(input_data, 0.0) + 5.0
 
         lam = self._get_lambda_iterative(
             lambda_interp,
@@ -174,14 +169,12 @@ class CondenserCalculationAdapter:
         engine = BermanStrategy()
         raw = engine.calculate(params)
 
-        tables = self._reshape_berman_results(
-            raw["main_results"], input_data, condenser)
+        tables = self._reshape_berman_results(raw["main_results"], input_data, condenser)
         ejectors = [EjectorResult(**e) for e in raw.get("ejector_results", [])]
 
         return tables, ejectors
 
-    def _prepare_berman_params(self, input_data: CalculationInput, condenser: Condenser, lam: float):
-        """Подготовка параметров + конвертация единиц"""
+    def _prepare_berman_params(self, input_data: CalculationInput, condenser: Condenser, lam: float) -> dict:
         try:
             h_steam = converter.convert(
                 input_data.H_steam,
@@ -217,11 +210,14 @@ class CondenserCalculationAdapter:
         }
 
     def _estimate_t_avg_berman(self, input_data: CalculationInput, lam: float) -> float:
+        if not input_data.t1_main:
+            raise ValidationError(
+                message="Пустой массив температур",
+                details="Массив t1_main не может быть пустым"
+            )
         return sum(input_data.t1_main) / len(input_data.t1_main)
 
     def _reshape_berman_results(self, flat_results: list[dict], input_data: CalculationInput, condenser: Condenser):
-        """Реструктуризация flat → матрицы"""
-
         len_W = max(len(input_data.W_main), len(input_data.W_builtin or []))
         len_b = len(input_data.coefficient_b)
         len_t = len(input_data.t1_main)
@@ -236,24 +232,17 @@ class CondenserCalculationAdapter:
 
                 matrix = []
                 for t_j in range(len_t):
-                    row = [chunk[t_j * len_G + g_k].get('P_steam_seuif_atm', 0.0)
-                           for g_k in range(len_G)]
+                    row = [chunk[t_j * len_G + g_k].get('P_steam_seuif_atm', 0.0) for g_k in range(len_G)]
                     matrix.append(row)
 
-                w_main = input_data.W_main[w_i] if w_i < len(
-                    input_data.W_main) else 0.0
-                w_builtin = input_data.W_builtin[w_i] if input_data.W_builtin and w_i < len(
-                    input_data.W_builtin) else 0.0
+                w_main = input_data.W_main[w_i] if w_i < len(input_data.W_main) else 0.0
+                w_builtin = input_data.W_builtin[w_i] if input_data.W_builtin and w_i < len(input_data.W_builtin) else 0.0
 
-                warnings = validate_water_flow_limits(
-                    w_main, w_builtin, condenser.water_flow_limits)
-
-                t1_warnings = validate_temperature_ranges(
-                    "berman", input_data.t1_main)
+                warnings = validate_water_flow_limits(w_main, w_builtin, condenser.water_flow_limits)
+                t1_warnings = validate_temperature_ranges("berman", input_data.t1_main)
                 warnings.extend(t1_warnings)
 
                 tables.append(MatrixResult(
-
                     meta={
                         "coefficient_b": input_data.coefficient_b[b_i],
                         "W_main": w_main,
@@ -278,7 +267,6 @@ class CondenserCalculationAdapter:
         condenser: Condenser,
         lambda_interp: Table1D,
     ):
-        """Расчёт по Метро-Виккерсу"""
         logger.info("Running MetroVickers strategy")
 
         engine = MetroVickersStrategy()
@@ -288,18 +276,18 @@ class CondenserCalculationAdapter:
 
         for b in input_data.coefficient_b:
             for w_i in range(len_W):
-                w_main = input_data.W_main[w_i] if w_i < len(
-                    input_data.W_main) else 0.0
+                # Объявляем переменные расходов ровно один раз! (Избегаем дублирования)
+                w_main = input_data.W_main[w_i] if w_i < len(input_data.W_main) else 0.0
+                w_builtin = input_data.W_builtin[w_i] if input_data.W_builtin and w_i < len(input_data.W_builtin) else 0.0
 
                 matrix = []
                 is_extrapolated_matrix = False
+                
                 for t1 in input_data.t1_main:
-
                     t_avg_est = t1 + 3.0
                     lam = self._get_lambda_iterative(
                         lambda_interp, t_avg_est,
-                        lambda lam_val: self._estimate_t_avg_metrovickers(
-                            t1, w_main, lam_val)
+                        lambda lam_val: self._estimate_t_avg_metrovickers(t1, w_main, lam_val)
                     )
 
                     row = []
@@ -309,28 +297,20 @@ class CondenserCalculationAdapter:
                         )
                         result = engine.calculate(params)
                         row.append(result['pressure_flow_path_1'])
+                        
                         if result.get('is_extrapolated'):
                             is_extrapolated_matrix = True
 
                     matrix.append(row)
 
-                w_main = input_data.W_main[w_i] if w_i < len(
-                    input_data.W_main) else 0.0
-                w_builtin = input_data.W_builtin[w_i] if input_data.W_builtin and w_i < len(
-                    input_data.W_builtin) else 0.0
-
-                warnings = validate_water_flow_limits(
-                    w_main, w_builtin, condenser.water_flow_limits)
-
-                t1_warnings = validate_temperature_ranges(
-                    "metro-vickers", input_data.t1_main)
+                warnings = validate_water_flow_limits(w_main, w_builtin, condenser.water_flow_limits)
+                t1_warnings = validate_temperature_ranges("metro-vickers", input_data.t1_main)
                 warnings.extend(t1_warnings)
 
                 if is_extrapolated_matrix:
                     warnings.append("Данные не подтверждены экспериментально")
 
                 tables.append(MatrixResult(
-
                     meta={
                         "coefficient_b": b,
                         "W_main": w_main,

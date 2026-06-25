@@ -1,80 +1,71 @@
-import logging
-from typing import Optional, List, Dict, Any
-from app.models.condenser import Condenser
-from app.core.exceptions import ValidationError
+"""
+Модуль валидации бизнес-правил (Business Rules - BR).
 
-logger = logging.getLogger(__name__)
+Содержит набор функций для проверки физической и логической корректности 
+входных данных (геометрии оборудования, расходов охлаждающей воды, 
+температурных диапазонов). Отделяет правила предметной области от 
+математического ядра. Валидаторы могут либо прерывать расчет (выбрасывая 
+исключения), либо генерировать предупреждения (warnings), которые 
+возвращаются пользователю вместе со сгенерированными матрицами.
+"""
+
+from typing import List, Dict, Any, Optional
+
+from app.core.exceptions import ValidationError
+from app.models.condenser import Condenser
+
 
 def validate_condenser_for_method(condenser: Condenser, method: str) -> None:
     """
-    BR-02: Валидация наличия обязательных констант для выбранной методики.
-    Генерирует ValueError если данные некорректны.
+    Проверяет наличие дополнительных геометрических параметров аппарата (BR-02).
+    Базовые параметры (диаметр, толщина стенки, параметры основного пучка) 
+    гарантированно присутствуют на уровне схемы БД (NOT NULL).
     """
-    errors = []
-
-    # Геометрия, которая обязательна для обеих методик, уже закрыта nullable=False
-    # на уровне базы данных. Здесь проверяем специфику:
-    if method == "berman":
-        if condenser.aircooler_count is None:
-            errors.append(
-                "Для методики Бермана обязательно наличие числа трубок воздухоохладителя (aircooler_count).")
-
-    if method == "metro-vickers":
-        # Метро-Виккерс использует aircooler_count в адаптере
-        if condenser.aircooler_count is None:
-            errors.append(
-                "Для методики Метро-Виккерса обязательно наличие числа трубок воздухоохладителя (aircooler_count).")
-
-    if errors:
+    missing_fields = []
+    
+    # Строгая проверка на None, так как 0 (ноль) является валидным значением.
+    # Это поле в БД может быть nullable=True, но для расчетов нам нужно явное значение.
+    if condenser.aircooler_count is None:
+        missing_fields.append("Количество трубок воздухоохладителя")
+        
+    if missing_fields:
         raise ValidationError(
-            message="Ошибка валидации БД (BR-02)",
-            details=", ".join(errors)
+            message="Недостаточно данных об оборудовании для проведения расчета.",
+            details=f"Отсутствуют параметры: {', '.join(missing_fields)}"
         )
 
 
 def _check_flow_limit(value: float, limits: dict, bundle_type: str, rule: str) -> List[str]:
-    """Вспомогательный метод для проверки лимитов одного пучка."""
+    """
+    Вспомогательная функция проверки конкретного значения расхода на попадание в лимиты.
+    """
     warnings = []
-    if not limits:
-        return warnings
-
-    # Безопасно достаем значения (если ключа нет или там null, получим None)
+    
     min_limit = limits.get("min")
     max_limit = limits.get("max")
-
-    # Явно проверяем, что лимит существует и не равен None, прежде чем сравнивать математически
+    
     if min_limit is not None and value < min_limit:
-        warnings.append(
-            f"Расход {bundle_type} ({value}) ниже минимума ({min_limit}) ({rule})."
-        )
-        
+        warnings.append(f"Расход {bundle_type} ({value}) ниже минимума ({min_limit}) ({rule}).")
+    
     if max_limit is not None and value > max_limit:
-        warnings.append(
-            f"Расход {bundle_type} ({value}) выше максимума ({max_limit}) ({rule})."
-        )
+        warnings.append(f"Расход {bundle_type} ({value}) выше максимума ({max_limit}) ({rule}).")
         
     return warnings
 
 
-def validate_water_flow_limits(
-    w_main: float,
-    w_builtin: float,
-    limits: Optional[Dict[str, Any]]
-) -> List[str]:
+def validate_water_flow_limits(w_main: float, w_builtin: float, limits: Optional[Dict[str, Any]]) -> List[str]:
     """
-    BR-06 / BR-07: Валидация расходов охлаждающей воды для конкретной комбинации (цикла).
-    Возвращает список сообщений-предупреждений.
+    Проверяет расходы охлаждающей воды на соответствие паспортным лимитам (BR-06 / BR-07).
     """
     warnings = []
     if not limits:
         return warnings
 
     if w_main == 0 and w_builtin == 0:
-        warnings.append(
-            "Оба расхода воды равны нулю — проверьте входные данные.")
+        warnings.append("Оба расхода воды равны нулю — проверьте входные данные.")
         return warnings
     
-    # ФИКС: Обработка списка [4000, 20000], который реально лежит в вашей базе
+    # Адаптация для унаследованных данных (Legacy Data): 
     if isinstance(limits, list) and len(limits) == 2:
         limits = {
             "main_bundle": {"min": limits[0], "max": limits[1]},
@@ -84,47 +75,48 @@ def validate_water_flow_limits(
     if not isinstance(limits, dict):
         return []
 
-    main_limits = limits.get("main_bundle", {})
-    builtin_limits = limits.get("builtin_bundle", {})
+    main_limits = limits.get("main_bundle") or {}
+    builtin_limits = limits.get("builtin_bundle") or {}
 
     # BR-07: Если работает только один пучок
     if w_main > 0 and w_builtin <= 0:
-        warnings.extend(_check_flow_limit(w_main, main_limits,
-                        "ОП", "режима одного пучка (BR-07)"))
+        warnings.extend(_check_flow_limit(w_main, main_limits, "ОП", "режима одного пучка (BR-07)"))
 
     elif w_builtin > 0 and w_main <= 0:
-        warnings.extend(_check_flow_limit(
-            w_builtin, builtin_limits, "ВП", "режима одного пучка (BR-07)"))
+        warnings.extend(_check_flow_limit(w_builtin, builtin_limits, "ВП", "режима одного пучка (BR-07)"))
 
     # BR-06: Оба пучка работают
     elif w_main > 0 and w_builtin > 0:
         warnings.extend(_check_flow_limit(w_main, main_limits, "ОП", "BR-06"))
-        warnings.extend(_check_flow_limit(
-            w_builtin, builtin_limits, "ВП", "BR-06"))
+        warnings.extend(_check_flow_limit(w_builtin, builtin_limits, "ВП", "BR-06"))
 
     return warnings
 
 
 def validate_temperature_ranges(method: str, t1_values: List[float]) -> List[str]:
     """
-    BR-10: Валидация температурных диапазонов для t1.
-    Берман: 0..45
-    Метро-Виккерс: 45..150
+    Проверяет температуры охлаждающей воды на применимость к методике (BR-10).
     """
     warnings = []
+    
     if not t1_values:
         return warnings
-
+    
     min_t = min(t1_values)
     max_t = max(t1_values)
 
     if method == "berman":
         if min_t < 0 or max_t > 45:
             warnings.append(
-                "t1 содержит значения вне оптимального диапазона 0...45°С (Берман).")
+                f"Температуры выходят за диапазон применимости Бермана (0...45°C). "
+                f"Min: {min_t}, Max: {max_t}"
+            )
     elif method == "metro-vickers":
         if min_t < 45 or max_t > 150:
             warnings.append(
-                "t1 содержит значения вне оптимального диапазона 45...150°С (Метро-Виккерс).")
-
+                f"Температуры выходят за диапазон применимости Метро-Виккерса (45...150°C). "
+                f"Min: {min_t}, Max: {max_t}"
+            )
+            
     return warnings
+    

@@ -1,4 +1,12 @@
-# gitlab_adapter.py — ДОПОЛНЯЕМ существующий файл
+"""
+Адаптер для взаимодействия с API GitLab.
+
+Этот модуль оборачивает библиотеку python-gitlab, предоставляя удобный 
+интерфейс для работы с репозиториями, задачами (Issues), ветками и файлами.
+Содержит встроенные механизмы кеширования для снижения нагрузки на API 
+и оптимизации времени ответа (BFF-паттерн).
+"""
+
 import os
 import time
 import logging
@@ -13,12 +21,29 @@ load_dotenv()
 
 logger = logging.getLogger(__name__)
 
+
 class GitLabAdapter:
-    # КЕШ ДЛЯ ПРОЕКТОВ (Чтобы не бомбить API)
-    # Структура: { id: (project_obj, timestamp) }
+    """
+    Класс-клиент для работы с GitLab API.
+    
+    Обеспечивает авторизацию, маршрутизацию запросов к конкретным проектам,
+    чтение/запись файлов (математических расчетов) и управление Issue.
+    """
+
+    # [ENGINEERING CONTEXT]
+    # Почему используется кеширование проектов на уровне класса:
+    # Запросы к GitLab API (особенно получение объекта проекта) занимают время.
+    # Если на каждый чих дергать API, мы упремся в Rate Limits и сильно замедлим
+    # отдачу данных на фронтенд. Структура: { id: (project_obj, timestamp) }.
     _projects_cache: ClassVar[dict[int, tuple]] = {}
 
     def __init__(self):
+        """
+        Инициализирует подключение к GitLab на основе переменных окружения.
+        
+        Raises:
+            ValueError: Если отсутствуют обязательные настройки (URL или Токен).
+        """
         self.url = os.getenv("GITLAB_URL")
         self.token = os.getenv("GITLAB_PRIVATE_TOKEN")
         self.project_id = os.getenv("GITLAB_PROJECT_ID")
@@ -26,12 +51,21 @@ class GitLabAdapter:
         if not self.url or not self.token:
             raise ValueError("В файле .env не заданы настройки GitLab")
 
+        # [ENGINEERING CONTEXT]
+        # ssl_verify=False используется, так как во внутреннем контуре предприятия
+        # могут применяться самоподписанные сертификаты (Self-Signed Certificates).
         self.gl = gitlab.Gitlab(self.url, private_token=self.token, ssl_verify=False)
         self._project = None
         self._default_branch = None
         self.CACHE_TTL = 300  # Время жизни кеша: 5 минут (300 сек)
 
     def check_connection(self) -> str:
+        """
+        Проверяет успешность авторизации пользователя в GitLab.
+
+        Returns:
+            str: Строка 'OK: username' при успехе, либо текст ошибки.
+        """
         try:
             self.gl.auth()
             return f"OK: {self.gl.user.username}"
@@ -39,7 +73,15 @@ class GitLabAdapter:
             return f"Error: {e}"
 
     def get_project(self):
-        """Получает объект текущего рабочего проекта (с кешированием)"""
+        """
+        Получает объект текущего рабочего проекта по умолчанию (из .env).
+        
+        Returns:
+            Project: Объект проекта GitLab.
+            
+        Raises:
+            ValueError: Если ID проекта по умолчанию не задан.
+        """
         if self._project is None:
             if not self.project_id:
                 raise ValueError("GITLAB_PROJECT_ID не задан в .env")
@@ -50,7 +92,15 @@ class GitLabAdapter:
         return self._project
 
     def get_project_by_id(self, project_id: int):
-        """Получает проект по ID с кешированием и безопасной обработкой ошибок"""
+        """
+        Получает проект по ID с использованием механизма кеширования (TTL).
+
+        Args:
+            project_id (int): Идентификатор проекта в GitLab.
+
+        Returns:
+            Project | None: Объект проекта или None, если проект не найден/нет доступа.
+        """
         now = time.time()
 
         if project_id in self._projects_cache:
@@ -66,9 +116,10 @@ class GitLabAdapter:
         except (gitlab.exceptions.GitlabGetError, Exception):
             print(f"❌ Проект ID {project_id} не найден в GitLab")
             return None
+
     @property
     def default_branch(self) -> str:
-        """Возвращает дефолтную ветку проекта"""
+        """Возвращает дефолтную ветку проекта по умолчанию (обычно 'main' или 'master')."""
         if self._default_branch is None:
             self.get_project()
         return self._default_branch
@@ -76,14 +127,24 @@ class GitLabAdapter:
     # ==================== РАБОТА С ФАЙЛАМИ ====================
 
     def get_file_content(self, file_path: str, ref: str | None = None, project_id: int | None = None) -> str:
-        """Читает содержимое файла из репозитория"""
+        """
+        Читает содержимое файла из репозитория.
+
+        Args:
+            file_path (str): Путь к файлу в репозитории.
+            ref (str | None): Ветка или коммит. По умолчанию берется дефолтная ветка.
+            project_id (int | None): ID проекта.
+
+        Returns:
+            str: Декодированное (utf-8) содержимое файла.
+        """
         project = self.get_project_by_id(project_id) if project_id else self.get_project()
         ref = ref or (project.default_branch if project_id else self.default_branch)
         file = project.files.get(file_path=file_path, ref=ref)
         return file.decode().decode("utf-8")
 
     def file_exists(self, file_path: str, ref: str | None = None, project_id: int | None = None) -> bool:
-        """Проверяет, существует ли файл"""
+        """Проверяет физическое существование файла в указанной ветке репозитория."""
         project = self.get_project_by_id(project_id) if project_id else self.get_project()
         ref = ref or (project.default_branch if project_id else self.default_branch)
         try:
@@ -93,7 +154,10 @@ class GitLabAdapter:
             return False
 
     def create_commit(self, file_path: str, content: str, commit_message: str, branch: str | None = None, project_id: int | None = None):
-        """Создает или обновляет файл в репозитории"""
+        """
+        Создает новый коммит с изменениями одного файла.
+        Автоматически определяет действие: 'create' (если файла нет) или 'update'.
+        """
         project = self.get_project_by_id(project_id) if project_id else self.get_project()
         branch = branch or (project.default_branch if project_id else self.default_branch)
 
@@ -111,7 +175,7 @@ class GitLabAdapter:
     def create_commit_multiple(
         self, files: dict[str, str], commit_message: str, branch: str | None = None, project_id: int | None = None
     ):
-        """Создает коммит с несколькими файлами одновременно"""
+        """Создает транзакционный коммит с изменениями сразу в нескольких файлах."""
         project = self.get_project_by_id(project_id) if project_id else self.get_project()
         branch = branch or (project.default_branch if project_id else self.default_branch)
 
@@ -130,25 +194,25 @@ class GitLabAdapter:
         return commit
 
     def list_files_in_path(self, path: str, ref: str, project_id: int | None = None) -> list[dict]:
-        """Возвращает список файлов в папке"""
+        """Возвращает плоский список файлов в указанной директории репозитория."""
         project = self.get_project_by_id(project_id) if project_id else self.get_project()
         try:
             return project.repository_tree(path=path, ref=ref, recursive=False)
         except GitlabGetError:
-        # Папка не найдена или нет доступа
+            # Папка не найдена или нет доступа
             return []
         except gitlab.exceptions.GitlabError:
             # Другие ошибки GitLab API
             return []
 
     def get_file_content_decoded(self, file_path: str, ref: str, project_id: int | None = None) -> str | None:
-        """Читает файл и декодирует контент"""
+        """Читает файл с безопасной обработкой ошибок (возвращает None, если файла нет)."""
         try:
             project = self.get_project_by_id(project_id) if project_id else self.get_project()
             f = project.files.get(file_path=file_path, ref=ref)
             return f.decode().decode('utf-8')
         except GitlabGetError:
-        # Файл не найден
+            # Файл не найден
             return None
         except gitlab.exceptions.GitlabError:
             # Другие ошибки GitLab API
@@ -157,7 +221,12 @@ class GitLabAdapter:
     # ==================== РАБОТА С ВЕТКАМИ ====================
 
     def create_branch(self, branch_name: str, source_branch: str | None = None, project_id: int | None = None) -> bool:
-        """Создаёт новую ветку. Возвращает True если создана, False если уже существует"""
+        """
+        Создаёт новую Git-ветку в проекте.
+        
+        Returns:
+            bool: True если ветка успешно создана, False если она уже существовала.
+        """
         project = self.get_project_by_id(project_id) if project_id else self.get_project()
         source = source_branch or (project.default_branch if project_id else self.default_branch)
 
@@ -172,7 +241,7 @@ class GitLabAdapter:
             raise
 
     def branch_exists(self, branch_name: str, project_id: int | None = None) -> bool:
-        """Проверяет существование ветки"""
+        """Проверяет существование ветки в проекте."""
         project = self.get_project_by_id(project_id) if project_id else self.get_project()
         try:
             project.branches.get(branch_name)
@@ -182,8 +251,13 @@ class GitLabAdapter:
 
     def find_branch_by_issue_iid(self, issue_iid: int, project_id: int) -> str | None:
         """
-        Умный поиск ветки задачи.
-        Ищет ветку, которая начинается с '4-' или 'issue/4-' или 'feature/4-'.
+        Умный поиск Git-ветки, привязанной к конкретной задаче (Issue).
+        
+        [ENGINEERING CONTEXT]
+        Разработчики могут называть ветки по-разному в зависимости от настроек GitLab
+        или личных привычек (например, '4-fix', 'issue/4-bug', просто '4'). 
+        Данный метод содержит эвристики, которые парсят результаты поиска API GitLab
+        и с высокой вероятностью находят ту самую ветку, игнорируя мусорные совпадения.
         """
         project = self.get_project_by_id(project_id)
         str_iid = str(issue_iid)
@@ -224,7 +298,12 @@ class GitLabAdapter:
     # ==================== РАБОТА С ЗАДАЧАМИ (ISSUES) ====================
 
     def get_all_assigned_issues(self, state: str = "opened") -> list[dict]:
-        """Получает ВСЕ задачи. Пропускает те, к проектам которых нет доступа."""
+        """
+        Получает список всех задач, назначенных на текущего пользователя (во всех проектах).
+        
+        Включает механизм обхода: пропускает задачи, относящиеся к проектам, 
+        на которые у пользователя больше нет прав (или проект был удален/скрыт).
+        """
         try:
             self.gl.auth()
             issues = self.gl.issues.list(assignee_id=self.gl.user.id, state=state, scope='all', all=True)
@@ -233,7 +312,7 @@ class GitLabAdapter:
             for issue in issues:
                 proj = self.get_project_by_id(issue.project_id)
                 if not proj:
-                    continue # Пропускаем задачу, если проект не найден
+                    continue  # Пропускаем задачу, если проект не найден
                 
                 result.append({
                     "iid": issue.iid,
@@ -254,6 +333,7 @@ class GitLabAdapter:
             return []
 
     def get_issue(self, issue_iid: int, project_id: int) -> dict:
+        """Получает детальную информацию о конкретной задаче по её IID."""
         project = self.get_project_by_id(project_id)
         issue = project.issues.get(issue_iid)
         return {
@@ -271,9 +351,15 @@ class GitLabAdapter:
         }
 
     def get_user_projects(self, search: str = "") -> list[dict]:
-        """Возвращает проекты пользователя (для выпадающего списка)"""
-        # membership=True: только те, где я участник
-        # order_by='last_activity_at': сначала те, с которыми недавно работали (удобно)
+        """
+        Возвращает список проектов пользователя для отображения в UI (dropdown/suggest).
+
+        [ENGINEERING CONTEXT]
+        min_access_level=30 ограничивает выборку только теми проектами, где юзер 
+        является Developer'ом или выше (имеет права создавать ветки/задачи).
+        Сортировка order_by='last_activity_at' улучшает UX, показывая активные 
+        проекты первыми.
+        """
         projects = self.gl.projects.list(
             membership=True,
             search=search,
@@ -286,7 +372,7 @@ class GitLabAdapter:
         return [{"id": p.id, "name": p.name_with_namespace, "web_url": p.web_url} for p in projects]
 
     def create_issue(self, title: str, description: str = "", labels: list[str] | None = None, project_id: int | None = None) -> dict:
-        """Создаёт новую задачу"""
+        """Создаёт новую задачу (Issue) и автоматически назначает её на создателя."""
         # Если ID передан - берем конкретный проект. Иначе - дефолтный из ENV (для совместимости)
         project = self.get_project_by_id(project_id) if project_id else self.get_project()
         issue = project.issues.create({
@@ -314,7 +400,13 @@ class GitLabAdapter:
         assignee_id: int | None = None,
         project_id: int | None = None
     ) -> dict:
-        """Создаёт Merge Request"""
+        """
+        Создаёт Merge Request (запрос на слияние) из рабочей ветки в целевую.
+        Автоматически устанавливает флаг 'remove_source_branch' для чистоты репозитория.
+
+        Raises:
+            ValueError: Если исходная ветка не найдена или MR уже существует.
+        """
         project = self.get_project_by_id(project_id) if project_id else self.get_project()
         target = target_branch or (project.default_branch if project_id else self.default_branch)
 
@@ -328,7 +420,7 @@ class GitLabAdapter:
             "target_branch": target,
             "title": title,
             "description": description,
-            "remove_source_branch": True, # Удалять ветку после слияния
+            "remove_source_branch": True,  # Удалять ветку после слияния
         }
 
         if assignee_id:
@@ -349,5 +441,5 @@ class GitLabAdapter:
             raise e
 
 
-# Глобальный экземпляр
+# Глобальный singleton-экземпляр для импорта в другие модули (FastAPI роутеры)
 gitlab_client = GitLabAdapter()

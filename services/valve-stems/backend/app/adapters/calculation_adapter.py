@@ -1,3 +1,14 @@
+"""
+Адаптер расчетного ядра (Calculation Adapter) для утечек через штоки клапанов.
+
+Этот модуль реализует паттерн "Адаптер", выступая прослойкой между Pydantic-схемами API 
+и чистым физическим ядром (ValvePhysicsEngine). Его зоны ответственности:
+1. Валидация полноты геометрических данных клапана.
+2. Конвертация физических величин из пользовательских единиц в СИ (МПа, °C, кДж/кг).
+3. Определение недостающих свойств пара (через библиотеку seuif97 / IAPWS-IF97).
+4. Агрегация результатов по типам клапанов (СК, РК, СРК) и расчет параметров смешения.
+"""
+
 import logging
 
 from seuif97 import ph2t, pt2h
@@ -24,6 +35,10 @@ logger = logging.getLogger(__name__)
 
 
 class CalculationAdapter:
+    """
+    Статический класс-адаптер для подготовки данных и управления жизненным циклом расчета.
+    """
+
     @staticmethod
     def _process_single_group(
         group_in: ValveGroupInput,
@@ -34,6 +49,28 @@ class CalculationAdapter:
         t_air_c: float,
         p_lst_mpa: float,
     ) -> tuple[GroupCalculationDetails, float, float]:
+        """
+        Подготавливает данные и рассчитывает утечки для конкретной группы клапанов.
+
+        Args:
+            group_in (ValveGroupInput): Пользовательские данные по группе (количество, тип, отсосы).
+            valve_info (ValveInfo): Геометрические характеристики клапана из БД/справочника.
+            p_fresh_mpa (float): Давление свежего пара (МПа).
+            t_start_c (float): Температура свежего пара (°C).
+            h_start_kj (float): Энтальпия свежего пара (кДж/кг).
+            t_air_c (float): Температура окружающего воздуха (°C).
+            p_lst_mpa (float): Давление концевого уплотнения (вакуум) (МПа).
+
+        Returns:
+            tuple: Кортеж из трех элементов:
+                - GroupCalculationDetails: Детализированный результат расчета для API.
+                - float: Суммарный массовый расход утечек через данную группу (group_total_g).
+                - float: Энтальпия пара на выходе (h_part).
+
+        Raises:
+            ValidationError: При несоответствии количества отсосов геометрии клапана.
+            UnitConversionError: При ошибке конвертации единиц измерения давления.
+        """
 
         logger.info(
             "Adapter: processing group",
@@ -48,6 +85,12 @@ class CalculationAdapter:
         len_parts_m = [float(L) / 1000.0 for L in raw_lengths if L is not None]
 
         count_parts = len(len_parts_m)
+        
+        # [ENGINEERING CONTEXT]
+        # Почему требуется минимум 2 участка:
+        # Шток клапана физически должен иметь хотя бы один вход (со стороны свежего пара)
+        # и один выход (со стороны атмосферы/вакуума). Следовательно, геометрия штока 
+        # не может состоять менее чем из двух расчетных участков (камер уплотнения).
         if count_parts < 2:
             raise ValidationError(
                 message=f"Для клапана '{valve_info.name}' (ID={group_in.valve_id}) требуется минимум 2 участка. "
@@ -63,6 +106,12 @@ class CalculationAdapter:
             len_parts_m=len_parts_m,
         )
 
+        # [ENGINEERING CONTEXT]
+        # Формула `max(0, count_parts - 2)`:
+        # Количество промежуточных отсосов пара всегда на 2 меньше, чем общее число участков.
+        # Это связано с тем, что крайние точки (вход из цилиндра и выход в атмосферный эжектор) 
+        # жестко заданы глобальными параметрами турбины (свежий пар и вакуум). 
+        # Пользователь должен ввести давления только для промежуточных камер.
         expected_user_inputs = max(0, count_parts - 2)
         if len(group_in.p_leak_offs) != expected_user_inputs:
             raise ValidationError(
@@ -96,6 +145,12 @@ class CalculationAdapter:
             },
         )
 
+        # [ENGINEERING CONTEXT]
+        # Конструирование термодинамических массивов:
+        # P_in_mpa: Массив давлений ПЕРЕД каждым участком. 
+        # Он начинается с давления свежего пара (p_fresh), затем идут промежуточные отсосы, 
+        # и заканчивается давлением концевого уплотнения (p_lst_mpa).
+        
         # 2. Строим массив P_in для Ядра (Свежий пар + Промежуточные + Вакуум)
         p_in_mpa = [p_fresh_mpa] + user_inputs_mpa + [p_lst_mpa]
 
@@ -185,6 +240,24 @@ class CalculationAdapter:
         globals_data: CalculationGlobals,
         groups_data: list[tuple[ValveGroupInput, ValveInfo]],
     ) -> MultiCalculationResult:
+        """
+        Оркестрирует массовый расчет утечек для всех переданных групп клапанов.
+
+        Агрегирует глобальные параметры термодинамики, вызывает ядро для каждой
+        группы по отдельности, после чего сводит результаты в единые суммы по
+        типам клапанов (СК, РК, СРК) с вычислением средневзвешенных энтальпий.
+
+        Args:
+            globals_data (CalculationGlobals): Глобальные параметры турбины (Давление, температура).
+            groups_data (list): Список кортежей, содержащих пользовательский ввод и геометрию.
+
+        Returns:
+            MultiCalculationResult: Полный отчет с деталями по группам и сводными данными.
+
+        Raises:
+            SteamPropertiesError: Если задана термодинамически невозможная точка для пара.
+            ValidationError: При отсутствии исходных данных (ни T, ни H).
+        """
 
         # 1. Конвертируем глобальные параметры
         try:
@@ -212,6 +285,13 @@ class CalculationAdapter:
                 unit="Указанная в форме",
             ) from e
 
+        # [ENGINEERING CONTEXT]
+        # Вычисление недостающего параметра по стандарту IAPWS-IF97 (seuif97):
+        # Согласно законам термодинамики, состояние водяного пара однозначно определяется 
+        # двумя независимыми параметрами. Если пользователь задал Давление (P) и Температуру (T),
+        # мы вычисляем Энтальпию (H) через функцию `pt2h`. Если задал Давление (P) и Энтальпию (H),
+        # мы восстанавливаем Температуру (T) через `ph2t`. 
+        
         # 2. Вычисляем свойства свежего пара
         if globals_data.T_fresh is not None:
             try:
@@ -274,6 +354,11 @@ class CalculationAdapter:
                 rk_g += total_g
                 rk_gh += total_g * h_part
 
+        # [ENGINEERING CONTEXT]
+        # Почему энтальпия смеси считается как `total_gh / total_g`:
+        # По закону сохранения энергии (первое начало термодинамики), энтальпия смеси 
+        # нескольких потоков равна сумме их энтальпий, умноженных на соответствующие 
+        # массовые расходы, деленной на суммарный расход: H_mix = Σ(G_i * H_i) / Σ(G_i).
         sk_summary = TypeSummary(
             total_g=sk_g, mixed_h=(sk_gh / sk_g) if sk_g > 0 else 0.0
         )
@@ -288,3 +373,4 @@ class CalculationAdapter:
             details=details_list,
             summary=CalculationSummary(sk=sk_summary, rk=rk_summary, srk=srk_summary),
         )
+        

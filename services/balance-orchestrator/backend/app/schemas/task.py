@@ -1,7 +1,17 @@
 # schemas/task.py
+
+"""
+Схемы данных и конфигурация для управления расчетными задачами.
+
+Этот модуль отвечает за маппинг (преобразование) сырых данных из внешнего трекера задач 
+(например, GitLab Issues) во внутренние сущности системы оркестрации. 
+Включает конфигурацию бюро, расчетных модулей, статусов, а также Pydantic-модели
+для валидации и обогащения задач бизнес-метаданными через `computed_field`.
+"""
+
 from datetime import date, datetime
 
-from pydantic import BaseModel, computed_field
+from pydantic import BaseModel, Field, computed_field
 
 
 # --- КОНФИГУРАЦИЯ БЮРО И МОДУЛЕЙ ---
@@ -46,7 +56,12 @@ BUREAU_CONFIG = {
     }
 }
 
-# Обратный маппинг (module::code -> code)
+# [ENGINEERING CONTEXT]
+# Почему используется такой сложный, 4-уровневый маппинг (LABEL_TO_MODULE):
+# Трекер задач (GitLab) исторически содержит зоопарк лейблов. Нам нужно "поймать" задачу,
+# независимо от того, как пользователь или система её разметили. 
+# Этот цикл создает плоский словарь, где любой вариант написания приводит к единому системному коду.
+
 LABEL_TO_MODULE = {}
 for _b_code, b_data in BUREAU_CONFIG.items():
     for m_code, m_name in b_data["modules"].items():
@@ -59,14 +74,15 @@ for _b_code, b_data in BUREAU_CONFIG.items():
         # 4. На всякий случай просто название (Балансы) - для обратной совместимости
         LABEL_TO_MODULE[m_name] = m_code
 
-# LEGACY_MAPPING для старых английских названий
+# [ENGINEERING CONTEXT]
+# Legacy маппинг для поддержки старых интеграций, где модули назывались иначе.
 LEGACY_MAPPING = {
     "valves": "btr-valve-stems"
 }
 LABEL_TO_MODULE.update(LEGACY_MAPPING)
 
 
-# Маппинг статусов (Текст лейбла -> Цвет)
+# Маппинг бизнес-статусов задач
 STATUS_CONFIG = {
     "Статус::Без исполнителя": {"color": "#9E9E9E", "key": "unassigned"},
     "Статус::Сделать":         {"color": "#B0BEC5", "key": "todo"},
@@ -80,38 +96,58 @@ STATUS_CONFIG = {
 
 
 class TaskInfo(BaseModel):
-    iid: int
-    project_id: int
-    project_name: str
-    title: str
-    description: str | None = None
-    state: str
-    labels: list[str] = []
-    assignee: str | None = None
-    created_at: datetime
-    due_date: date | None = None
-    web_url: str
+    """
+    Модель с детальной информацией о задаче (Issue).
+    
+    Содержит как сырые данные из трекера, так и автоматически вычисляемые
+    поля (computed_fields) для удобного использования во фронтенде 
+    без дополнительного парсинга.
+    """
+    iid: int = Field(..., description="Внутренний идентификатор задачи (Issue IID).", examples=[1054])
+    project_id: int = Field(..., description="Уникальный ID проекта в трекере.", examples=[42])
+    project_name: str = Field(..., description="Название проекта.", examples=["Турбина К-300"])
+    title: str = Field(..., description="Заголовок задачи.", examples=["Расчет конденсатора (Вариант 2)"])
+    description: str | None = Field(None, description="Полное текстовое описание задачи (Markdown).")
+    state: str = Field(..., description="Системное состояние задачи (opened/closed).", examples=["opened"])
+    labels: list[str] = Field(default=[], description="Список всех навешанных лейблов.", examples=[["Бюро::БТР", "Модуль::Конденсаторы"]])
+    assignee: str | None = Field(None, description="Username назначенного исполнителя.", examples=["ivanov_i"])
+    created_at: datetime = Field(..., description="Временная метка создания задачи.")
+    due_date: date | None = Field(None, description="Крайний срок выполнения задачи.")
+    web_url: str = Field(..., description="Прямая ссылка на задачу в UI трекера.", examples=["https://gitlab.local/project/issues/1054"])
 
     @computed_field
     def formatted_date(self) -> str:
+        """
+        Возвращает дату создания в удобочитаемом формате ДД.ММ.ГГ.
+        
+        Returns:
+            str: Отформатированная дата (например, '24.10.23').
+        """
         return self.created_at.strftime("%d.%m.%y")
 
     @computed_field
     def bureau(self) -> dict[str, str] | None:
-        """Определяет бюро по лейблу bureau::... / Бюро::... или по модулю"""
+        """
+        Определяет инженерное бюро, к которому относится задача.
 
+        [ENGINEERING CONTEXT]
+        Алгоритм поиска двухуровневый: сначала мы ищем явные лейблы (bureau::... или Бюро::...).
+        Если их нет, мы пытаемся "угадать" бюро по префиксу расчетного модуля 
+        (например, если модуль начинается с 'btr-', значит это БТР). 
+        Это защищает нас от случаев, когда пользователь забыл поставить лейбл бюро.
+
+        Returns:
+            dict | None: Словарь с кодом, названием и цветом бюро, либо None.
+        """
         # 1. Явный лейбл бюро (Английский и Русский)
         for label in self.labels:
-            # Английский: bureau::btr
             if label.startswith("bureau::"):
                 code = label.replace("bureau::", "")
                 if code in BUREAU_CONFIG:
                     return {"code": code, "name": BUREAU_CONFIG[code]["name"], "color": BUREAU_CONFIG[code]["color"]}
 
-            # Русский: Бюро::БТР
             if label.startswith("Бюро::"):
                 name = label.replace("Бюро::", "")
-                # Ищем код бюро по русскому названию
                 for code, data in BUREAU_CONFIG.items():
                     if data["name"] == name:
                         return {"code": code, "name": data["name"], "color": data["color"]}
@@ -130,7 +166,12 @@ class TaskInfo(BaseModel):
 
     @computed_field
     def calc_type(self) -> str | None:
-        """Возвращает код модуля (например, 'btr-valve-stems')"""
+        """
+        Извлекает системный код расчетного модуля из лейблов задачи.
+
+        Returns:
+            str | None: Системный код (например, 'btr-valve-stems') или None.
+        """
         for label in self.labels:
             # ИСПОЛЬЗУЕМ LABEL_TO_MODULE ВМЕСТО TYPE_MAPPING
             if label in LABEL_TO_MODULE:
@@ -139,7 +180,12 @@ class TaskInfo(BaseModel):
 
     @computed_field
     def calc_type_human(self) -> str:
-        """Русское название модуля для отображения"""
+        """
+        Возвращает человекочитаемое (русское) название модуля для UI.
+
+        Returns:
+            str: Название модуля (например, 'Конденсаторы') или 'Общая задача'.
+        """
         code = self.calc_type
         if not code:
             return "Общая задача"
@@ -153,8 +199,13 @@ class TaskInfo(BaseModel):
     @computed_field
     def business_status(self) -> dict:
         """
-        Парсим лейбл Статус::...
-        Возвращаем dict: { text: 'В работе', color: '#...', key: '...' }
+        Извлекает текущий бизнес-статус задачи на основе лейблов 'Статус::...'.
+
+        Если задача закрыта в самом трекере (state == 'closed'), статус переопределяется
+        как закрытый, независимо от навешанных лейблов.
+
+        Returns:
+            dict: Объект статуса (текст, цвет для UI, системный ключ).
         """
         for label in self.labels:
             if label.startswith("Статус::"):
@@ -175,21 +226,26 @@ class TaskInfo(BaseModel):
 
 
 class TaskCreate(BaseModel):
-    title: str
-    description: str = ""
-    labels: list[str] = []
-    project_id: int  # ОБЯЗАТЕЛЬНОЕ ПОЛЕ
+    """Модель для создания новой задачи во внешнем трекере (GitLab)."""
+    title: str = Field(..., description="Заголовок новой задачи.", examples=["Новый расчет баланса"])
+    description: str = Field(default="", description="Описание задачи.", examples=["Вводные данные: ..."])
+    labels: list[str] = Field(default=[], description="Список стартовых лейблов.")
+    project_id: int = Field(..., description="ОБЯЗАТЕЛЬНОЕ ПОЛЕ: ID проекта, в котором создается задача.", examples=[42])
 
 
 class BranchCreate(BaseModel):
-    issue_iid: int
-    project_id: int
+    """Модель для запроса создания новой Git-ветки, привязанной к задаче."""
+    issue_iid: int = Field(..., description="IID задачи (Issue), к которой привязывается ветка.", examples=[1054])
+    project_id: int = Field(..., description="ID проекта в Git.", examples=[42])
 
 
 class BranchInfo(BaseModel):
-    branch_name: str
-    issue_iid: int
-    created: bool
+    """Модель ответа с информацией о созданной Git-ветке."""
+    branch_name: str = Field(..., description="Сгенерированное имя ветки.", examples=["1054-btr-condenser-calc"])
+    issue_iid: int = Field(..., description="IID связанной задачи.")
+    created: bool = Field(..., description="Флаг успешности создания ветки (True если создана).")
 
 class BranchCreateRequest(BaseModel):
-    project_id: int
+    """Запрос на создание ветки (упрощенный вариант)."""
+    project_id: int = Field(..., description="Уникальный ID проекта.", examples=[42])
+    

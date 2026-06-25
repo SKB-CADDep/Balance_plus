@@ -1,3 +1,12 @@
+"""
+Скрипт локального тестирования и отладки генератора схем Draw.io.
+
+Утилита проверяет работоспособность классов `ParameterMapper` и `DiagramModifier`.
+Берет заготовленный шаблон (XML/Draw.io), подставляет в него тестовые размеры 
+геометрии клапана (mock data) и сохраняет результат в отдельную папку 
+для визуального контроля разработчиком.
+"""
+
 import os
 
 from app.api.routes.drawio import DiagramModifier, ParameterMapper
@@ -15,6 +24,9 @@ print(f"Директория скрипта: {SCRIPT_DIR}")
 print(f"Путь к шаблону: {TEMPLATE_PATH}")
 print(f"Путь для сохранения результата: {OUTPUT_PATH}")
 
+# [ENGINEERING CONTEXT]
+# Тестовый набор данных (Mock). Представляет собой типичную геометрию двухучасткового
+# штока клапана. Эти размеры будут подставлены вместо плейсхолдеров на чертеже.
 sample_valve = ValveInfo(
     count_parts=2,
     diameter=65.0,
@@ -25,7 +37,12 @@ sample_valve = ValveInfo(
 
 
 def run_test():
-    """Функция для запуска теста генерации диаграммы."""
+    """
+    Функция для запуска теста генерации диаграммы.
+
+    Читает шаблон, формирует словарь обновлений на основе входных параметров,
+    модифицирует узлы графа и сохраняет итоговый файл.
+    """
     print("\n--- Запуск теста генерации схемы ---")
 
     if not os.path.exists(TEMPLATE_PATH):
@@ -33,9 +50,17 @@ def run_test():
         return
 
     try:
+        # [ENGINEERING CONTEXT]
+        # Как работает интеграция с Draw.io под капотом:
+        # Файлы .drawio по сути являются XML-документами (модель mxGraph). 
+        # Каждый визуальный элемент (текст, стрелка, рамка) имеет свой уникальный `cell_id`.
+        # Значения внутри блоков часто хранятся в виде HTML-строк (html_value).
+        # ParameterMapper знает, какому ID соответствует какой размер (например, длина L1),
+        # а DiagramModifier просто находит этот узел в XML-дереве и перезаписывает его текст.
         mapper = ParameterMapper(count_parts=sample_valve.count_parts)
         updates = mapper.map_parameters(sample_valve)
         print(f"Подготовлены обновления для {len(updates)} полей: {list(updates.keys())}")
+        
         modifier = DiagramModifier(template_path=TEMPLATE_PATH)
 
         for cell_id, html_value in updates.items():
@@ -50,3 +75,4 @@ def run_test():
 
 if __name__ == "__main__":
     run_test()
+    
