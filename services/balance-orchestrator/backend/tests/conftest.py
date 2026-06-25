@@ -67,7 +67,7 @@ class DBYamlItem(pytest.Item):
                     assert len(rows) == len(self.spec.expected_rows), \
                         f"Ожидалось {len(self.spec.expected_rows)} записей, получено {len(rows)}"
 
-                    for expected_row, actual_row in zip(self.spec.expected_rows, rows):
+                    for expected_row, actual_row in zip(self.spec.expected_rows, rows, strict=False):
                         for key, expected_val in expected_row.items():
                             assert key in actual_row, f"Колонка '{key}' отсутствует в результате"
                             assert actual_row[key] == expected_val, \
@@ -114,7 +114,7 @@ class CalcItem(pytest.Item):
                     assert_dicts_approx(v, act[k], path + f"{k}.")
             elif isinstance(exp, list) and isinstance(act, list):
                 assert len(exp) == len(act), f"Массив '{path}': ожидалась длина {len(exp)}, получено {len(act)}"
-                for i, (e_val, a_val) in enumerate(zip(exp, act)):
+                for i, (e_val, a_val) in enumerate(zip(exp, act, strict=False)):
                     assert_dicts_approx(e_val, a_val, path + f"[{i}].")
             elif isinstance(exp, (float, int)) and isinstance(act, (float, int)):
                 # Сравниваем числа с погрешностью 1e-5 (0.00001)
