@@ -2,7 +2,10 @@
 Валидационные тесты для режима 4: расширенный диапазон, сокращённая матрица.
 """
 
+
 import pytest
+
+from app.utils.berman_strategy import BermanStrategy
 
 from .conftest import (
     assert_pressure_approx,
@@ -27,7 +30,7 @@ class TestPressureMatrixMode4:
     """Полная проверка матрицы давлений из results_4.json."""
 
     @pytest.mark.parametrize("case", _test_cases, ids=[c["id"] for c in _test_cases])
-    def test_pressure_calculation(self, strategy, case) -> None:
+    def test_pressure_calculation(self, strategy:BermanStrategy, case:dict) -> None:
         params = build_calculation_params(
             geometry=_geometry,
             mode=_mode,
@@ -50,10 +53,10 @@ class TestPressureMatrixMode4:
 
 
 class TestEjectorsMode4:
-    """Тесты эжекторов с увеличенным расходом воздуха."""
+    """Тесты эжекторов c увеличенным расходом воздуха."""
 
     @pytest.mark.parametrize("case", _ejector_cases, ids=[c["id"] for c in _ejector_cases])
-    def test_ejector_pressure(self, strategy, case) -> None:
+    def test_ejector_pressure(self, strategy:BermanStrategy, case:dict) -> None:
         params = build_calculation_params(
             geometry=_geometry,
             mode=_mode,
@@ -82,7 +85,7 @@ class TestEjectorsMode4:
             f"  Рассчитанное = {calculated:.6f}"
         )
 
-    def test_higher_air_flow_increases_ejector_pressure(self, strategy) -> None:
+    def test_higher_air_flow_increases_ejector_pressure(self, strategy:BermanStrategy) -> None:
         base_params = {
             "W_main": 12000.0,
             "W_builtin": 0.0,
@@ -130,7 +133,7 @@ class TestExtendedWaterFlowRange:
 
         reduction = (P_8000 - P_16000) / P_8000 * 100
 
-        print("\nСнижение давления при увеличении W с 8000 до 16000 м³/ч:")
+        print("\nCнижeниe давления при увеличении W c 8000 до 16000 м³/ч:")
         print(f"  P(8000) = {P_8000:.6f} кгс/см²")
         print(f"  P(16000) = {P_16000:.6f} кгс/см²")
         print(f"  Снижение: {reduction:.1f}%")
@@ -139,13 +142,13 @@ class TestExtendedWaterFlowRange:
 
 
 class TestMode4VsMode3:
-    """Сравнение mode_4 с mode_3 для общих режимов."""
+    """Сравнение mode_4 c mode_3 для общих режимов."""
 
     @pytest.fixture
-    def results_3(self):
+    def results_3(self) -> dict:
         return load_results(3)
 
-    def test_w8000_matches_mode3(self, results_3) -> None:
+    def test_w8000_matches_mode3(self, results_3:dict) -> None:
         mode_3 = find_mode_in_results(results_3, W_main=8000.0, W_builtin=0.0, coefficient_b=1.0)
         mode_4 = find_mode_in_results(_results, W_main=8000.0, W_builtin=0.0, coefficient_b=1.0)
 

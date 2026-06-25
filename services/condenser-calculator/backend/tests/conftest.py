@@ -194,7 +194,7 @@ def pytest_collect_file(file_path: Path, parent):
 
 # --- АВТОМАТИЧЕСКОЕ СОХРАНЕНИЕ ЛОГОВ ПРИ ОШИБКАХ ---
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
-def pytest_runtest_makereport(item, call):
+def pytest_runtest_makereport(item, call:pytest.CallInfo[None]):
     outcome = yield
     report = outcome.get_result()
 

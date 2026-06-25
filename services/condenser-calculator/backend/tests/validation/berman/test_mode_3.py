@@ -5,6 +5,8 @@
 
 import pytest
 
+from app.utils.berman_strategy import BermanStrategy
+
 from .conftest import (
     assert_pressure_approx,
     build_calculation_params,
@@ -28,7 +30,7 @@ class TestPressureMatrixMode3:
     """Полная проверка матрицы давлений для режима 'только ОП'."""
 
     @pytest.mark.parametrize("case", _test_cases, ids=[c["id"] for c in _test_cases])
-    def test_pressure_calculation(self, strategy, case) -> None:
+    def test_pressure_calculation(self, strategy:BermanStrategy, case:dict) -> None:
         assert case["W_builtin"] == 0.0, "Mode 3 должен иметь W_builtin = 0"
 
         params = build_calculation_params(
@@ -52,13 +54,13 @@ class TestPressureMatrixMode3:
 
 
 class TestMainBundleOnlyVsBothBundles:
-    """Сравнение режима 'только ОП' с режимом 'ОП+ВП'."""
+    """Сравнение режима 'только ОП' c режимом 'ОП+ВП'."""
 
     @pytest.fixture
-    def results_1(self):
+    def results_1(self) -> dict:
         return load_results(1)
 
-    def test_pressure_higher_without_builtin(self, strategy, results_1) -> None:
+    def test_pressure_higher_without_builtin(self, strategy:BermanStrategy, results_1:dict) -> None:
         params_main_only = build_calculation_params(
             geometry=_geometry,
             mode=_mode,
@@ -93,10 +95,10 @@ class TestMainBundleOnlyVsBothBundles:
         )
 
         increase = (P_main_only - P_both) / P_both * 100
-        print(f"\nУвеличение давления при отключении ВП: {increase:.1f}%")
+        print(f"\nУвeличeниe давления при отключении ВП: {increase:.1f}%")
 
     @pytest.mark.parametrize("W_main", [8000.0, 12000.0, 15000.0])
-    def test_pressure_comparison_multiple_flows(self, strategy, results_1, W_main) -> None:
+    def test_pressure_comparison_multiple_flows(self, strategy:BermanStrategy, results_1:dict, W_main:float) -> None:
         mode_3_data = find_mode_in_results(_results, W_main=W_main, W_builtin=0.0, coefficient_b=1.0)
         P_mode_3 = get_expected_pressure(mode_3_data, t1_idx=3, G_steam_idx=4)
 
@@ -116,7 +118,7 @@ class TestMainBundleOnlyVsBothBundles:
 class TestVerificationScenario1:
     """Контрольный пример: сценарий 1 (только ОП)."""
 
-    def test_saturation_temperature(self, strategy) -> None:
+    def test_saturation_temperature(self, strategy:BermanStrategy) -> None:
         params = build_calculation_params(
             geometry=_geometry,
             mode=_mode,

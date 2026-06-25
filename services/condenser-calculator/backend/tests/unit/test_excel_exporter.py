@@ -7,7 +7,7 @@ from app.services.excel_exporter import ExcelExporter
 
 
 class MockMatrixResult:
-    def __init__(self, meta, columns, rows, values, warnings=None) -> None:
+    def __init__(self, meta:dict, columns:list[float], rows:list[float], values:list[list[float]], warnings: list[str] | None=None) -> None:
         self.meta = meta
         self.columns = columns
         self.rows = rows
@@ -15,7 +15,7 @@ class MockMatrixResult:
         self.warnings = warnings or[]
 
 class MockCalculationOutput:
-    def __init__(self, tables, ejector_results) -> None:
+    def __init__(self, tables:list[MockMatrixResult], ejector_results:list[dict[str, float]]) -> None:
         self.tables = tables
         self.ejector_results = ejector_results
 

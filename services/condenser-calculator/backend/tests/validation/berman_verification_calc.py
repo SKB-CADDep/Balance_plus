@@ -1,7 +1,10 @@
+import math
+from typing import Any
+
 from app.utils.berman_strategy import BermanStrategy
 
 
-def target_function(**kwargs):
+def target_function(**kwargs:Any) -> dict[str, float]:
     # This prepares the specific dictionary expected by BermanStrategy.calculate
     # with the base verification scenario parameters.
 
@@ -46,7 +49,6 @@ def target_function(**kwargs):
                 P_ejector = e["P_ejector_atm"]
                 break
 
-    import math
     if P_ejector is not None:
         P_ejector = math.floor(P_ejector * 100000) / 100000.0
 

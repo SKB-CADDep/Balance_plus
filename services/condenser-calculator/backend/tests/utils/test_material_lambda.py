@@ -1,7 +1,7 @@
 """
 Тестирование бизнес-логики расчета теплопроводности (λ) материалов с мокированием Table1D
 """
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
@@ -12,27 +12,27 @@ from app.core.material_lambda import build_lambda_interpolator, get_lambda
 
 # --- Вспомогательные классы для тестов ---
 class MockPoint:
-    def __init__(self, temperature, value) -> None:
+    def __init__(self, temperature:float, value:float) -> None:
         self.temperature = temperature
         self.value = value
 
 class MockMaterial:
-    def __init__(self, name, points) -> None:
+    def __init__(self, name:str, points:list[MockPoint]) -> None:
         self.name = name
         self.thermal_conductivity_points = points
 
 class FakeTable1D:
-    def __init__(self, x, y) -> None:
+    def __init__(self, x:list[float], y:list[float]) -> None:
         idx = np.argsort(x)
         self.x = x[idx]
         self.y = y[idx]
 
-    def __call__(self, val):
+    def __call__(self, val:float) -> float:
         return np.interp(val, self.x, self.y)
 
 # --- Фикстуры ---
 @pytest.fixture
-def valid_material():
+def valid_material() -> MockMaterial:
     return MockMaterial("МНЖ 5-1", [
         MockPoint(20.0, 15.0),
         MockPoint(100.0, 35.0),
@@ -40,7 +40,7 @@ def valid_material():
     ])
 
 @pytest.fixture
-def unordered_material():
+def unordered_material() -> MockMaterial:
     return MockMaterial("Латунь Л68", [
         MockPoint(100.0, 35.0),
         MockPoint(20.0, 15.0),
@@ -51,17 +51,17 @@ def unordered_material():
 # --- Тестовые сценарии ---
 
 @patch("app.core.material_lambda.Table1D", side_effect=FakeTable1D)
-def test_get_lambda_exact_point(mock_table, valid_material) -> None:
+def test_get_lambda_exact_point(mock_table:MagicMock, valid_material:MockMaterial) -> None:
     interp = build_lambda_interpolator(valid_material)
     assert get_lambda(interp, 100.0) == 35.0
 
 @patch("app.core.material_lambda.Table1D", side_effect=FakeTable1D)
-def test_get_lambda_interpolation(mock_table, valid_material) -> None:
+def test_get_lambda_interpolation(mock_table:MagicMock, valid_material:MockMaterial) -> None:
     interp = build_lambda_interpolator(valid_material)
     assert get_lambda(interp, 60.0) == 25.0
 
 @patch("app.core.material_lambda.Table1D", side_effect=FakeTable1D)
-def test_get_lambda_unordered_points(mock_table, unordered_material) -> None:
+def test_get_lambda_unordered_points(mock_table:MagicMock, unordered_material:MockMaterial) -> None:
     interp = build_lambda_interpolator(unordered_material)
     assert get_lambda(interp, 60.0) == 25.0
 
@@ -76,19 +76,19 @@ def test_get_lambda_single_point() -> None:
         build_lambda_interpolator(material)
 
 @patch("app.core.material_lambda.Table1D", side_effect=FakeTable1D)
-def test_get_lambda_below_range(mock_table, valid_material) -> None:
+def test_get_lambda_below_range(mock_table:MagicMock, valid_material:MockMaterial) -> None:
     interp = build_lambda_interpolator(valid_material)
     with pytest.raises(MaterialPropertyError, match=r"вне диапазона таблицы.*\[20.0; 150.0\]"):
         get_lambda(interp, 10.0)
 
 @patch("app.core.material_lambda.Table1D", side_effect=FakeTable1D)
-def test_get_lambda_above_range(mock_table, valid_material) -> None:
+def test_get_lambda_above_range(mock_table:MagicMock, valid_material:MockMaterial) -> None:
     interp = build_lambda_interpolator(valid_material)
     with pytest.raises(MaterialPropertyError, match=r"вне диапазона таблицы.*\[20.0; 150.0\]"):
         get_lambda(interp, 200.0)
 
 @patch("app.core.material_lambda.Table1D", side_effect=FakeTable1D)
-def test_lambda_list_format(mock_table) -> None:
+def test_lambda_list_format(mock_table:MagicMock) -> None:
     """Тест обработки формата JSON: списка списков [[t, λ], ...]"""
     material = MockMaterial("TestList", [[20, 10], [100, 30]])
     interp = build_lambda_interpolator(material)
@@ -100,7 +100,7 @@ def test_lambda_list_format(mock_table) -> None:
     assert result == 20.0
 
 @patch("app.core.material_lambda.Table1D", side_effect=FakeTable1D)
-def test_lambda_dict_format(mock_table) -> None:
+def test_lambda_dict_format(mock_table:MagicMock) -> None:
     """Тест обработки формата JSON: словари (когда material - тоже словарь)"""
     material_dict = {
         "name": "TestDict",

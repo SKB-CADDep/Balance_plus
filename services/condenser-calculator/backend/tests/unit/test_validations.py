@@ -1,6 +1,10 @@
 import pytest
 
-from app.core.condenser_validators import validate_condenser_for_method, validate_water_flow_limits
+from app.core.condenser_validators import (
+    validate_condenser_for_method,
+    validate_temperature_ranges,
+    validate_water_flow_limits,
+)
 from app.core.exceptions import ValidationError
 from app.models import Condenser
 
@@ -83,7 +87,6 @@ def test_water_flow_limits_empty() -> None:
 
 
 def test_temperature_ranges_br10_berman() -> None:
-    from app.core.condenser_validators import validate_temperature_ranges
     # Normal
     warnings = validate_temperature_ranges("berman", [10.0, 20.0, 30.0])
     assert len(warnings) == 0
@@ -98,7 +101,6 @@ def test_temperature_ranges_br10_berman() -> None:
 
 
 def test_temperature_ranges_br10_metrovickers() -> None:
-    from app.core.condenser_validators import validate_temperature_ranges
     # Normal
     warnings = validate_temperature_ranges("metro-vickers", [50.0, 100.0])
     assert len(warnings) == 0

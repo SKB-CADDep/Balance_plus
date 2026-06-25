@@ -4,6 +4,8 @@
 
 import pytest
 
+from app.utils.berman_strategy import BermanStrategy
+
 from .conftest import build_calculation_params, load_geometry, load_mode
 
 
@@ -18,11 +20,11 @@ class TestDocumentationVerification:
     """
 
     @pytest.fixture(scope="class")
-    def verification_geometry(self):
+    def verification_geometry(self) -> dict:
         return load_geometry("geometry")
 
     @pytest.fixture(scope="class")
-    def verification_mode(self):
+    def verification_mode(self) -> dict:
         return load_mode(1)
 
     @pytest.mark.parametrize(
@@ -35,13 +37,13 @@ class TestDocumentationVerification:
     )
     def test_saturation_temperature(
         self,
-        strategy,
-        verification_geometry,
-        verification_mode,
-        scenario_name,
-        W_main,
-        W_builtin,
-        expected_t_sat,
+        strategy:BermanStrategy,
+        verification_geometry:dict,
+        verification_mode:dict,
+        scenario_name:str,
+        W_main:float,
+        W_builtin:float,
+        expected_t_sat:float,
     ) -> None:
         params = build_calculation_params(
             geometry=verification_geometry,
@@ -54,7 +56,7 @@ class TestDocumentationVerification:
             coefficient_b=1.0,
             G_air=0.0,
         )
-
+        print(type(strategy))
         result = strategy.calculate(params)
 
         assert len(result["main_results"]) > 0, f"Сценарий '{scenario_name}': результаты не получены"
@@ -76,11 +78,11 @@ class TestDocumentationVerification:
     )
     def test_ejector_pressure(
         self,
-        strategy,
-        verification_geometry,
-        verification_mode,
-        num_ejectors,
-        expected_pressure_atm,
+        strategy:BermanStrategy,
+        verification_geometry:dict,
+        verification_mode:dict,
+        num_ejectors:int,
+        expected_pressure_atm:float,
     ) -> None:
         params = build_calculation_params(
             geometry=verification_geometry,

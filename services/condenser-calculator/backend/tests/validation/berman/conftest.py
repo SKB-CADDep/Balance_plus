@@ -226,60 +226,60 @@ def generate_ejector_test_cases(results: dict) -> list[dict[str, Any]]:
 
 
 @pytest.fixture(scope="session")
-def strategy():
+def strategy() -> BermanStrategy:
     """Экземпляр BermanStrategy для всей сессии тестов."""
     return BermanStrategy()
 
 
 @pytest.fixture(scope="module")
-def geometry_standard():
+def geometry_standard() -> dict:
     """Стандартная геометрия (geometry.json)."""
     return load_geometry("geometry")
 
 
 @pytest.fixture(scope="module")
-def geometry_mode4():
+def geometry_mode4() -> dict:
     """Геометрия для mode_4 (geometry_4.json)."""
     return load_geometry("geometry_4")
 
 
 @pytest.fixture(scope="module")
-def mode_1():
+def mode_1() -> dict:
     return load_mode(1)
 
 
 @pytest.fixture(scope="module")
-def mode_2():
+def mode_2() -> dict:
     return load_mode(2)
 
 
 @pytest.fixture(scope="module")
-def mode_3():
+def mode_3() -> dict:
     return load_mode(3)
 
 
 @pytest.fixture(scope="module")
-def mode_4():
+def mode_4() -> dict:
     return load_mode(4)
 
 
 @pytest.fixture(scope="module")
-def results_1():
+def results_1() -> dict:
     return load_results(1)
 
 
 @pytest.fixture(scope="module")
-def results_2():
+def results_2() -> dict:
     return load_results(2)
 
 
 @pytest.fixture(scope="module")
-def results_3():
+def results_3() -> dict:
     return load_results(3)
 
 
 @pytest.fixture(scope="module")
-def results_4():
+def results_4() -> dict:
     return load_results(4)
 
 
@@ -313,7 +313,7 @@ def assert_pressure_approx(
     rel_tolerance: float = 0.001,
     context: str = "",
 ) -> None:
-    """Проверка давления с информативным сообщением об ошибке."""
+    """Проверка давления c информативным сообщением oб ошибке."""
     assert calculated == pytest.approx(expected, rel=rel_tolerance), (
         f"{context}\n"
         f"  Ожидаемое P = {expected:.6f} кгс/см²\n"
