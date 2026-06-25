@@ -118,7 +118,7 @@ tests =[]
 
 def get_validation_dir():
     current = Path(__file__).resolve().parent
-    for parent in [current] + list(current.parents):
+    for parent in [current, *list(current.parents)]:
         if (parent / "validation_data").exists():
             return parent / "validation_data" / "valve-stems"
     raise FileNotFoundError("Папка validation_data/valve-stems не найдена!")

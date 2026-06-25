@@ -98,10 +98,10 @@ class CalculationAdapter:
         )
 
         # 2. Строим массив P_in для Ядра (Свежий пар + Промежуточные + Вакуум)
-        p_in_mpa = [p_fresh_mpa] + user_inputs_mpa + [p_lst_mpa]
+        p_in_mpa = [p_fresh_mpa, *user_inputs_mpa, p_lst_mpa]
 
         # 3. Строим массив Отсосов для Ядра
-        p_suctions_mpa = user_inputs_mpa[1:] + [p_lst_mpa]
+        p_suctions_mpa = [*user_inputs_mpa[1:], p_lst_mpa]
 
         if any(p > p_fresh_mpa for p in p_suctions_mpa):
             logger.warning(
