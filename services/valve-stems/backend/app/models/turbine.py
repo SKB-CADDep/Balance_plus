@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 from sqlalchemy import Column, ForeignKey, Integer, String, Table
 from sqlalchemy.orm import relationship
 
@@ -15,7 +17,7 @@ turbine_valve_link = Table(
 
 class Turbine(Base):
     __tablename__ = "unique_turbine"
-    __table_args__ = {"schema": "autocalc"}
+    __table_args__:ClassVar = {"schema": "autocalc"}
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String, nullable=False, index=True)

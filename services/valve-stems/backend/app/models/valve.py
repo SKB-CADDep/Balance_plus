@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 from sqlalchemy import Column, Float, Integer, String
 from sqlalchemy.orm import relationship
 
@@ -6,7 +8,7 @@ from app.core.database import Base
 
 class Valve(Base):
     __tablename__ = "stocks"
-    __table_args__ = {"schema": "autocalc"}
+    __table_args__:ClassVar = {"schema": "autocalc"}
 
     id = Column(Integer, primary_key=True)
     # Имя чертежа теперь СТРОГО УНИКАЛЬНО! Никаких дублей.

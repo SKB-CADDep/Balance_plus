@@ -20,20 +20,27 @@ PROJECTS_FILE = Path("/app/Data.xlsx")
 GEOMETRY_FILE = Path("/app/Data_1.xlsx")
 
 def clean_value(val):
-    if pd.isna(val): return None
-    if isinstance(val, float) and val.is_integer(): return str(int(val))
+    if pd.isna(val):
+        return None
+    if isinstance(val, float) and val.is_integer():
+        return str(int(val))
     return str(val).strip()
 
 def to_float(val, default=None):
-    if pd.isna(val): return default
+    if pd.isna(val):
+        return default
     if isinstance(val, str):
         val = val.replace(',', '.').strip()
-        if not val: return default
-    try: return float(val)
-    except ValueError: return default
+        if not val:
+            return default
+    try:
+        return float(val)
+    except ValueError:
+        return default
 
 def extract_valves(cell_value):
-    if pd.isna(cell_value) or str(cell_value).strip() == "": return []
+    if pd.isna(cell_value) or str(cell_value).strip() == "":
+        return []
     raw_str = str(cell_value).replace('\n', ',')
     return [v.strip() for v in raw_str.split(',') if v.strip()]
 
@@ -59,10 +66,12 @@ def init_db():
 
         for _, row in df_geo.iterrows():
             name = str(row.get('Чертеж_клапана')).strip()
-            if not name or name == 'nan': continue
+            if not name or name == 'nan':
+                continue
 
             # Если такой чертеж уже добавили, пропускаем дубль
-            if name in valve_cache: continue
+            if name in valve_cache:
+                continue
 
             valve = Valve(
                 name=name,
@@ -92,7 +101,8 @@ def init_db():
 
         for _, row in df_proj.iterrows():
             mark = clean_value(row.get('Марка турбины'))
-            if not mark: continue
+            if not mark:
+                continue
 
             turbine = Turbine(
                 name=mark,
