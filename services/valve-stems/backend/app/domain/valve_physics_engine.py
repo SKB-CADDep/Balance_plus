@@ -132,9 +132,7 @@ class ValvePhysicsEngine:
         try:
             self.S = geo.clearance_m * pi * geo.diameter_m
             if self.S <= 0:
-                raise PhysicsCalculationError(
-                    message="Площадь зазора S должна быть > 0."
-                )
+                raise PhysicsCalculationError(message="Площадь зазора S должна быть > 0.")
 
             proportional_coef = geo.radius_rounding_m / (2.0 * geo.clearance_m)
             self.KSI = ksi_calc(proportional_coef)
@@ -153,9 +151,7 @@ class ValvePhysicsEngine:
         except PhysicsCalculationError:
             raise
         except Exception as e:
-            logger.error(
-                "Engine: initialization failed", extra={"error": str(e)}, exc_info=True
-            )
+            logger.error("Engine: initialization failed", extra={"error": str(e)}, exc_info=True)
             raise PhysicsCalculationError(
                 message="Инициализация физического ядра провалена.", details=str(e)
             )
@@ -393,9 +389,7 @@ class ValvePhysicsEngine:
         elif self.geo.count_parts == 4:
             g = (self.g_parts[0] - self.g_parts[1] - self.g_parts[2]) * cv
         elif self.geo.count_parts == 5:
-            g = (
-                self.g_parts[0] - self.g_parts[1] - self.g_parts[2] - self.g_parts[3]
-            ) * cv
+            g = (self.g_parts[0] - self.g_parts[1] - self.g_parts[2] - self.g_parts[3]) * cv
         else:
             raise PhysicsCalculationError(
                 message="Неверное количество участков клапана для расчета отсоса в деаэратор.",
@@ -428,8 +422,7 @@ class ValvePhysicsEngine:
             den = max(self.g_parts[2] + self.g_parts[1], 1e-9)
             g_list[0] = (self.g_parts[2] + self.g_parts[1]) * cv
             h_list[0] = (
-                self.h_parts[2] * 4.1868 * self.g_parts[2]
-                + self.h_parts[1] * self.g_parts[1]
+                self.h_parts[2] * 4.1868 * self.g_parts[2] + self.h_parts[1] * self.g_parts[1]
             ) / den
             p_list[0] = self.thermo.p_suctions_mpa[0]
             t_list[0] = ph(p_list[0], h_list[0], 1)
@@ -441,9 +434,7 @@ class ValvePhysicsEngine:
 
             den2 = max(self.g_parts[3] + self.g_parts[2], 1e-9)
             g2 = abs(self.g_parts[2] - self.g_parts[3]) * cv
-            h2 = (
-                self.h_parts[3] * self.g_parts[3] + self.h_parts[2] * self.g_parts[2]
-            ) / den2
+            h2 = (self.h_parts[3] * self.g_parts[3] + self.h_parts[2] * self.g_parts[2]) / den2
             p2 = self.thermo.p_suctions_mpa[1]
             t2 = ph(p2, h2, 1)
             g_list[:2], h_list[:2], p_list[:2], t_list[:2] = (
@@ -464,9 +455,7 @@ class ValvePhysicsEngine:
 
             den3 = max(self.g_parts[4] + self.g_parts[3], 1e-9)
             g3 = (self.g_parts[3] + self.g_parts[4]) * cv
-            h3 = (
-                self.h_parts[4] * self.g_parts[4] + self.h_parts[3] * self.g_parts[3]
-            ) / den3
+            h3 = (self.h_parts[4] * self.g_parts[4] + self.h_parts[3] * self.g_parts[3]) / den3
             p3 = self.thermo.p_suctions_mpa[2]
             t3 = ph(p3, h3, 1)
             g_list[:3], h_list[:3], p_list[:3], t_list[:3] = (

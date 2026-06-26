@@ -36,9 +36,7 @@ async def calculate(params: MultiCalculationParams, db: Session = Depends(get_db
         valve_db = get_valve_by_id(db, valve_id=group.valve_id)
         groups_data.append((group, ValveInfo.model_validate(valve_db)))
 
-    calculation_result = CalculationAdapter.run_multi_calculation(
-        params.globals, groups_data
-    )
+    calculation_result = CalculationAdapter.run_multi_calculation(params.globals, groups_data)
 
     stock_name_parts = [f"{v_info.name} ({g.quantity}шт)" for g, v_info in groups_data]
     pretty_stock_name = " + ".join(stock_name_parts)

@@ -8,6 +8,7 @@ from app import crud, models, schemas
 
 # ===== Хелперы для создания тестовых данных =====
 
+
 def create_test_turbine(db: Session, turbine_name: str = "Test Turbine"):
     turbine = models.Turbine(name=turbine_name)
     db.add(turbine)
@@ -60,6 +61,7 @@ def create_test_calculation_result(
 
 # ===== Тесты get_valves_by_turbine =====
 
+
 def test_get_valves_by_turbine(db_session):
     turbine = create_test_turbine(db_session)
     create_test_valve(db_session, valve_name="VD-001", turbine_id=turbine.id)
@@ -82,6 +84,7 @@ def test_get_valves_by_turbine_no_turbine(db_session):
 
 # ===== Тесты get_valve_by_drawing =====
 
+
 def test_get_valve_by_drawing(db_session):
     turbine = create_test_turbine(db_session)
     create_test_valve(db_session, valve_name="VD-003", turbine_id=turbine.id)
@@ -99,6 +102,7 @@ def test_get_valve_by_drawing_not_found(db_session):
 
 
 # ===== Тесты get_valve_by_id =====
+
 
 def test_get_valve_by_id(db_session):
     turbine = create_test_turbine(db_session)
@@ -118,6 +122,7 @@ def test_get_valve_by_id_not_found(db_session):
 
 
 # ===== Тесты create_calculation_result =====
+
 
 def test_create_calculation_result(db_session):
     turbine = create_test_turbine(db_session)
@@ -157,6 +162,7 @@ def test_create_calculation_result(db_session):
 
 # ===== Тесты get_results_by_valve_drawing =====
 
+
 def test_get_results_by_valve_drawing(db_session):
     turbine = create_test_turbine(db_session)
     valve = create_test_valve(db_session, valve_name="VD-006", turbine_id=turbine.id)
@@ -182,8 +188,10 @@ def test_get_results_by_valve_drawing(db_session):
     )
 
     create_test_calculation_result(
-        db_session, "VD-006",
-        parameters1.model_dump(), results1.model_dump(),
+        db_session,
+        "VD-006",
+        parameters1.model_dump(),
+        results1.model_dump(),
         valve_id=valve.id,
     )
 
@@ -208,8 +216,10 @@ def test_get_results_by_valve_drawing(db_session):
     )
 
     create_test_calculation_result(
-        db_session, "VD-006",
-        parameters2.model_dump(), results2.model_dump(),
+        db_session,
+        "VD-006",
+        parameters2.model_dump(),
+        results2.model_dump(),
         valve_id=valve.id,
     )
 

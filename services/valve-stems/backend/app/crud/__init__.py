@@ -14,5 +14,5 @@ __all__ = [
     "get_turbine_by_id",
     "get_valve_by_drawing",
     "get_valve_by_id",
-    "get_valves_by_turbine"
+    "get_valves_by_turbine",
 ]

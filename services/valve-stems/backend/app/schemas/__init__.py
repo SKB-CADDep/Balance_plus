@@ -28,5 +28,5 @@ __all__ = [
     "TypeSummary",
     "ValveCreate",
     "ValveGroupInput",
-    "ValveInfo"
+    "ValveInfo",
 ]

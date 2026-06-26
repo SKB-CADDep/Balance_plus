@@ -10,7 +10,16 @@ from app.core.logging_config import request_id_ctx
 
 logger = logging.getLogger("app.middleware.access")
 
-SILENT_PATHS = {"/health", "/health/db", "/api/v1/health", "/openapi.json", "/docs", "/redoc", "/metrics"}
+SILENT_PATHS = {
+    "/health",
+    "/health/db",
+    "/api/v1/health",
+    "/openapi.json",
+    "/docs",
+    "/redoc",
+    "/metrics",
+}
+
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
@@ -22,10 +31,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         is_silent = path in SILENT_PATHS
 
         if not is_silent:
-            logger.info(
-                "Incoming request",
-                extra={"method": method, "path": path}
-            )
+            logger.info("Incoming request", extra={"method": method, "path": path})
 
         start = time.perf_counter()
 
@@ -39,7 +45,12 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             if not is_silent:
                 logger.info(
                     "Request completed",
-                    extra={"status_code": response.status_code, "duration_ms": duration, "method": method, "path": path}
+                    extra={
+                        "status_code": response.status_code,
+                        "duration_ms": duration,
+                        "method": method,
+                        "path": path,
+                    },
                 )
 
             return response
@@ -48,7 +59,13 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             duration = round((time.perf_counter() - start) * 1000, 1)
             logger.error(
                 "Request failed with unhandled exception",
-                extra={"status_code": 500, "duration_ms": duration, "method": method, "path": path, "error": str(e)},
-                exc_info=True
+                extra={
+                    "status_code": 500,
+                    "duration_ms": duration,
+                    "method": method,
+                    "path": path,
+                    "error": str(e),
+                },
+                exc_info=True,
             )
             raise

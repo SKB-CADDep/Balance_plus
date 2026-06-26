@@ -10,14 +10,22 @@ from app.core.database import Base
 turbine_valve_link = Table(
     "turbine_valve_link",
     Base.metadata,
-    Column("turbine_id", Integer, ForeignKey("autocalc.unique_turbine.id", ondelete="CASCADE"), primary_key=True),
-    Column("valve_id", Integer, ForeignKey("autocalc.stocks.id", ondelete="CASCADE"), primary_key=True),
-    schema="autocalc"
+    Column(
+        "turbine_id",
+        Integer,
+        ForeignKey("autocalc.unique_turbine.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+    Column(
+        "valve_id", Integer, ForeignKey("autocalc.stocks.id", ondelete="CASCADE"), primary_key=True
+    ),
+    schema="autocalc",
 )
+
 
 class Turbine(Base):
     __tablename__ = "unique_turbine"
-    __table_args__:ClassVar = {"schema": "autocalc"}
+    __table_args__: ClassVar = {"schema": "autocalc"}
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String, nullable=False, index=True)

@@ -7,11 +7,14 @@ from pythonjsonlogger import jsonlogger
 
 request_id_ctx: ContextVar[str | None] = ContextVar("request_id", default=None)
 
+
 class RequestIdFilter(logging.Filter):
     """Фильтр для добавления request_id во все логи."""
+
     def filter(self, record):
         record.request_id = request_id_ctx.get()
         return True
+
 
 def setup_logging(level: str = "INFO"):
     """Инициализация структурированного JSON логирования."""
@@ -20,11 +23,7 @@ def setup_logging(level: str = "INFO"):
 
     formatter = jsonlogger.JsonFormatter(
         fmt="%(asctime)s %(levelname)s %(name)s %(message)s %(request_id)s",
-        rename_fields={
-            "asctime": "timestamp",
-            "levelname": "level",
-            "name": "logger"
-        },
+        rename_fields={"asctime": "timestamp", "levelname": "level", "name": "logger"},
     )
     handler.setFormatter(formatter)
     handler.addFilter(RequestIdFilter())

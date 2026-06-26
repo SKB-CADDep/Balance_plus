@@ -5,7 +5,7 @@ from app.schemas import CalculationParams, ValveInfo
 from app.services.calculator import ValveCalculator
 
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -16,7 +16,7 @@ class TestValveCalculator(unittest.TestCase):
             t_air=40,
             count_valves=2,
             p_ejector=[0.97, 0.97],
-            p_values=[130, 10, 1.03]
+            p_values=[130, 10, 1.03],
         )
         valve_info = ValveInfo(
             id=1,
@@ -26,7 +26,7 @@ class TestValveCalculator(unittest.TestCase):
             diameter=40,
             len_part1=313.5,
             len_part2=50,
-            len_part3=97.5
+            len_part3=97.5,
         )
         self.calculator = ValveCalculator(params, valve_info)
 
@@ -47,7 +47,7 @@ class TestValveCalculator(unittest.TestCase):
         for i in range(len(expected_Hi)):
             self.assertAlmostEqual(result.Hi[i], expected_Hi[i], places=0)
 
-        expected_deaerator_props = [0.9250777918, 503.6, 832.8619847*4.1868, 10]
+        expected_deaerator_props = [0.9250777918, 503.6, 832.8619847 * 4.1868, 10]
         for i, expected_value in enumerate(expected_deaerator_props):
             self.assertAlmostEqual(result.deaerator_props[i], expected_value, places=1)
 
@@ -55,20 +55,16 @@ class TestValveCalculator(unittest.TestCase):
         self.assertEqual(len(result.ejector_props), len(expected_ejector_props))
         for i, expected in enumerate(expected_ejector_props):
             actual = result.ejector_props[i]
-            self.assertAlmostEqual(actual['g'], expected['g'], places=2)
-            self.assertAlmostEqual(actual['t'], expected['t'], places=1)
-            self.assertAlmostEqual(actual['h'], expected['h'], places=0)
-            self.assertAlmostEqual(actual['p'], expected['p'], places=2)
+            self.assertAlmostEqual(actual["g"], expected["g"], places=2)
+            self.assertAlmostEqual(actual["t"], expected["t"], places=1)
+            self.assertAlmostEqual(actual["h"], expected["h"], places=0)
+            self.assertAlmostEqual(actual["p"], expected["p"], places=2)
 
 
 class TestValveCalculatorTwo(unittest.TestCase):
     def setUp(self):
         params = CalculationParams(
-            temperature_start=555,
-            t_air=40,
-            count_valves=2,
-            p_ejector=[0.97],
-            p_values=[130, 1.03]
+            temperature_start=555, t_air=40, count_valves=2, p_ejector=[0.97], p_values=[130, 1.03]
         )
         valve_info = ValveInfo(
             id=2,
@@ -77,7 +73,7 @@ class TestValveCalculatorTwo(unittest.TestCase):
             clearance=0.23,
             diameter=50,
             len_part1=190,
-            len_part2=110
+            len_part2=110,
         )
         self.calculator = ValveCalculator(params, valve_info)
 
@@ -87,7 +83,7 @@ class TestValveCalculatorTwo(unittest.TestCase):
         expected_Gi = [0.9634638651, 0.004586641266]
         expected_Pi_in = [130, 1.03]
         expected_Ti = [555.005, 39.980]
-        expected_Hi = [832.8619847*4.1868, 40.24]
+        expected_Hi = [832.8619847 * 4.1868, 40.24]
 
         for i in range(len(expected_Gi)):
             self.assertAlmostEqual(result.Gi[i], expected_Gi[i], places=3)
@@ -98,17 +94,16 @@ class TestValveCalculatorTwo(unittest.TestCase):
         for i in range(len(expected_Hi)):
             self.assertAlmostEqual(result.Hi[i], expected_Hi[i], places=0)
 
-        expected_ejector_props = [
-            {"g": 1.936529, "t": 491.322, "h": 3470.265, "p": 0.97}
-        ]
+        expected_ejector_props = [{"g": 1.936529, "t": 491.322, "h": 3470.265, "p": 0.97}]
 
         self.assertEqual(len(result.ejector_props), len(expected_ejector_props))
         for i, expected in enumerate(expected_ejector_props):
             actual = result.ejector_props[i]
-            self.assertAlmostEqual(actual['g'], expected['g'], places=2)
-            self.assertAlmostEqual(actual['t'], expected['t'], places=0)
-            self.assertAlmostEqual(actual['h'], expected['h'], places=0)
-            self.assertAlmostEqual(actual['p'], expected['p'], places=2)
+            self.assertAlmostEqual(actual["g"], expected["g"], places=2)
+            self.assertAlmostEqual(actual["t"], expected["t"], places=0)
+            self.assertAlmostEqual(actual["h"], expected["h"], places=0)
+            self.assertAlmostEqual(actual["p"], expected["p"], places=2)
+
 
 # class TestValveCalculatorThree(unittest.TestCase):
 #     def setUp(self):
@@ -220,5 +215,5 @@ class TestValveCalculatorTwo(unittest.TestCase):
 #             self.assertAlmostEqual(actual['p'], expected['p'], places=2)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

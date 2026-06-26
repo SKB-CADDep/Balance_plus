@@ -53,7 +53,9 @@ class ValveGroupInput(BaseModel):
     valve_id: int = Field(..., description="ID клапана, чью геометрию берем за основу")
     type: Literal["СК", "РК", "СРК"] = Field(..., description="Тип группы")
 
-    valve_names: list[str] = Field(..., min_length=1, description="Список имен клапанов (напр. ['СК-1', 'СК-2'])")
+    valve_names: list[str] = Field(
+        ..., min_length=1, description="Список имен клапанов (напр. ['СК-1', 'СК-2'])"
+    )
     quantity: int = Field(..., ge=1, description="Количество клапанов в группе")
 
     p_values: list[float] = Field(default_factory=list, description="Давления перед участками")
@@ -74,6 +76,7 @@ class ValveGroupInput(BaseModel):
 
 class MultiCalculationParams(BaseModel):
     """Главная схема входящего запроса на мульти-расчет."""
+
     turbine_id: int
     globals: CalculationGlobals
     groups: list[ValveGroupInput] = Field(..., min_length=1)
@@ -86,6 +89,7 @@ class MultiCalculationParams(BaseModel):
 
 class GroupCalculationDetails(BaseModel):
     """Детализация результатов для одной конкретной группы."""
+
     valve_id: int
     type: Literal["СК", "РК", "СРК"]
     valve_names: list[str]
@@ -107,12 +111,14 @@ class GroupCalculationDetails(BaseModel):
 
 class TypeSummary(BaseModel):
     """Сводные агрегированные данные для конкретного типа (Σ СК или Σ РК)."""
+
     total_g: float
     mixed_h: float
 
 
 class CalculationSummary(BaseModel):
     """Главный объект сводных таблиц."""
+
     sk: TypeSummary
     rk: TypeSummary
     srk: TypeSummary
@@ -120,6 +126,7 @@ class CalculationSummary(BaseModel):
 
 class MultiCalculationResult(BaseModel):
     """Главная схема ответа на мульти-расчет."""
+
     details: list[GroupCalculationDetails]
     summary: CalculationSummary
 

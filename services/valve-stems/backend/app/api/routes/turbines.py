@@ -31,9 +31,7 @@ def search_turbines(
 
 
 @router.get("/{turbine_id}/valves/", response_model=TurbineValves)
-def get_valves_by_turbine(
-    turbine_id: int, db: Session = Depends(dependencies.get_db)
-) -> Any:
+def get_valves_by_turbine(turbine_id: int, db: Session = Depends(dependencies.get_db)) -> Any:
     return crud_turbines.get_valves_by_turbine_id(db, turbine_id=turbine_id)
 
 
@@ -60,16 +58,12 @@ async def create_turbine(turbine: TurbineInfo, db: Session = Depends(get_db)):
     return db_turbine
 
 
-@router.get(
-    "/{turbine_id}", response_model=TurbineInfo, summary="Получить турбину по ID"
-)
+@router.get("/{turbine_id}", response_model=TurbineInfo, summary="Получить турбину по ID")
 async def read_turbine_by_id(turbine_id: int, db: Session = Depends(get_db)):
     return get_turbine_by_id(db, turbine_id=turbine_id)
 
 
-@router.delete(
-    "/{turbine_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Удалить турбину"
-)
+@router.delete("/{turbine_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Удалить турбину")
 async def delete_turbine(turbine_id: int, db: Session = Depends(get_db)):
     db_turbine = get_turbine_by_id(db, turbine_id=turbine_id)
     db.delete(db_turbine)

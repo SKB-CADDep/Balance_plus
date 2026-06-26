@@ -133,9 +133,7 @@ class CalculationAdapter:
 
         # Конвертация ответа
         pi_out = [
-            converter.convert(
-                p, from_unit="МПа", to_unit="кгс/см²", parameter_type="pressure"
-            )
+            converter.convert(p, from_unit="МПа", to_unit="кгс/см²", parameter_type="pressure")
             for p in raw.pi_in_mpa
         ]
         dea_p_out = (
@@ -161,9 +159,7 @@ class CalculationAdapter:
                 if ej["p_mpa"]
                 else 0.0
             )
-            ej_props_out.append(
-                {"g": ej["g"] * qty, "t": ej["t"], "h": ej["h"], "p": ej_p_out}
-            )
+            ej_props_out.append({"g": ej["g"] * qty, "t": ej["t"], "h": ej["h"], "p": ej_p_out})
 
         details = GroupCalculationDetails(
             valve_id=group_in.valve_id,
@@ -242,9 +238,7 @@ class CalculationAdapter:
                     pressure=p_fresh_mpa, enthalpy=globals_data.H_fresh
                 ) from e
         else:
-            raise ValidationError(
-                "Не задана ни температура, ни энтальпия свежего пара."
-            )
+            raise ValidationError("Не задана ни температура, ни энтальпия свежего пара.")
 
         details_list = []
         sk_g, sk_gh = 0.0, 0.0
@@ -275,15 +269,9 @@ class CalculationAdapter:
                 rk_g += total_g
                 rk_gh += total_g * h_part
 
-        sk_summary = TypeSummary(
-            total_g=sk_g, mixed_h=(sk_gh / sk_g) if sk_g > 0 else 0.0
-        )
-        rk_summary = TypeSummary(
-            total_g=rk_g, mixed_h=(rk_gh / rk_g) if rk_g > 0 else 0.0
-        )
-        srk_summary = TypeSummary(
-            total_g=srk_g, mixed_h=(srk_gh / srk_g) if srk_g > 0 else 0.0
-        )
+        sk_summary = TypeSummary(total_g=sk_g, mixed_h=(sk_gh / sk_g) if sk_g > 0 else 0.0)
+        rk_summary = TypeSummary(total_g=rk_g, mixed_h=(rk_gh / rk_g) if rk_g > 0 else 0.0)
+        srk_summary = TypeSummary(total_g=srk_g, mixed_h=(srk_gh / srk_g) if srk_g > 0 else 0.0)
 
         return MultiCalculationResult(
             details=details_list,

@@ -27,7 +27,5 @@ def get_valve_by_drawing(db: Session, valve_drawing: str) -> Valve:
     """
     valve = db.query(Valve).filter(Valve.name == valve_drawing).first()
     if not valve:
-        raise EntityNotFoundError(
-            entity_name="Клапан (шток) по чертежу", entity_id=valve_drawing
-        )
+        raise EntityNotFoundError(entity_name="Клапан (шток) по чертежу", entity_id=valve_drawing)
     return valve

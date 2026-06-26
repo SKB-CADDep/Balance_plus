@@ -77,8 +77,6 @@ async def get_turbine_by_valve_name(valve_name: str, db: Session = Depends(get_d
 
     turbine = db.query(Turbine).filter(Turbine.id == valve.turbine_id).first()
     if not turbine:
-        raise EntityNotFoundError(
-            entity_name="Турбина для клапана", entity_id=valve_name
-        )
+        raise EntityNotFoundError(entity_name="Турбина для клапана", entity_id=valve_name)
 
     return TurbineInfo.model_validate(turbine)

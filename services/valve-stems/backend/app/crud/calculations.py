@@ -68,11 +68,7 @@ def get_results_by_valve_drawing(db: Session, valve_drawing: str):
 
 
 def get_calculation_result_by_id(db: Session, result_id: int) -> CalculationResultDB:
-    result = (
-        db.query(CalculationResultDB)
-        .filter(CalculationResultDB.id == result_id)
-        .first()
-    )
+    result = db.query(CalculationResultDB).filter(CalculationResultDB.id == result_id).first()
     if not result:
         raise EntityNotFoundError(entity_name="Результат расчёта", entity_id=result_id)
     return result

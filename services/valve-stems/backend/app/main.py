@@ -18,9 +18,11 @@ setup_logging(log_level)
 
 logger = logging.getLogger(__name__)
 
+
 class HealthCheckFilter(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
         return record.getMessage().find("/health") == -1
+
 
 logging.getLogger("uvicorn.access").addFilter(HealthCheckFilter())
 
@@ -48,7 +50,7 @@ app.add_middleware(
 
 setup_exception_handlers(app)
 
-app.include_router(health.router) # healthcheck
+app.include_router(health.router)  # healthcheck
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
 

@@ -10,7 +10,7 @@ class CalculationResultDB(Base):
     # Если у тебя класс называется просто CalculationResultDB (без BaseModel),
     # используй свой стандартный синтаксис.
     __tablename__ = "calculation_results"
-    __table_args__:ClassVar = {"schema": "autocalc"}
+    __table_args__: ClassVar = {"schema": "autocalc"}
 
     id = Column(Integer, primary_key=True, index=True)
     user_name = Column(String, nullable=True)
