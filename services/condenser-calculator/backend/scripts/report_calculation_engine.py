@@ -1,16 +1,15 @@
-from _common import setup_path
-
-setup_path()
-
 import matplotlib.pyplot as plt
 import numpy as np
+from _common import setup_path
 from scipy.interpolate import CubicSpline
 from scipy.optimize import curve_fit
+
+setup_path()
 
 from app.utils.calculation_engine import k_interpolation_data
 
 
-def power_law_model(v, a, b, c):
+def power_law_model(v:np.ndarray|float, a:float, b:float, c:float) -> np.ndarray|float:
     return a * np.power(v, b) + c
 
 

@@ -29,7 +29,7 @@ class Table1D:
     _extrap_model: np.poly1d = field(init=False, repr=False)
     _best_extrap_degree: int = field(init=False, repr=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         # Валидация входных данных
         if not isinstance(self.x_cords, np.ndarray) or not isinstance(self.y_cords, np.ndarray):
             raise TypeError("x_cords и y_cords должны быть экземплярами np.ndarray.")
@@ -141,7 +141,7 @@ class Table2D:
     z_values: np.ndarray
     _rgi: RegularGridInterpolator = field(init=False, repr=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if not all(isinstance(arr, np.ndarray) for arr in [self.x_cords, self.y_cords, self.z_values]):
             raise TypeError("x_cords, y_cords, и z_values должны быть экземплярами np.ndarray.")
         if self.x_cords.ndim != 1 or self.y_cords.ndim != 1 or self.z_values.ndim != 2:

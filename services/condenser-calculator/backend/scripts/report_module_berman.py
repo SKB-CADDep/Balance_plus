@@ -2,11 +2,13 @@ from _common import setup_path
 
 setup_path()
 
-# generate_berman_report.py
 from app.utils.berman_strategy import BermanStrategy
 
+# generate_berman_report.py
 
-def create_markdown_table(headers, data_rows):
+
+
+def create_markdown_table(headers:list[str], data_rows:list[list[str]]) -> str:
     """
     Создает строку таблицы в формате Markdown.
 
@@ -27,7 +29,7 @@ def create_markdown_table(headers, data_rows):
     return "\n".join([header_line, separator_line, *row_lines])
 
 
-def run_berman_simulation(main_water_flow, built_in_water_flow, num_bundles_label, fouling_factor_raw, include_ejector_data) -> None:
+def run_berman_simulation(main_water_flow:int, built_in_water_flow:int, num_bundles_label:int, fouling_factor_raw:float, include_ejector_data:bool) -> None:
     """
     Настраивает параметры, запускает симуляцию по методу Бермана и форматирует результаты.
 

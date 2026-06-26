@@ -154,7 +154,7 @@ class CondenserCalculationAdapter:
         input_data: CalculationInput,
         condenser: Condenser,
         lambda_interp: Table1D,
-    ):
+    ) -> tuple[list[MatrixResult], list[EjectorResult]]:
         """Расчёт по Бермана"""
         logger.info("Running Berman strategy")
 
@@ -177,7 +177,7 @@ class CondenserCalculationAdapter:
 
         return tables, ejectors
 
-    def _prepare_berman_params(self, input_data: CalculationInput, condenser: Condenser, lam: float):
+    def _prepare_berman_params(self, input_data: CalculationInput, condenser: Condenser, lam: float) -> dict:
         """Подготовка параметров + конвертация единиц"""
         try:
             h_steam = converter.convert(
@@ -216,7 +216,7 @@ class CondenserCalculationAdapter:
     def _estimate_t_avg_berman(self, input_data: CalculationInput, lam: float) -> float:
         return sum(input_data.t1_main) / len(input_data.t1_main)
 
-    def _reshape_berman_results(self, flat_results: list[dict], input_data: CalculationInput, condenser: Condenser):
+    def _reshape_berman_results(self, flat_results: list[dict], input_data: CalculationInput, condenser: Condenser) -> list[MatrixResult]:
         """Реструктуризация flat → матрицы"""
 
         len_W = max(len(input_data.W_main), len(input_data.W_builtin or []))
@@ -274,7 +274,7 @@ class CondenserCalculationAdapter:
         input_data: CalculationInput,
         condenser: Condenser,
         lambda_interp: Table1D,
-    ):
+    ) -> list[MatrixResult]:
         """Расчёт по Метро-Виккерсу"""
         logger.info("Running MetroVickers strategy")
 
@@ -295,7 +295,7 @@ class CondenserCalculationAdapter:
                     t_avg_est = t1 + 3.0
                     lam = self._get_lambda_iterative(
                         lambda_interp, t_avg_est,
-                        lambda lam_val: self._estimate_t_avg_metrovickers(
+                        lambda lam_val, w_main=w_main,t1=t1: self._estimate_t_avg_metrovickers(
                             t1, w_main, lam_val)
                     )
 
@@ -350,7 +350,7 @@ class CondenserCalculationAdapter:
         w_main: float,
         g: float,
         b: float,
-    ):
+    ) -> dict:
         return {
             'diameter_inside_of_pipes': condenser.diameter_internal,
             'thickness_pipe_wall': condenser.wall_thickness,

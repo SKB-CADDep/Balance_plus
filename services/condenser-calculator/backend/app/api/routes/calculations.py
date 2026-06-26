@@ -41,7 +41,7 @@ adapter = CondenserCalculationAdapter()
 async def calculate(
     input_data: CalculationInput,
     db: Session = Depends(get_db),
-):
+) -> CalculationOutput:
     """
     Основной эндпоинт расчёта конденсатора.
     """
@@ -111,7 +111,7 @@ async def calculate(
 async def calculate_excel(
     input_data: CalculationInput,
     db: Session = Depends(get_db),
-):
+) -> StreamingResponse:
     """
     Эндпоинт расчёта конденсатора с прямым экспортом в Excel.
     """

@@ -11,6 +11,7 @@ import datetime
 import importlib.util
 import os
 import sys
+from collections.abc import Callable, Iterator
 from pathlib import Path
 from typing import Any
 
@@ -44,7 +45,7 @@ MONOREPO_ROOT = _find_monorepo_root(Path(__file__))
 VALIDATION_DATA_PATH = MONOREPO_ROOT / "validation_data"
 
 
-def pytest_configure(config) -> None:
+def pytest_configure(config:pytest.config) -> None:
     # Удобно видеть корень данных в отчёте (и отлаживать пути)
     config._condenser_validation_data_path = str(VALIDATION_DATA_PATH)
 
@@ -66,7 +67,7 @@ class DBTestSuite(BaseModel):
 
 # --- 2. ИСПОЛНИТЕЛЬ КОНКРЕТНОГО ТЕСТА ---
 class DBYamlItem(pytest.Item):
-    def __init__(self, name, parent, spec: DBTestStep) -> None:
+    def __init__(self, name:str, parent:pytest.Node, spec: DBTestStep) -> None:
         super().__init__(name, parent)
         self.spec = spec
 
@@ -105,13 +106,13 @@ class DBYamlItem(pytest.Item):
                 # ОЧЕНЬ ВАЖНО: Откатываем изменения, чтобы база осталась чистой
                 trans.rollback()
 
-    def reportinfo(self):
+    def reportinfo(self) -> tuple[Path, int, str]:
         return self.path, 0, f"DB Test: {self.name} ({self.spec.description})"
 
 
 # --- 3. СБОРЩИК ФАЙЛОВ .db.yaml ---
 class DBYamlFile(pytest.File):
-    def collect(self):
+    def collect(self) -> Iterator[DBYamlItem]:
         # Читаем YAML
         raw_data = yaml.safe_load(self.path.open(encoding="utf-8"))
 
@@ -127,7 +128,7 @@ class DBYamlFile(pytest.File):
 
 # --- ПЛАГИН ДЛЯ ТЕСТИРОВАНИЯ МАТЕМАТИКИ И СТРАТЕГИЙ (*.calc.py) ---
 class CalcItem(pytest.Item):
-    def __init__(self, name, parent, spec, target_func) -> None:
+    def __init__(self, name:str, parent:pytest.Node, spec:dict[str, Any], target_func:Callable[...,Any]) -> None:
         super().__init__(name, parent)
         self.spec = spec
         self.target_func = target_func
@@ -139,7 +140,7 @@ class CalcItem(pytest.Item):
         result = self.target_func(**input_data)
 
         # РЕКУРСИВНАЯ ФУНКЦИЯ ДЛЯ ГЛУБОКОГО СРАВНЕНИЯ С УЧЕТОМ ПОГРЕШНОСТИ
-        def assert_dicts_approx(exp, act, path="") -> None:
+        def assert_dicts_approx(exp:list, act:list, path:str="") -> None:
             if isinstance(exp, dict) and isinstance(act, dict):
                 for k, v in exp.items():
                     assert k in act, f"Ключ '{path}{k}' отсутствует в результате"
@@ -159,12 +160,12 @@ class CalcItem(pytest.Item):
         # Запускаем проверку
         assert_dicts_approx(expected, result)
 
-    def reportinfo(self):
+    def reportinfo(self) -> tuple[Path, int, str]:
         return self.path, 0, f"Math Test: {self.name}"
 
 
 class CalcFile(pytest.File):
-    def collect(self):
+    def collect(self) -> Iterator[CalcItem]:
         # Динамически импортируем python-файл как модуль
         spec = importlib.util.spec_from_file_location("calc_module", self.path)
         module = importlib.util.module_from_spec(spec)
@@ -183,7 +184,7 @@ class CalcFile(pytest.File):
             yield CalcItem.from_parent(self, name=test_name, spec=test_spec, target_func=target_func)
 
 
-def pytest_collect_file(file_path: Path, parent):
+def pytest_collect_file(file_path: Path, parent:pytest.Node) -> pytest.File:
     # Перехват DB-файлов
     if file_path.name.endswith(".db.yaml"):
         return DBYamlFile.from_parent(parent, path=file_path)
@@ -194,7 +195,7 @@ def pytest_collect_file(file_path: Path, parent):
 
 # --- АВТОМАТИЧЕСКОЕ СОХРАНЕНИЕ ЛОГОВ ПРИ ОШИБКАХ ---
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
-def pytest_runtest_makereport(item, call:pytest.CallInfo[None]):
+def pytest_runtest_makereport(item:pytest.Item, call:pytest.CallInfo[None]) -> None:
     outcome = yield
     report = outcome.get_result()
 

@@ -1,4 +1,5 @@
 import math
+from typing import Any
 
 import numpy as np
 import seuif97
@@ -34,7 +35,7 @@ k_interpolation_data = {
     ]
 }
 
-def calculate_pressure(params):
+def calculate_pressure(params:dict) -> dict:
     get_k_from_table_temp = RegularGridInterpolator(
         (k_interpolation_data["speed_points"], k_interpolation_data["temperature_points"]),
         np.array(k_interpolation_data["k_values_matrix"]),
@@ -112,7 +113,7 @@ def calculate_pressure(params):
     }
 
 
-def batch_calculate(params_template, varying_params: dict):
+def batch_calculate(params_template:dict[str, Any], varying_params: dict) -> list[dict[str, Any]]:
     from itertools import product
 
     keys = list(varying_params.keys())

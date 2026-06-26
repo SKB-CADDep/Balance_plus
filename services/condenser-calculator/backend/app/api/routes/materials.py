@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.crud.materials import get_materials
 from app.dependencies import get_db
+from app.models.material import Material
 from app.schemas.material import MaterialShort
 
 router = APIRouter(tags=["Materials"])
@@ -13,5 +14,5 @@ router = APIRouter(tags=["Materials"])
     response_model=list[MaterialShort],
     summary="Список материалов",
 )
-async def list_materials(db: Session = Depends(get_db)):
+async def list_materials(db: Session = Depends(get_db)) -> list[Material]:
     return get_materials(db)

@@ -1,8 +1,7 @@
+import pandas as pd
 from _common import setup_path
 
 setup_path()
-
-import pandas as pd
 
 from app.utils.VKU_strategy import VKUStrategy
 

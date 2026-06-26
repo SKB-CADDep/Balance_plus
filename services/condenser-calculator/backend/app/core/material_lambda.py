@@ -1,5 +1,6 @@
 import logging
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 
@@ -20,7 +21,7 @@ class MaterialLambdaInterpolator:
     material_name: str
 
 
-def build_lambda_interpolator(material) -> MaterialLambdaInterpolator:
+def build_lambda_interpolator(material:Any) -> MaterialLambdaInterpolator:
     """
     Создает и кэширует интерполятор Table1D для зависимости теплопроводности.
     Должен вызываться один раз перед циклом расчетов.

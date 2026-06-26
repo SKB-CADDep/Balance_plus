@@ -1,14 +1,15 @@
+import time
+from typing import Any
+
 from _common import setup_path
 
 setup_path()
-
-import time
 
 from app.utils.base_for_selection import ProblemDefinition
 from app.utils.selection_methods import AnalyticalSolver, BisectionSolver, NewtonSolver
 
 
-def run_comparison():
+def run_comparison() -> list[dict[str, Any]]:
     """
     Запускает все реализованные решатели и возвращает результаты.
     """
@@ -66,7 +67,7 @@ def run_comparison():
     return results
 
 
-def print_results_to_console(results) -> None:
+def print_results_to_console(results:list[dict[str, Any]]) -> None:
     """Выводит результаты в консоль в виде таблицы."""
     print("Цель: подобрать X, чтобы A3_delt был равен 0.001")
     print("-" * 80)

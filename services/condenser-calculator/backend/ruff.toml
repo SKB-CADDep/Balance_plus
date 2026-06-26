@@ -1,0 +1,14 @@
+[lint]
+ignore = [
+    "E501", #line too long
+    "F403",
+    "F401",
+    "RUF001",
+    "RUF003",
+    "RUF002",
+    "E402",
+    "F405"
+]
+
+[lint.isort]
+known-first-party = ["app"]

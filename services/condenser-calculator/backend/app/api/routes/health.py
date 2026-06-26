@@ -7,12 +7,12 @@ from app.dependencies import get_db
 router = APIRouter(tags=["Health"])
 
 @router.get("/health", include_in_schema=False)
-def health_check():
+def health_check() -> dict:
     """Быстрая проверка доступности сервиса (для Docker)."""
     return {"status": "ok", "service": "condenser-calculator"}
 
 @router.get("/health/db", include_in_schema=False)
-def health_check_db(db: Session = Depends(get_db)):
+def health_check_db(db: Session = Depends(get_db)) -> dict:
     """Глубокая проверка с подключением к PostgreSQL."""
     try:
         db.execute(text("SELECT 1"))

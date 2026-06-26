@@ -1,8 +1,8 @@
+from pprint import pprint
+
 from _common import setup_path
 
 setup_path()
-
-from pprint import pprint
 
 from app.utils.TPS_module import TablePressureStrategy
 

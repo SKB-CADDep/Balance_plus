@@ -277,7 +277,7 @@ def test_26_edge_empty_array_t1_main() -> None:
     assert response.status_code in [422, 400]
 
 @pytest.mark.parametrize("b_val",[0.0, 1.0, 0.75, 0.999])
-def test_27_edge_boundary_b(b_val) -> None:
+def test_27_edge_boundary_b(b_val:float) -> None:
     """Граничные значения коэффициента загрязнения b"""
     payload = {
         "method": "berman",
@@ -298,7 +298,7 @@ def test_27_edge_boundary_b(b_val) -> None:
     (45.0, False),   # Граница Бермана
     (150.0, True)    # Экстремальное значение, должно выдать warning
 ])
-def test_28_edge_boundary_temperatures(temp, expected_warning) -> None:
+def test_28_edge_boundary_temperatures(temp:float, expected_warning:bool) -> None:
     """Температурные граничные случаи и проверка генерации BR-10 / BR-11"""
     payload = {
         "method": "berman",

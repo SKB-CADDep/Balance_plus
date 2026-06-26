@@ -1,3 +1,5 @@
+from typing import Any
+
 from _common import setup_path
 
 setup_path()
@@ -5,7 +7,7 @@ setup_path()
 from compare_selection_methods import run_comparison
 
 
-def create_markdown_table(results):
+def create_markdown_table(results:list[dict[str, Any]]) -> str:
     """Создает строку с таблицей в формате Markdown из списка результатов."""
     # Заголовок таблицы
     header = "| Метод              | Найденный X        | Итераций | Время (μs/запуск) | Итоговый A3_delt |"
@@ -33,7 +35,7 @@ def create_markdown_table(results):
 
     return "\n".join([header, separator, *rows])
 
-def generate_report_file(results, filename="report.md") -> None:
+def generate_report_file(results:list[dict[str, Any]], filename:str="report.md") -> None:
     """Генерирует полный файл отчета в формате Markdown."""
     table_md = create_markdown_table(results)
 
