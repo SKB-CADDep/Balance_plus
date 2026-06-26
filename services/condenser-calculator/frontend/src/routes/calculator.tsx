@@ -23,7 +23,6 @@ import { CondensersService, MaterialsService, type CalculationInput, type Matrix
 import {
   CondenserForm,
   type CondenserFormValues,
-  ResultMatrixViewer,
   useCondenserCalculation,
 } from '../components/CondenserCalculator';
 
@@ -56,8 +55,6 @@ function CalculatorPage() {
     });
 
     const [materialId, setMaterialId] = useState<number | null>(null);
-
-    const [tables, setTables] = useState<Array<MatrixResult>>([]);
 
     // Default material when loaded
     useEffect(() => {
@@ -106,8 +103,9 @@ function CalculatorPage() {
 
         mutation.mutate(payload, {
           onSuccess: (data) => {
-            setTables(data.tables ?? []);
+            sessionStorage.setItem('lastCalculationResult', JSON.stringify(data));
             toast({ title: "Расчет выполнен успешно!", status: "success" });
+            navigate({ to: '/results' });
           },
           onError: (err: any) => {
             const detail = err?.response?.data?.detail ?? err?.body?.detail;
@@ -121,8 +119,14 @@ function CalculatorPage() {
                 .join('\n');
             } else if (typeof detail === 'string') {
               description = detail;
+            } else if (err?.body) {
+              if (typeof err.body === 'string') {
+                description = err.body;
+              } else {
+                description = err.body.message || err.body.error || JSON.stringify(err.body);
+              }
             } else {
-              description = err?.message ?? 'Неизвестная ошибка';
+              description = err?.message ?? 'Неизвестная ошибка на сервере';
             }
             toast({ title: "Ошибка расчета", description, status: "error", isClosable: true, duration: 8000 });
           },
@@ -180,12 +184,9 @@ function CalculatorPage() {
                     </FormControl>
                   </SimpleGrid>
 
-                  <Flex direction={{ base: 'column', lg: 'row' }} gap={6} align="flex-start">
-                    <Box flex="1" minW={0}>
+                  <Flex direction="column" gap={6}>
+                    <Box w="full">
                       <CondenserForm onSubmit={handleCalculate} isSubmitting={mutation.isPending} />
-                    </Box>
-                    <Box flex="1" minW={0}>
-                      <ResultMatrixViewer results={tables} />
                     </Box>
                   </Flex>
                 </Box>
