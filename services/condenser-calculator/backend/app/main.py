@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes import calculations, condensers, health, materials
 from app.core.config import settings
 
-#Если вы хотите, чтобы таблицы создались мгновенно без настройки Alembic
+# Если вы хотите, чтобы таблицы создались мгновенно без настройки Alembic
 # from app.core.database import engine
 # from app.models.base import Base
 
@@ -36,7 +36,9 @@ app.add_middleware(
 
 # Healthcheck на корневом уровне
 api_router.include_router(health.router, prefix="/health", tags=["health"])
-api_router.include_router(calculations.router, prefix="/calculations", tags=["calculations"])
+api_router.include_router(
+    calculations.router, prefix="/calculations", tags=["calculations"]
+)
 api_router.include_router(condensers.router, prefix="/condensers", tags=["condensers"])
 api_router.include_router(materials.router, prefix="/materials", tags=["materials"])
 

@@ -50,9 +50,8 @@ async def calculate(
         extra={
             "condenser_id": input_data.condenser_id,
             "method": input_data.method,
-            "tables_expected": len(input_data.coefficient_b) * max(
-                len(input_data.W_main), len(input_data.W_builtin or [])
-            ),
+            "tables_expected": len(input_data.coefficient_b)
+            * max(len(input_data.W_main), len(input_data.W_builtin or [])),
         },
     )
 
@@ -117,8 +116,7 @@ async def calculate_excel(
     """
     logger.info(
         "Received calculation EXCEL export request",
-        extra={"condenser_id": input_data.condenser_id,
-               "method": input_data.method},
+        extra={"condenser_id": input_data.condenser_id, "method": input_data.method},
     )
 
     try:
@@ -143,7 +141,7 @@ async def calculate_excel(
         return StreamingResponse(
             file_stream,
             media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            headers={"Content-Disposition": f"attachment; filename={filename}"}
+            headers={"Content-Disposition": f"attachment; filename={filename}"},
         )
 
     except EntityNotFoundError as e:

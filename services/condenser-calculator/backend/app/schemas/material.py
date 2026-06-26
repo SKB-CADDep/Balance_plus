@@ -1,4 +1,3 @@
-
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -17,5 +16,6 @@ class MaterialDetail(BaseModel):
     )
 
     model_config = ConfigDict(from_attributes=True)
+
 
 MaterialShort = MaterialListItem

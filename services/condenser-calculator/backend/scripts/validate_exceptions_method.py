@@ -38,7 +38,9 @@ def report_condenser_pressure(
     if result is not None:
         print("  Расчет выполнен успешно.")
         print(f"  Вывод для пользователя: P1 = {result}")
-        print(f"  Вывод для разработчика: pressure_flow_path_1 = {calculator.pressure_flow_path_1}")
+        print(
+            f"  Вывод для разработчика: pressure_flow_path_1 = {calculator.pressure_flow_path_1}"
+        )
     else:
         print("  Ни одно из условий методологии не выполнено. Результат не определен.")
 
@@ -73,4 +75,3 @@ if __name__ == "__main__":
         temperature_cooling_water_1=None,
         pif=None,
     )
-

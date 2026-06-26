@@ -67,7 +67,7 @@ def run_comparison() -> list[dict[str, Any]]:
     return results
 
 
-def print_results_to_console(results:list[dict[str, Any]]) -> None:
+def print_results_to_console(results: list[dict[str, Any]]) -> None:
     """Выводит результаты в консоль в виде таблицы."""
     print("Цель: подобрать X, чтобы A3_delt был равен 0.001")
     print("-" * 80)
@@ -76,7 +76,11 @@ def print_results_to_console(results:list[dict[str, Any]]) -> None:
     )
     print("=" * 100)
     for res in results:
-        x_str = f"{res['Найденный X']:.8f}" if isinstance(res["Найденный X"], float) else str(res["Найденный X"])
+        x_str = (
+            f"{res['Найденный X']:.8f}"
+            if isinstance(res["Найденный X"], float)
+            else str(res["Найденный X"])
+        )
         t_str = (
             f"{res['Время (μs/запуск)']:.4f}"
             if isinstance(res["Время (μs/запуск)"], float)
@@ -88,7 +92,9 @@ def print_results_to_console(results:list[dict[str, Any]]) -> None:
             else str(res["Итоговый A3_delt"])
         )
 
-        print(f"{res['Метод']:<20} | {x_str:<18} | {res['Итераций']:<10} | {t_str:<20} | {d_str:<20}")
+        print(
+            f"{res['Метод']:<20} | {x_str:<18} | {res['Итераций']:<10} | {t_str:<20} | {d_str:<20}"
+        )
 
 
 if __name__ == "__main__":

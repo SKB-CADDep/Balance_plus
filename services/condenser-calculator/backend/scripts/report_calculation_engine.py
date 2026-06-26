@@ -9,7 +9,9 @@ setup_path()
 from app.utils.calculation_engine import k_interpolation_data
 
 
-def power_law_model(v:np.ndarray|float, a:float, b:float, c:float) -> np.ndarray|float:
+def power_law_model(
+    v: np.ndarray | float, a: float, b: float, c: float
+) -> np.ndarray | float:
     return a * np.power(v, b) + c
 
 
@@ -50,17 +52,33 @@ def plot_hybrid_extrapolation() -> None:
         try:
             initial_guess = [2000, 0.8, 500]
             bounds = ([0, 0.1, -np.inf], [np.inf, 1.5, np.inf])
-            params, _ = curve_fit(power_law_model, fit_speeds, fit_k_values, p0=initial_guess, bounds=bounds)
+            params, _ = curve_fit(
+                power_law_model,
+                fit_speeds,
+                fit_k_values,
+                p0=initial_guess,
+                bounds=bounds,
+            )
 
             k_extrapolated_part = power_law_model(extrapolation_part_speeds, *params)
 
-            full_k_curve = np.concatenate([k_initial_part, k_known_part, k_extrapolated_part])
+            full_k_curve = np.concatenate(
+                [k_initial_part, k_known_part, k_extrapolated_part]
+            )
 
-            ax.plot(new_speeds, full_k_curve, linestyle="-", linewidth=2.0, label=f"{temp} °C")
+            ax.plot(
+                new_speeds,
+                full_k_curve,
+                linestyle="-",
+                linewidth=2.0,
+                label=f"{temp} °C",
+            )
             ax.scatter(speeds, k_values_for_temp, s=20, zorder=5)
 
         except RuntimeError:
-            print(f"Не удалось аппроксимировать данные для экстраполяции при {temp}°C. Пропускаем.")
+            print(
+                f"Не удалось аппроксимировать данные для экстраполяции при {temp}°C. Пропускаем."
+            )
 
     ax.set_title("Зависимость K от скорости", fontsize=18, pad=20)
     ax.set_xlabel("Скорость воды, м/с", fontsize=14)
@@ -80,4 +98,3 @@ def plot_hybrid_extrapolation() -> None:
 
 if __name__ == "__main__":
     plot_hybrid_extrapolation()
-

@@ -24,7 +24,7 @@ async def save_calculation_result(req: CalculationSaveRequest):
         if not branch_name:
             raise HTTPException(
                 status_code=400,
-                detail=f"Ветка для задачи #{req.task_iid} не найдена в GitLab. Убедитесь, что работа над задачей начата."
+                detail=f"Ветка для задачи #{req.task_iid} не найдена в GitLab. Убедитесь, что работа над задачей начата.",
             )
 
         print(f"💾 Сохраняем в ветку: {branch_name} (Проект ID: {req.project_id})")
@@ -35,7 +35,7 @@ async def save_calculation_result(req: CalculationSaveRequest):
         # 3. Готовим файлы
         files_to_commit = {
             f"{base_path}/input.json": json.dumps(req.input_data, indent=2, ensure_ascii=False),
-            f"{base_path}/result.json": json.dumps(req.output_data, indent=2, ensure_ascii=False)
+            f"{base_path}/result.json": json.dumps(req.output_data, indent=2, ensure_ascii=False),
         }
 
         # 4. Коммитим (с указанием project_id!)
@@ -43,14 +43,14 @@ async def save_calculation_result(req: CalculationSaveRequest):
             files=files_to_commit,
             commit_message=f"Calc Result: {req.commit_message}",
             branch=branch_name,
-            project_id=req.project_id # <--- Важно!
+            project_id=req.project_id,  # <--- Важно!
         )
 
         return {
             "status": "saved",
             "commit_id": commit.id,
             "path": base_path,
-            "web_url": commit.web_url
+            "web_url": commit.web_url,
         }
 
     except gitlab.exceptions.GitlabAuthenticationError:
@@ -67,7 +67,9 @@ async def save_calculation_result(req: CalculationSaveRequest):
 
 
 @router.get("/latest")
-async def get_latest_calculation(task_iid: int = Query(...), app_type: str = Query(...), project_id: int = Query(...)):
+async def get_latest_calculation(
+    task_iid: int = Query(...), app_type: str = Query(...), project_id: int = Query(...)
+):
     """
     Возвращает данные последнего расчёта для гидрации формы.
     Читает из фиксированного пути calculations/{app_type}/current/
@@ -81,8 +83,12 @@ async def get_latest_calculation(task_iid: int = Query(...), app_type: str = Que
 
         # 2. Читаем файлы напрямую из фиксированного пути
         base_path = f"calculations/{app_type}/current"
-        input_content = gitlab_client.get_file_content_decoded(f"{base_path}/input.json", ref=branch_name, project_id=project_id)
-        result_content = gitlab_client.get_file_content_decoded(f"{base_path}/result.json", ref=branch_name, project_id=project_id)
+        input_content = gitlab_client.get_file_content_decoded(
+            f"{base_path}/input.json", ref=branch_name, project_id=project_id
+        )
+        result_content = gitlab_client.get_file_content_decoded(
+            f"{base_path}/result.json", ref=branch_name, project_id=project_id
+        )
 
         if not input_content:
             return {"found": False, "reason": "Files missing"}
@@ -90,7 +96,7 @@ async def get_latest_calculation(task_iid: int = Query(...), app_type: str = Que
         return {
             "found": True,
             "input_data": json.loads(input_content),
-            "output_data": json.loads(result_content) if result_content else None
+            "output_data": json.loads(result_content) if result_content else None,
         }
 
     except gitlab.exceptions.GitlabAuthenticationError:

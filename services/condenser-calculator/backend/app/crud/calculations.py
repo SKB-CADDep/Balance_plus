@@ -17,14 +17,14 @@ def save_calculation_result(
     """Сохраняет результаты расчета и входные параметры в БД."""
     logger.info(
         "DB: saving calculation result",
-        extra={"condenser_id": condenser_id, "method": method}
+        extra={"condenser_id": condenser_id, "method": method},
     )
 
     result = CalculationResult(
         condenser_id=condenser_id,
         input_data=input_data,
         output_data=output_data,
-        method=method
+        method=method,
     )
 
     db.add(result)
@@ -33,7 +33,7 @@ def save_calculation_result(
 
     logger.info(
         "DB: calculation result saved successfully",
-        extra={"calculation_id": result.id, "condenser_id": condenser_id}
+        extra={"calculation_id": result.id, "condenser_id": condenser_id},
     )
 
     return result

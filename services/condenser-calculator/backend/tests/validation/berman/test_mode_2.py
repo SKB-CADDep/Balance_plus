@@ -28,7 +28,7 @@ class TestPressureMatrixMode2:
     """Полная проверка матрицы давлений из results_2.json."""
 
     @pytest.mark.parametrize("case", _test_cases, ids=[c["id"] for c in _test_cases])
-    def test_pressure_calculation(self, strategy:BermanStrategy, case:dict) -> None:
+    def test_pressure_calculation(self, strategy: BermanStrategy, case: dict) -> None:
         params = build_calculation_params(
             geometry=_geometry,
             mode=_mode,
@@ -47,7 +47,11 @@ class TestPressureMatrixMode2:
 
         calculated = result["main_results"][0]["P_steam_formula_atm"]
 
-        assert_pressure_approx(calculated=calculated, expected=case["expected_pressure"], context=f"Тест: {case['id']}")
+        assert_pressure_approx(
+            calculated=calculated,
+            expected=case["expected_pressure"],
+            context=f"Тест: {case['id']}",
+        )
 
 
 class TestDifferentTemperaturesEffect:
@@ -57,7 +61,9 @@ class TestDifferentTemperaturesEffect:
     def results_1_for_comparison(self) -> dict:
         return load_results(1)
 
-    def test_higher_builtin_temp_increases_pressure(self, strategy:BermanStrategy, results_1_for_comparison:dict) -> None:
+    def test_higher_builtin_temp_increases_pressure(
+        self, strategy: BermanStrategy, results_1_for_comparison: dict
+    ) -> None:
         params_diff = build_calculation_params(
             geometry=_geometry,
             mode=_mode,
@@ -94,11 +100,22 @@ class TestDifferentTemperaturesEffect:
 
     @pytest.mark.parametrize(
         "t1_main, t1_builtin",
-        [(5.0, 8.0), (10.0, 13.0), (15.0, 18.0), (20.0, 23.0), (25.0, 28.0), (30.0, 33.0)],
+        [
+            (5.0, 8.0),
+            (10.0, 13.0),
+            (15.0, 18.0),
+            (20.0, 23.0),
+            (25.0, 28.0),
+            (30.0, 33.0),
+        ],
         ids=["5/8", "10/13", "15/18", "20/23", "25/28", "30/33"],
     )
-    def test_all_temperature_pairs(self, strategy:BermanStrategy, t1_main:float, t1_builtin:float) -> None:
-        mode_data = find_mode_in_results(_results, W_main=12000.0, W_builtin=3500.0, coefficient_b=1.0)
+    def test_all_temperature_pairs(
+        self, strategy: BermanStrategy, t1_main: float, t1_builtin: float
+    ) -> None:
+        mode_data = find_mode_in_results(
+            _results, W_main=12000.0, W_builtin=3500.0, coefficient_b=1.0
+        )
 
         t1_list = [5.0, 10.0, 15.0, 20.0, 25.0, 30.0]
         t_idx = t1_list.index(t1_main)
@@ -119,5 +136,8 @@ class TestDifferentTemperaturesEffect:
         result = strategy.calculate(params)
         calculated = result["main_results"][0]["P_steam_formula_atm"]
 
-        assert_pressure_approx(calculated, expected, context=f"t1_main={t1_main}°C, t1_builtin={t1_builtin}°C")
-
+        assert_pressure_approx(
+            calculated,
+            expected,
+            context=f"t1_main={t1_main}°C, t1_builtin={t1_builtin}°C",
+        )

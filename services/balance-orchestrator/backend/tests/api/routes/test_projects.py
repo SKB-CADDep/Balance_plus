@@ -54,7 +54,9 @@ class TestListProjects:
     @patch("app.api.routes.projects.gitlab_client")
     async def test_raises_401_on_authentication_error(self, mock_gitlab: MagicMock):
         """Should raise HTTPException 401 on GitLab authentication error."""
-        mock_gitlab.get_user_projects.side_effect = gitlab.exceptions.GitlabAuthenticationError("Auth failed")
+        mock_gitlab.get_user_projects.side_effect = gitlab.exceptions.GitlabAuthenticationError(
+            "Auth failed"
+        )
 
         with pytest.raises(HTTPException) as exc_info:
             await list_projects(search="")
@@ -85,4 +87,3 @@ class TestListProjects:
 
         assert exc_info.value.status_code == 500
         assert exc_info.value.detail == "Ошибка получения списка проектов: Unexpected error"
-

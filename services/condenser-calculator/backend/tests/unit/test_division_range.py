@@ -15,7 +15,9 @@ class TestSplitIntoParts:
         """
         number = 1000
         n_parts = 10
-        expected = np.array([0., 100., 200., 300., 400., 500., 600., 700., 800., 900., 1000.])
+        expected = np.array(
+            [0.0, 100.0, 200.0, 300.0, 400.0, 500.0, 600.0, 700.0, 800.0, 900.0, 1000.0]
+        )
         result = split_into_parts(number, n_parts)
         assert np.array_equal(result, expected)  # проверка идентичности
 
@@ -39,7 +41,7 @@ class TestSplitIntoParts:
         """
         number = 123
         n_parts = 1
-        expected = np.array([0., 123.])
+        expected = np.array([0.0, 123.0])
         result = split_into_parts(number, n_parts)
         assert np.array_equal(result, expected)
 
@@ -60,7 +62,7 @@ class TestSplitIntoParts:
         """
         number = 10.5
         n_parts = 3
-        expected = np.array([0., 3.5, 7.0, 10.5])
+        expected = np.array([0.0, 3.5, 7.0, 10.5])
         result = split_into_parts(number, n_parts)
         assert np.allclose(result, expected)
 
@@ -79,6 +81,6 @@ class TestSplitIntoParts:
         """
         number = 100
         n_parts = 0
-        expected = np.array([0.])
+        expected = np.array([0.0])
         result = split_into_parts(number, n_parts)
         assert np.array_equal(result, expected)

@@ -29,7 +29,7 @@ class TestPressureMatrixMode1:
     """Полная проверка матрицы давлений из results_1.json."""
 
     @pytest.mark.parametrize("case", _test_cases, ids=[c["id"] for c in _test_cases])
-    def test_pressure_calculation(self, strategy:BermanStrategy, case:dict) -> None:
+    def test_pressure_calculation(self, strategy: BermanStrategy, case: dict) -> None:
         params = build_calculation_params(
             geometry=_geometry,
             mode=_mode,
@@ -44,20 +44,26 @@ class TestPressureMatrixMode1:
 
         result = strategy.calculate(params)
 
-        assert len(result["main_results"]) > 0, f"Результаты не получены для {case['id']}"
+        assert len(result["main_results"]) > 0, (
+            f"Результаты не получены для {case['id']}"
+        )
 
         calculated = result["main_results"][0]["P_steam_formula_atm"]
 
         assert_pressure_approx(
-            calculated=calculated, expected=case["expected_pressure"], context=f"Тест: {case['id']}"
+            calculated=calculated,
+            expected=case["expected_pressure"],
+            context=f"Тест: {case['id']}",
         )
 
 
 class TestEjectorsMode1:
     """Проверка расчёта эжекторов для режима 1."""
 
-    @pytest.mark.parametrize("case", _ejector_cases, ids=[c["id"] for c in _ejector_cases])
-    def test_ejector_pressure(self, strategy:BermanStrategy, case:dict) -> None:
+    @pytest.mark.parametrize(
+        "case", _ejector_cases, ids=[c["id"] for c in _ejector_cases]
+    )
+    def test_ejector_pressure(self, strategy: BermanStrategy, case: dict) -> None:
         params = build_calculation_params(
             geometry=_geometry,
             mode=_mode,
@@ -73,7 +79,9 @@ class TestEjectorsMode1:
         result = strategy.calculate(params)
 
         ejector_results = [
-            ej for ej in result["ejector_results"] if ej["number_of_ejectors"] == case["num_ejectors"]
+            ej
+            for ej in result["ejector_results"]
+            if ej["number_of_ejectors"] == case["num_ejectors"]
         ]
 
         assert len(ejector_results) > 0
@@ -90,8 +98,16 @@ class TestEjectorsMode1:
 class TestSpotCheckMode1:
     """Выборочные проверки для ключевых режимов."""
 
-    def test_reference_mode(self, strategy:BermanStrategy, geometry_standard:dict, mode_1:dict, results_1:dict) -> None:
-        mode_data = find_mode_in_results(results_1, W_main=12000.0, W_builtin=3500.0, coefficient_b=1.0)
+    def test_reference_mode(
+        self,
+        strategy: BermanStrategy,
+        geometry_standard: dict,
+        mode_1: dict,
+        results_1: dict,
+    ) -> None:
+        mode_data = find_mode_in_results(
+            results_1, W_main=12000.0, W_builtin=3500.0, coefficient_b=1.0
+        )
         assert mode_data is not None
 
         expected = get_expected_pressure(mode_data, t1_idx=3, G_steam_idx=4)
@@ -112,21 +128,35 @@ class TestSpotCheckMode1:
 
         assert_pressure_approx(calculated, expected, context="Опорный режим mode_1")
 
-    def test_dirty_tubes_increase_pressure(self, strategy:BermanStrategy, geometry_standard:dict, mode_1:dict, results_1:dict) -> None:
-        mode_clean = find_mode_in_results(results_1, W_main=12000.0, W_builtin=3500.0, coefficient_b=1.0)
-        mode_dirty = find_mode_in_results(results_1, W_main=12000.0, W_builtin=3500.0, coefficient_b=0.75)
+    def test_dirty_tubes_increase_pressure(
+        self,
+        strategy: BermanStrategy,
+        geometry_standard: dict,
+        mode_1: dict,
+        results_1: dict,
+    ) -> None:
+        mode_clean = find_mode_in_results(
+            results_1, W_main=12000.0, W_builtin=3500.0, coefficient_b=1.0
+        )
+        mode_dirty = find_mode_in_results(
+            results_1, W_main=12000.0, W_builtin=3500.0, coefficient_b=0.75
+        )
 
         P_clean = get_expected_pressure(mode_clean, t1_idx=3, G_steam_idx=4)
         P_dirty = get_expected_pressure(mode_dirty, t1_idx=3, G_steam_idx=4)
 
-        assert P_dirty > P_clean, f"P(dirty)={P_dirty:.6f} должно быть > P(clean)={P_clean:.6f}"
+        assert P_dirty > P_clean, (
+            f"P(dirty)={P_dirty:.6f} должно быть > P(clean)={P_clean:.6f}"
+        )
 
 
 class TestPhysicalConsistencyMode1:
     """Проверка физической корректности результатов."""
 
-    def test_pressure_monotonicity_by_temperature(self, results_1:dict) -> None:
-        mode_data = find_mode_in_results(results_1, W_main=12000.0, W_builtin=3500.0, coefficient_b=1.0)
+    def test_pressure_monotonicity_by_temperature(self, results_1: dict) -> None:
+        mode_data = find_mode_in_results(
+            results_1, W_main=12000.0, W_builtin=3500.0, coefficient_b=1.0
+        )
         pressures = mode_data["table_data"][0]["pressures_axis"]
 
         for t_idx in range(5):
@@ -134,15 +164,16 @@ class TestPhysicalConsistencyMode1:
             P_next = pressures[t_idx + 1][4]
             assert P_next > P_curr, (
                 f"Давление должно расти c температурой: "
-                f"P[t{t_idx}]={P_curr:.6f}, P[t{t_idx+1}]={P_next:.6f}"
+                f"P[t{t_idx}]={P_curr:.6f}, P[t{t_idx + 1}]={P_next:.6f}"
             )
 
-    def test_pressure_monotonicity_by_steam_flow(self, results_1:dict) -> None:
-        mode_data = find_mode_in_results(results_1, W_main=12000.0, W_builtin=3500.0, coefficient_b=1.0)
+    def test_pressure_monotonicity_by_steam_flow(self, results_1: dict) -> None:
+        mode_data = find_mode_in_results(
+            results_1, W_main=12000.0, W_builtin=3500.0, coefficient_b=1.0
+        )
         pressures = mode_data["table_data"][0]["pressures_axis"]
 
         for g_idx in range(8):
             P_curr = pressures[3][g_idx]
             P_next = pressures[3][g_idx + 1]
             assert P_next > P_curr, "Давление должно расти c расходом пара"
-

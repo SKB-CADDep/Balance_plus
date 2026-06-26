@@ -1,4 +1,5 @@
 """Загружает JSON-файлы материалов из db/materials/ в PostgreSQL."""
+
 import json
 from pathlib import Path
 

@@ -72,14 +72,18 @@ class GitLabAdapter:
 
     # ==================== РАБОТА С ФАЙЛАМИ ====================
 
-    def get_file_content(self, file_path: str, ref: str | None = None, project_id: int | None = None) -> str:
+    def get_file_content(
+        self, file_path: str, ref: str | None = None, project_id: int | None = None
+    ) -> str:
         """Читает содержимое файла из репозитория"""
         project = self.get_project_by_id(project_id) if project_id else self.get_project()
         ref = ref or (project.default_branch if project_id else self.default_branch)
         file = project.files.get(file_path=file_path, ref=ref)
         return file.decode().decode("utf-8")
 
-    def file_exists(self, file_path: str, ref: str | None = None, project_id: int | None = None) -> bool:
+    def file_exists(
+        self, file_path: str, ref: str | None = None, project_id: int | None = None
+    ) -> bool:
         """Проверяет, существует ли файл"""
         project = self.get_project_by_id(project_id) if project_id else self.get_project()
         ref = ref or (project.default_branch if project_id else self.default_branch)
@@ -89,12 +93,21 @@ class GitLabAdapter:
         except GitlabGetError:
             return False
 
-    def create_commit(self, file_path: str, content: str, commit_message: str, branch: str | None = None, project_id: int | None = None):
+    def create_commit(
+        self,
+        file_path: str,
+        content: str,
+        commit_message: str,
+        branch: str | None = None,
+        project_id: int | None = None,
+    ):
         """Создает или обновляет файл в репозитории"""
         project = self.get_project_by_id(project_id) if project_id else self.get_project()
         branch = branch or (project.default_branch if project_id else self.default_branch)
 
-        action = "update" if self.file_exists(file_path, branch, project_id=project_id) else "create"
+        action = (
+            "update" if self.file_exists(file_path, branch, project_id=project_id) else "create"
+        )
 
         data = {
             "branch": branch,
@@ -106,7 +119,11 @@ class GitLabAdapter:
         return commit
 
     def create_commit_multiple(
-        self, files: dict[str, str], commit_message: str, branch: str | None = None, project_id: int | None = None
+        self,
+        files: dict[str, str],
+        commit_message: str,
+        branch: str | None = None,
+        project_id: int | None = None,
     ):
         """Создает коммит с несколькими файлами одновременно"""
         project = self.get_project_by_id(project_id) if project_id else self.get_project()
@@ -114,7 +131,9 @@ class GitLabAdapter:
 
         actions = []
         for file_path, content in files.items():
-            action = "update" if self.file_exists(file_path, branch, project_id=project_id) else "create"
+            action = (
+                "update" if self.file_exists(file_path, branch, project_id=project_id) else "create"
+            )
             actions.append({"action": action, "file_path": file_path, "content": content})
 
         data = {
@@ -132,20 +151,22 @@ class GitLabAdapter:
         try:
             return project.repository_tree(path=path, ref=ref, recursive=False)
         except GitlabGetError:
-        # Папка не найдена или нет доступа
+            # Папка не найдена или нет доступа
             return []
         except gitlab.exceptions.GitlabError:
             # Другие ошибки GitLab API
             return []
 
-    def get_file_content_decoded(self, file_path: str, ref: str, project_id: int | None = None) -> str | None:
+    def get_file_content_decoded(
+        self, file_path: str, ref: str, project_id: int | None = None
+    ) -> str | None:
         """Читает файл и декодирует контент"""
         try:
             project = self.get_project_by_id(project_id) if project_id else self.get_project()
             f = project.files.get(file_path=file_path, ref=ref)
-            return f.decode().decode('utf-8')
+            return f.decode().decode("utf-8")
         except GitlabGetError:
-        # Файл не найден
+            # Файл не найден
             return None
         except gitlab.exceptions.GitlabError:
             # Другие ошибки GitLab API
@@ -153,7 +174,9 @@ class GitLabAdapter:
 
     # ==================== РАБОТА С ВЕТКАМИ ====================
 
-    def create_branch(self, branch_name: str, source_branch: str | None = None, project_id: int | None = None) -> bool:
+    def create_branch(
+        self, branch_name: str, source_branch: str | None = None, project_id: int | None = None
+    ) -> bool:
         """Создаёт новую ветку. Возвращает True если создана, False если уже существует"""
         project = self.get_project_by_id(project_id) if project_id else self.get_project()
         source = source_branch or (project.default_branch if project_id else self.default_branch)
@@ -223,24 +246,28 @@ class GitLabAdapter:
     def get_all_assigned_issues(self, state: str = "opened") -> list[dict]:
         """Получает ВСЕ задачи из ВСЕХ проектов, назначенные на текущего пользователя."""
         self.gl.auth()
-        issues = self.gl.issues.list(assignee_id=self.gl.user.id, state=state, scope='all', all=True)
+        issues = self.gl.issues.list(
+            assignee_id=self.gl.user.id, state=state, scope="all", all=True
+        )
 
         result = []
         for issue in issues:
             proj = self.get_project_by_id(issue.project_id)
-            result.append({
-                "iid": issue.iid,
-                "project_id": issue.project_id,
-                "project_name": proj.name,  # без namespace
-                "title": issue.title,
-                "description": issue.description,
-                "state": issue.state,
-                "labels": issue.labels,
-                "assignee": issue.assignee["username"] if issue.assignee else None,
-                "created_at": issue.created_at,
-                "due_date": issue.due_date,
-                "web_url": issue.web_url,
-            })
+            result.append(
+                {
+                    "iid": issue.iid,
+                    "project_id": issue.project_id,
+                    "project_name": proj.name,  # без namespace
+                    "title": issue.title,
+                    "description": issue.description,
+                    "state": issue.state,
+                    "labels": issue.labels,
+                    "assignee": issue.assignee["username"] if issue.assignee else None,
+                    "created_at": issue.created_at,
+                    "due_date": issue.due_date,
+                    "web_url": issue.web_url,
+                }
+            )
         return result
 
     def get_issue(self, issue_iid: int, project_id: int) -> dict:
@@ -267,24 +294,32 @@ class GitLabAdapter:
         projects = self.gl.projects.list(
             membership=True,
             search=search,
-            order_by='last_activity_at',
+            order_by="last_activity_at",
             min_access_level=30,  # Developer и выше (чтобы мог создавать задачи)
             simple=True,
             get_all=False,  # Не тянем все 100500, хватит первых 20-50 для саджеста
-            per_page=50
+            per_page=50,
         )
         return [{"id": p.id, "name": p.name_with_namespace, "web_url": p.web_url} for p in projects]
 
-    def create_issue(self, title: str, description: str = "", labels: list[str] | None = None, project_id: int | None = None) -> dict:
+    def create_issue(
+        self,
+        title: str,
+        description: str = "",
+        labels: list[str] | None = None,
+        project_id: int | None = None,
+    ) -> dict:
         """Создаёт новую задачу"""
         # Если ID передан - берем конкретный проект. Иначе - дефолтный из ENV (для совместимости)
         project = self.get_project_by_id(project_id) if project_id else self.get_project()
-        issue = project.issues.create({
-            "title": title,
-            "description": description,
-            "labels": labels or [],
-            "assignee_ids": [self.gl.user.id]  # Сразу назначаем на себя
-        })
+        issue = project.issues.create(
+            {
+                "title": title,
+                "description": description,
+                "labels": labels or [],
+                "assignee_ids": [self.gl.user.id],  # Сразу назначаем на себя
+            }
+        )
 
         return {
             "iid": issue.iid,
@@ -302,7 +337,7 @@ class GitLabAdapter:
         description: str = "",
         target_branch: str | None = None,
         assignee_id: int | None = None,
-        project_id: int | None = None
+        project_id: int | None = None,
     ) -> dict:
         """Создаёт Merge Request"""
         project = self.get_project_by_id(project_id) if project_id else self.get_project()
@@ -310,7 +345,7 @@ class GitLabAdapter:
 
         # Проверяем, существует ли исходная ветка
         if not self.branch_exists(source_branch, project_id=project_id):
-             raise ValueError(f"Ветка {source_branch} не найдена")
+            raise ValueError(f"Ветка {source_branch} не найдена")
 
         # Создаем MR
         mr_data = {
@@ -318,7 +353,7 @@ class GitLabAdapter:
             "target_branch": target,
             "title": title,
             "description": description,
-            "remove_source_branch": True, # Удалять ветку после слияния
+            "remove_source_branch": True,  # Удалять ветку после слияния
         }
 
         if assignee_id:

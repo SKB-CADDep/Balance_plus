@@ -12,24 +12,30 @@ class AnalyticalSolver:  # Аналитически!
         self.iterations = 0
         self._inv_power = 1.0 / problem.power_minus_1
 
-    def solve(self, target_delta:float, **kwargs:Any) -> float:
+    def solve(self, target_delta: float, **kwargs: Any) -> float:
         self.iterations = 1  # Считается за одну операцию
         base = (1.0 - target_delta) / self.problem.c
         if base < 0:
-            raise ValueError("Невозможно найти вещественное решение: основание степени отрицательное.")
+            raise ValueError(
+                "Невозможно найти вещественное решение: основание степени отрицательное."
+            )
         return math.pow(base, self._inv_power)
 
 
 class BisectionSolver:  # Дихотомии!
     """Решает задачу методом дихотомии. Надежен, но медленнее сходится."""
 
-    def __init__(self, problem: ProblemDefinition, max_iter:int=100, tol:float=1e-7) -> None:
+    def __init__(
+        self, problem: ProblemDefinition, max_iter: int = 100, tol: float = 1e-7
+    ) -> None:
         self.problem = problem
         self.max_iter = max_iter
         self.tol = tol
         self.iterations = 0
 
-    def solve(self, target_delta:float, a:float=1.0, b:float=10.0) -> float:  # Начальный отрезок [1, 10]
+    def solve(
+        self, target_delta: float, a: float = 1.0, b: float = 10.0
+    ) -> float:  # Начальный отрезок [1, 10]
         self.iterations = 0
         fa = self.problem.f(a, target_delta)
         fb = self.problem.f(b, target_delta)
@@ -57,13 +63,15 @@ class BisectionSolver:  # Дихотомии!
 class NewtonSolver:  # Ньютоном!
     """Решает задачу методом Ньютона. Быстрая сходимость, но требует производную."""
 
-    def __init__(self, problem: ProblemDefinition, max_iter:int=20, tol:float=1e-9) -> None:
+    def __init__(
+        self, problem: ProblemDefinition, max_iter: int = 20, tol: float = 1e-9
+    ) -> None:
         self.problem = problem
         self.max_iter = max_iter
         self.tol = tol
         self.iterations = 0
 
-    def solve(self, target_delta:float, initial_guess:float=2.0) -> None:
+    def solve(self, target_delta: float, initial_guess: float = 2.0) -> None:
         self.iterations = 0
         x = float(initial_guess)
 

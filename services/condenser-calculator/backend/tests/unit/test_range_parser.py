@@ -9,7 +9,6 @@ from app.core.range_parser import parse_range_input
 
 
 class TestRangeParser:
-
     def test_single_and_list_format(self) -> None:
         """Проверка форматов 1 и 2: Одиночное число и список через пробел"""
         assert parse_range_input("1000") == [1000.0]

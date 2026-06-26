@@ -4,6 +4,7 @@
 Тесты написаны под `pytest` (pip install pytest).
 Запуск:  pytest -q
 """
+
 import contextlib
 
 import pytest
@@ -49,7 +50,9 @@ def test_temperature_c_to_k_and_back(uc: UnitConverter) -> None:
 def test_density_linear_factor(uc: UnitConverter) -> None:
     """Проверяем линейный коэффициент г/см³ ↔ кг/м³"""
     rho_g = 1.2  # г/см³
-    rho_kg = uc.convert(rho_g, from_unit="г/см³", to_unit="кг/м³", parameter_type="density")
+    rho_kg = uc.convert(
+        rho_g, from_unit="г/см³", to_unit="кг/м³", parameter_type="density"
+    )
     assert rho_kg == pytest.approx(1200.0, rel=1e-9)
 
 
@@ -116,14 +119,15 @@ def test_add_unit_non_linear(uc: UnitConverter) -> None:
             "temperature",
             unit_symbol="°F",
             unit_name="градус Фаренгейта",
-            to_base=lambda f: (f - 32) * 5.0 / 9.0,        # °F → °C
-            from_base=lambda c: c * 9.0 / 5.0 + 32,        # °C → °F
+            to_base=lambda f: (f - 32) * 5.0 / 9.0,  # °F → °C
+            from_base=lambda c: c * 9.0 / 5.0 + 32,  # °C → °F
         )
-
 
     # Проверка правильности
     temp_f = 212.0  # точка кипения воды
-    temp_c = uc.convert(temp_f, from_unit="°F", to_unit="°C", parameter_type="temperature")
+    temp_c = uc.convert(
+        temp_f, from_unit="°F", to_unit="°C", parameter_type="temperature"
+    )
     assert temp_c == pytest.approx(100.0, abs=1e-12)
 
 
@@ -138,4 +142,3 @@ def test_unknown_parameter_raises(uc: UnitConverter) -> None:
 def test_unknown_unit_raises(uc: UnitConverter) -> None:
     with pytest.raises(UnknownUnitError):
         uc.convert(1, from_unit="foo", to_unit="bar", parameter_type="pressure")
-

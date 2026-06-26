@@ -10,6 +10,7 @@ class VKUStrategy:
     Методика основана на определении давления по приведенному расходу пара
     и температуре наружного воздуха с использованием 2D-интерполяции.
     """
+
     _TVOZD_CONST_DEFAULT = 20.0
     _P_DATA: ClassVar[list] = [
         [40, 35, 30, 25, 20],
@@ -25,15 +26,21 @@ class VKUStrategy:
             [0.165805856, 0.131543391, 0.104418940, 0.081373354, 0.065873667],
             [0.176512876, 0.140618866, 0.112168783, 0.087899538, 0.071686050],
             [0.187525812, 0.150000255, 0.119918627, 0.094323750, 0.077498432],
-            [0.198232832, 0.159381644, 0.127668470, 0.101155848, 0.083718701]
-        ]
+            [0.198232832, 0.159381644, 0.127668470, 0.101155848, 0.083718701],
+        ],
     ]
 
-    def __init__(self, mass_flow_steam_nom: float, degree_dryness_steam_nom: float) -> None:
+    def __init__(
+        self, mass_flow_steam_nom: float, degree_dryness_steam_nom: float
+    ) -> None:
         if mass_flow_steam_nom <= 0:
-            raise ValueError("Номинальный расход пара (mass_flow_steam_nom) должен быть больше нуля.")
+            raise ValueError(
+                "Номинальный расход пара (mass_flow_steam_nom) должен быть больше нуля."
+            )
         if not (0 < degree_dryness_steam_nom <= 1):
-            raise ValueError("Номинальная степень сухости (degree_dryness_steam_nom) должна быть в диапазоне (0, 1].")
+            raise ValueError(
+                "Номинальная степень сухости (degree_dryness_steam_nom) должна быть в диапазоне (0, 1]."
+            )
 
         self.mass_flow_steam_nom = mass_flow_steam_nom
         self.degree_dryness_steam_nom = degree_dryness_steam_nom
@@ -56,7 +63,7 @@ class VKUStrategy:
             (g_reduced_axis, t_air_axis_asc),
             p_values_reordered,
             bounds_error=False,
-            fill_value=None
+            fill_value=None,
         )
 
     def calculate(self, params: dict[str, Any]) -> dict[str, float]:
@@ -80,24 +87,25 @@ class VKUStrategy:
             KeyError: Если в словаре `params` отсутствует обязательный ключ.
         """
         try:
-            mass_flow_flow_path_1 = params['mass_flow_flow_path_1']
-            degree_dryness_flow_path_1 = params['degree_dryness_flow_path_1']
+            mass_flow_flow_path_1 = params["mass_flow_flow_path_1"]
+            degree_dryness_flow_path_1 = params["degree_dryness_flow_path_1"]
         except KeyError as e:
             raise KeyError(f"Отсутствует обязательный параметр в словаре: {e}")
 
-        t_air = params.get('temperature_air', self._TVOZD_CONST_DEFAULT)
+        t_air = params.get("temperature_air", self._TVOZD_CONST_DEFAULT)
 
         mass_flow_reduced_steam_condencer = (
-                (mass_flow_flow_path_1 / self.mass_flow_steam_nom) *
-                (degree_dryness_flow_path_1 / self.degree_dryness_steam_nom) * 100
+            (mass_flow_flow_path_1 / self.mass_flow_steam_nom)
+            * (degree_dryness_flow_path_1 / self.degree_dryness_steam_nom)
+            * 100
         )
 
         point_to_interpolate = (mass_flow_reduced_steam_condencer, t_air)
         pressure_flow_path_1 = self._interpolator(point_to_interpolate).item()
 
         results = {
-            'pressure_flow_path_1': pressure_flow_path_1,
-            'mass_flow_reduced_steam_condencer': mass_flow_reduced_steam_condencer
+            "pressure_flow_path_1": pressure_flow_path_1,
+            "mass_flow_reduced_steam_condencer": mass_flow_reduced_steam_condencer,
         }
 
         return results

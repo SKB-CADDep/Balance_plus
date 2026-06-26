@@ -16,22 +16,25 @@ def validate_condenser_for_method(condenser: Condenser, method: str) -> None:
     if method == "berman":
         if condenser.aircooler_count is None:
             errors.append(
-                "Для методики Бермана обязательно наличие числа трубок воздухоохладителя (aircooler_count).")
+                "Для методики Бермана обязательно наличие числа трубок воздухоохладителя (aircooler_count)."
+            )
 
     if method == "metro-vickers":
         # Метро-Виккерс использует aircooler_count в адаптере
         if condenser.aircooler_count is None:
             errors.append(
-                "Для методики Метро-Виккерса обязательно наличие числа трубок воздухоохладителя (aircooler_count).")
+                "Для методики Метро-Виккерса обязательно наличие числа трубок воздухоохладителя (aircooler_count)."
+            )
 
     if errors:
         raise ValidationError(
-            message="Ошибка валидации БД (BR-02)",
-            details=", ".join(errors)
+            message="Ошибка валидации БД (BR-02)", details=", ".join(errors)
         )
 
 
-def _check_flow_limit(value: float, limits: dict, bundle_type: str, rule: str) -> list[str]:
+def _check_flow_limit(
+    value: float, limits: dict, bundle_type: str, rule: str
+) -> list[str]:
     """Вспомогательный метод для проверки лимитов одного пучка."""
     warnings = []
     if not limits:
@@ -39,17 +42,17 @@ def _check_flow_limit(value: float, limits: dict, bundle_type: str, rule: str) -
 
     if "min" in limits and value < limits["min"]:
         warnings.append(
-            f"Расход {bundle_type} ({value}) ниже минимума ({limits['min']}) ({rule}).")
+            f"Расход {bundle_type} ({value}) ниже минимума ({limits['min']}) ({rule})."
+        )
     if "max" in limits and value > limits["max"]:
         warnings.append(
-            f"Расход {bundle_type} ({value}) выше максимума ({limits['max']}) ({rule}).")
+            f"Расход {bundle_type} ({value}) выше максимума ({limits['max']}) ({rule})."
+        )
     return warnings
 
 
 def validate_water_flow_limits(
-    w_main: float,
-    w_builtin: float,
-    limits: dict[str, Any] | None
+    w_main: float, w_builtin: float, limits: dict[str, Any] | None
 ) -> list[str]:
     """
     BR-06 / BR-07: Валидация расходов охлаждающей воды для конкретной комбинации (цикла).
@@ -60,8 +63,7 @@ def validate_water_flow_limits(
         return warnings
 
     if w_main == 0 and w_builtin == 0:
-        warnings.append(
-            "Оба расхода воды равны нулю — проверьте входные данные.")
+        warnings.append("Оба расхода воды равны нулю — проверьте входные данные.")
         return warnings
 
     main_limits = limits.get("main_bundle", {})
@@ -69,18 +71,21 @@ def validate_water_flow_limits(
 
     # BR-07: Если работает только один пучок
     if w_main > 0 and w_builtin <= 0:
-        warnings.extend(_check_flow_limit(w_main, main_limits,
-                        "ОП", "режима одного пучка (BR-07)"))
+        warnings.extend(
+            _check_flow_limit(w_main, main_limits, "ОП", "режима одного пучка (BR-07)")
+        )
 
     elif w_builtin > 0 and w_main <= 0:
-        warnings.extend(_check_flow_limit(
-            w_builtin, builtin_limits, "ВП", "режима одного пучка (BR-07)"))
+        warnings.extend(
+            _check_flow_limit(
+                w_builtin, builtin_limits, "ВП", "режима одного пучка (BR-07)"
+            )
+        )
 
     # BR-06: Оба пучка работают
     elif w_main > 0 and w_builtin > 0:
         warnings.extend(_check_flow_limit(w_main, main_limits, "ОП", "BR-06"))
-        warnings.extend(_check_flow_limit(
-            w_builtin, builtin_limits, "ВП", "BR-06"))
+        warnings.extend(_check_flow_limit(w_builtin, builtin_limits, "ВП", "BR-06"))
 
     return warnings
 
@@ -101,10 +106,12 @@ def validate_temperature_ranges(method: str, t1_values: list[float]) -> list[str
     if method == "berman":
         if min_t < 0 or max_t > 45:
             warnings.append(
-                "t1 содержит значения вне оптимального диапазона 0...45°С (Берман).")
+                "t1 содержит значения вне оптимального диапазона 0...45°С (Берман)."
+            )
     elif method == "metro-vickers":
         if min_t < 45 or max_t > 150:
             warnings.append(
-                "t1 содержит значения вне оптимального диапазона 45...150°С (Метро-Виккерс).")
+                "t1 содержит значения вне оптимального диапазона 45...150°С (Метро-Виккерс)."
+            )
 
     return warnings

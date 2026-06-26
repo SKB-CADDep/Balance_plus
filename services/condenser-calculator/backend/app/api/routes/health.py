@@ -6,10 +6,12 @@ from app.dependencies import get_db
 
 router = APIRouter(tags=["Health"])
 
+
 @router.get("/health", include_in_schema=False)
 def health_check() -> dict:
     """Быстрая проверка доступности сервиса (для Docker)."""
     return {"status": "ok", "service": "condenser-calculator"}
+
 
 @router.get("/health/db", include_in_schema=False)
 def health_check_db(db: Session = Depends(get_db)) -> dict:
@@ -20,5 +22,5 @@ def health_check_db(db: Session = Depends(get_db)) -> dict:
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail={"status": "error", "database": "disconnected", "details": str(e)}
+            detail={"status": "error", "database": "disconnected", "details": str(e)},
         )

@@ -9,7 +9,7 @@ logging.disable(logging.CRITICAL)
 
 
 class TestOptimizedTable1D:
-    """ Тесты для оптимизированного класса Table1D. """
+    """Тесты для оптимизированного класса Table1D."""
 
     @pytest.fixture(autouse=True)
     def setup(self) -> None:
@@ -53,9 +53,13 @@ class TestOptimizedTable1D:
         assert table_unsorted(30.0) == pytest.approx(0.3555, abs=1e-3)
 
     def test_creation_fails(self) -> None:
-        with pytest.raises(ValueError, match="Координаты X должны быть строго возрастающими"):
+        with pytest.raises(
+            ValueError, match="Координаты X должны быть строго возрастающими"
+        ):
             Table1D(np.array([1, 2, 2]), np.array([1, 2, 3]))
-        with pytest.raises(ValueError, match="Размеры x_cords и y_cords должны совпадать"):
+        with pytest.raises(
+            ValueError, match="Размеры x_cords и y_cords должны совпадать"
+        ):
             Table1D(np.array([1, 2]), np.array([1, 2, 3]))
         with pytest.raises(ValueError, match="Массивы координат не могут быть пустыми"):
             Table1D(np.array([]), np.array([]))
@@ -79,12 +83,14 @@ class TestOptimizedTable1D:
 
     def test_call_with_mixed_array(self) -> None:
         test_points = np.array([30.0, 125.0, -10.0, 73.0])
-        expected_results = np.array([
-            self.expected_interp_val,
-            self.expected_extrap_val_positive,
-            self.expected_extrap_val_negative,
-            self.y_data[-1]
-        ])
+        expected_results = np.array(
+            [
+                self.expected_interp_val,
+                self.expected_extrap_val_positive,
+                self.expected_extrap_val_negative,
+                self.y_data[-1],
+            ]
+        )
         results = self.table(test_points)
         assert results.shape == expected_results.shape
         assert np.allclose(results, expected_results, atol=1e-3)
@@ -97,20 +103,28 @@ class TestOptimizedTable1D:
 
 
 class TestTable2DAndTrilinear:
-    """ Тесты для Table2D и трилинейной интерполяции. """
+    """Тесты для Table2D и трилинейной интерполяции."""
 
     @pytest.fixture(autouse=True)
     def setup(self) -> None:
         self.x_cords = np.array([25.0, 30.0, 33.0, 35.0])
         self.y_cords = np.array([20.0, 50.0, 100.0, 150.0, 200.0])
-        z_a1_original = np.array([
-            [6.549, 7.211, 8.88, 10.945, 13.409], [5.9, 6.499, 8.018, 9.927, 12.214],
-            [5.036, 5.552, 6.872, 8.572, 10.622], [3.851, 4.257, 5.299, 6.712, 8.438]
-        ])
-        z_a2_original = np.array([
-            [6.635, 7.384, 9.285, 11.678, 14.582], [5.979, 6.655, 8.384, 10.591, 13.28],
-            [5.104, 5.687, 7.184, 9.144, 11.546], [3.906, 4.362, 5.539, 7.158, 9.169]
-        ])
+        z_a1_original = np.array(
+            [
+                [6.549, 7.211, 8.88, 10.945, 13.409],
+                [5.9, 6.499, 8.018, 9.927, 12.214],
+                [5.036, 5.552, 6.872, 8.572, 10.622],
+                [3.851, 4.257, 5.299, 6.712, 8.438],
+            ]
+        )
+        z_a2_original = np.array(
+            [
+                [6.635, 7.384, 9.285, 11.678, 14.582],
+                [5.979, 6.655, 8.384, 10.591, 13.28],
+                [5.104, 5.687, 7.184, 9.144, 11.546],
+                [3.906, 4.362, 5.539, 7.158, 9.169],
+            ]
+        )
         self.z_a1 = z_a1_original[::-1, :]
         self.z_a2 = z_a2_original[::-1, :]
         self.table_a1 = Table2D(self.x_cords, self.y_cords, self.z_a1)
@@ -126,12 +140,26 @@ class TestTable2DAndTrilinear:
         assert np.isnan(self.table_a1(20.0, 50.0))
 
     def test_trilinear_interpolation(self) -> None:
-        result = interpolate_trilinear(self.table_a2, self.a_val2, self.table_a1, self.a_val1,
-                                       self.target_x, self.target_y, target_a=8800.0)
+        result = interpolate_trilinear(
+            self.table_a2,
+            self.a_val2,
+            self.table_a1,
+            self.a_val1,
+            self.target_x,
+            self.target_y,
+            target_a=8800.0,
+        )
         assert result == pytest.approx(6.360, abs=1e-3)
 
     def test_trilinear_extrapolation_a_is_clamped(self) -> None:
         z_at_8000 = self.table_a2(self.target_x, self.target_y)
-        result = interpolate_trilinear(self.table_a2, self.a_val2, self.table_a1, self.a_val1,
-                                       self.target_x, self.target_y, target_a=7500.0)
+        result = interpolate_trilinear(
+            self.table_a2,
+            self.a_val2,
+            self.table_a1,
+            self.a_val1,
+            self.target_x,
+            self.target_y,
+            target_a=7500.0,
+        )
         assert result == z_at_8000

@@ -33,7 +33,9 @@ def get_material_by_uuid(db: Session, material_uuid: str) -> Material:
     material = db.query(Material).filter(Material.uuid == material_uuid).first()
 
     if not material:
-        logger.warning("DB: material not found by uuid", extra={"material_uuid": material_uuid})
+        logger.warning(
+            "DB: material not found by uuid", extra={"material_uuid": material_uuid}
+        )
         raise EntityNotFoundError(f"Material with uuid {material_uuid} not found.")
 
     return material

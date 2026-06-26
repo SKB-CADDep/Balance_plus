@@ -1,4 +1,3 @@
-
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -30,5 +29,6 @@ class CondenserDetail(CondenserBase):
     water_flow_limits: dict | None
 
     model_config = ConfigDict(from_attributes=True)
+
 
 CondenserShort = CondenserListItem

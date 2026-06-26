@@ -23,10 +23,7 @@ def get_condenser_by_id(db: Session, condenser_id: int) -> Condenser:
 
 
 def search_condensers(
-    db: Session,
-    search: str | None = None,
-    skip: int = 0,
-    limit: int = 100
+    db: Session, search: str | None = None, skip: int = 0, limit: int = 100
 ) -> list[Condenser]:
     """Ищет конденсаторы по имени или проекту (case-insensitive) с пагинацией."""
     query = db.query(Condenser)
@@ -36,7 +33,7 @@ def search_condensers(
         query = query.filter(
             or_(
                 Condenser.name_condenser.ilike(search_term),
-                Condenser.project_name.ilike(search_term)
+                Condenser.project_name.ilike(search_term),
             )
         )
 

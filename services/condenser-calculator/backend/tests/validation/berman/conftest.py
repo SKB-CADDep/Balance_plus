@@ -47,7 +47,9 @@ _sentinel = (
 )
 if not _sentinel.exists() and _legacy_validation_root.exists():
     VALIDATION_DATA_ROOT = _legacy_validation_root
-BERMAN_DATA_PATH = VALIDATION_DATA_ROOT / "condenser-calculator" / "strategies" / "berman"
+BERMAN_DATA_PATH = (
+    VALIDATION_DATA_ROOT / "condenser-calculator" / "strategies" / "berman"
+)
 
 GEOMETRYS_PATH = BERMAN_DATA_PATH / "geometrys"
 MODES_PATH = BERMAN_DATA_PATH / "modes"
@@ -116,16 +118,12 @@ def build_calculation_params(
         "S_tube": geom["wall_thickness"],
         "Z_main": int(geom["passes_main"]),
         "Z_builtin": int(geom.get("passes_builtin", 0)),
-
         # Параметры из limits
         "G_nom": geometry["limits"]["mass_flow_steam_nom"],
-
         # Параметры из mode
         "H_steam": mode["H_steam"],
-
         # Материал
         "lambda": material_lambda,
-
         # Рабочие параметры
         "W_main_list": [W_main],
         "W_builtin_list": [W_builtin],
@@ -207,7 +205,7 @@ def generate_ejector_test_cases(results: dict) -> list[dict[str, Any]]:
         else:
             continue
 
-        for t1, expected_P in zip(t1_axis, curve["values"],  strict=True):
+        for t1, expected_P in zip(t1_axis, curve["values"], strict=True):
             test_cases.append(
                 {
                     "num_ejectors": num_ejectors,
@@ -320,4 +318,3 @@ def assert_pressure_approx(
         f"  Рассчитанное P = {calculated:.6f} кгс/см²\n"
         f"  Отклонение = {abs(calculated - expected) / expected * 100:.3f}%"
     )
-

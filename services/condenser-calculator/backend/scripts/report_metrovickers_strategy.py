@@ -5,13 +5,17 @@ setup_path()
 from app.utils.metrovickers_strategy import MetroVickersStrategy
 
 
-def print_beautifully(data_dict:dict, friendly_names:dict, title:str, keys_to_print:list) -> None:
+def print_beautifully(
+    data_dict: dict, friendly_names: dict, title: str, keys_to_print: list
+) -> None:
     """
     Вспомогательная функция для красивой печати данных.
     """
     print(f"\n--- {title} ---")
     max_len = max(
-        len(f"{friendly_names[k][0]} [{friendly_names[k][1]}]") for k in keys_to_print if k in friendly_names
+        len(f"{friendly_names[k][0]} [{friendly_names[k][1]}]")
+        for k in keys_to_print
+        if k in friendly_names
     )
     for key in keys_to_print:
         if key in data_dict and key in friendly_names:
@@ -24,7 +28,9 @@ def print_beautifully(data_dict:dict, friendly_names:dict, title:str, keys_to_pr
                 print(f"{label}: {value}")
 
 
-def generate_and_print_tables(strategy:MetroVickersStrategy, base_params:dict) -> None:
+def generate_and_print_tables(
+    strategy: MetroVickersStrategy, base_params: dict
+) -> None:
     """
     Генерирует данные и выводит их в виде таблиц, аналогичных скриншоту.
     """
@@ -47,7 +53,9 @@ def generate_and_print_tables(strategy:MetroVickersStrategy, base_params:dict) -
         print("=" * 60)
 
         # Печатаем заголовок таблицы (расходы воды)
-        header = "t_ср".ljust(COL_WIDTH) + "".join([str(flow).ljust(COL_WIDTH) for flow in flow_values])
+        header = "t_ср".ljust(COL_WIDTH) + "".join(
+            [str(flow).ljust(COL_WIDTH) for flow in flow_values]
+        )
         print(header)
 
         # Цикл по строкам таблицы (температуры)
@@ -99,17 +107,29 @@ def main() -> None:
         "thickness_pipe_wall": ("Толщина стенки трубок", "мм"),
         "length_cooling_tubes_of_the_main_bundle": ("Активная длина труб", "м"),
         "number_cooling_tubes_of_the_main_bundle": ("Кол-во трубок осн. пучка", "шт"),
-        "number_cooling_tubes_of_the_built_in_bundle": ("Кол-во трубок встр. пучка", "шт"),
-        "number_cooling_water_passes_of_the_main_bundle": ("Число ходов воды (Z)", "шт"),
+        "number_cooling_tubes_of_the_built_in_bundle": (
+            "Кол-во трубок встр. пучка",
+            "шт",
+        ),
+        "number_cooling_water_passes_of_the_main_bundle": (
+            "Число ходов воды (Z)",
+            "шт",
+        ),
         "mass_flow_cooling_water": ("Расход охлаждающей воды", "т/ч"),
         "temperature_cooling_water_1": ("Температура воды на входе", "°C"),
-        "thermal_conductivity_cooling_surface_tube_material": ("Теплопроводность материала", "Вт/(м·К)"),
+        "thermal_conductivity_cooling_surface_tube_material": (
+            "Теплопроводность материала",
+            "Вт/(м·К)",
+        ),
         "coefficient_b": ("Коэффициент чистоты (β)", "-"),
         "mass_flow_flow_path_1": ("Расход пара", "т/ч"),
         "degree_dryness_flow_path_1": ("Степень сухости пара", "-"),
         "diameter_outside_of_pipes": ("Наружный диаметр трубок", "мм"),
         "area_tube_bundle_surface_total": ("Площадь поверхности осн. пучка", "м²"),
-        "area_surface_of_the_air_cooler_tube_bundle": ("Площадь поверхности возд-ля", "м²"),
+        "area_surface_of_the_air_cooler_tube_bundle": (
+            "Площадь поверхности возд-ля",
+            "м²",
+        ),
         "coefficient_Kf": ("Коэффициент отношения площадей", "-"),
         "coefficient_R1": ("Терм. сопротивление стенки", "м²·К/Вт"),
         "speed_cooling_water": ("Скорость охлаждающей воды", "м/с"),
@@ -126,7 +146,12 @@ def main() -> None:
     }
 
     # === ЧАСТЬ 1: Расчет и вывод для одного набора параметров ===
-    print_beautifully(input_params, friendly_names, "Входные параметры для единичного расчета", input_params.keys())
+    print_beautifully(
+        input_params,
+        friendly_names,
+        "Входные параметры для единичного расчета",
+        input_params.keys(),
+    )
     try:
         results = strategy.calculate(input_params)
         intermediate_keys = [
@@ -136,7 +161,12 @@ def main() -> None:
             "coefficient_K_temp",
             "temperature_saturation_steam",
         ]
-        print_beautifully(results, friendly_names, "Ключевые промежуточные результаты", intermediate_keys)
+        print_beautifully(
+            results,
+            friendly_names,
+            "Ключевые промежуточные результаты",
+            intermediate_keys,
+        )
         print("\n" + "=" * 50)
         final_key = "pressure_flow_path_1"
         desc, unit = friendly_names[final_key]
@@ -157,4 +187,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

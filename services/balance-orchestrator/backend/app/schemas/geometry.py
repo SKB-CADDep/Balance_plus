@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 class GeometryInfo(BaseModel):
     """Краткая информация о геометрии (для списка)"""
+
     id: str
     name: str
     type: str
@@ -14,6 +15,7 @@ class GeometryInfo(BaseModel):
 
 class GeometriesManifest(BaseModel):
     """Манифест со списком всех геометрий"""
+
     schema_version: str
     geometries: list[GeometryInfo]
 
@@ -37,6 +39,7 @@ class CondenserMaterials(BaseModel):
 
 class CondenserGeometry(BaseModel):
     """Полная геометрия конденсатора"""
+
     id: str
     type: str
     version: str

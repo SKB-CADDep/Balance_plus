@@ -139,7 +139,9 @@ class TestCreateTask:
     @patch("app.api.routes.tasks.gitlab_client")
     async def test_valid_task_creates_and_returns_full_info(self, mock_gitlab: MagicMock):
         """Should create issue and return full task info."""
-        task = TaskCreate(title="New Task", description="Details", labels=["feature"], project_id=123)
+        task = TaskCreate(
+            title="New Task", description="Details", labels=["feature"], project_id=123
+        )
         created_issue = {"iid": 123, "project_id": 123}
         full_issue = {"iid": 123, "title": "New Task", "state": "opened"}
         mock_gitlab.create_issue.return_value = created_issue
@@ -159,7 +161,9 @@ class TestCreateTask:
         mock_gitlab.create_issue.return_value = {"iid": 456, "project_id": 123}
         mock_gitlab.get_issue.return_value = {"iid": 456}
         _ = await create_task(task)
-        mock_gitlab.create_issue.assert_called_once_with(title="", description="", labels=[], project_id=123)
+        mock_gitlab.create_issue.assert_called_once_with(
+            title="", description="", labels=[], project_id=123
+        )
 
     @pytest.mark.asyncio
     @patch("app.api.routes.tasks.gitlab_client")
@@ -191,7 +195,9 @@ class TestCreateTaskBranch:
     @pytest.mark.asyncio
     @patch("app.api.routes.tasks.gitlab_client")
     @patch("app.api.routes.tasks.slugify")
-    async def test_successful_branch_creation(self, mock_slugify: MagicMock, mock_gitlab: MagicMock):
+    async def test_successful_branch_creation(
+        self, mock_slugify: MagicMock, mock_gitlab: MagicMock
+    ):
         """Should create branch with slugified title."""
         issue_iid = 42
         project_id = 123
@@ -248,7 +254,9 @@ class TestCreateTaskBranch:
     @pytest.mark.asyncio
     @patch("app.api.routes.tasks.gitlab_client")
     @patch("app.api.routes.tasks.slugify")
-    async def test_raises_500_on_get_issue_error(self, mock_slugify: MagicMock, mock_gitlab: MagicMock):
+    async def test_raises_500_on_get_issue_error(
+        self, mock_slugify: MagicMock, mock_gitlab: MagicMock
+    ):
         """Should raise HTTPException 500 on get_issue error."""
         payload = BranchCreateRequest(project_id=123)
         mock_gitlab.get_issue.side_effect = Exception("Issue not found")
@@ -260,7 +268,9 @@ class TestCreateTaskBranch:
     @pytest.mark.asyncio
     @patch("app.api.routes.tasks.gitlab_client")
     @patch("app.api.routes.tasks.slugify")
-    async def test_raises_500_on_create_branch_error(self, mock_slugify: MagicMock, mock_gitlab: MagicMock):
+    async def test_raises_500_on_create_branch_error(
+        self, mock_slugify: MagicMock, mock_gitlab: MagicMock
+    ):
         """Should raise HTTPException 500 on create_branch error."""
         issue = {"iid": 200, "title": "Error task"}
         project_id = 123
@@ -272,4 +282,3 @@ class TestCreateTaskBranch:
             await create_task_branch(200, payload)
         assert exc_info.value.status_code == 500
         assert exc_info.value.detail == "Ошибка создания ветки: Branch exists"
-

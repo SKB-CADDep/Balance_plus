@@ -32,18 +32,20 @@ class TestDocumentationVerification:
         [
             pytest.param("Только ОП", 12000.0, 0.0, 30.898, id="scenario_1_main_only"),
             pytest.param("ОП + ВП", 12000.0, 4000.0, 28.173, id="scenario_2_both"),
-            pytest.param("Только ВП", 0.0, 4000.0, 52.694, id="scenario_3_builtin_only"),
+            pytest.param(
+                "Только ВП", 0.0, 4000.0, 52.694, id="scenario_3_builtin_only"
+            ),
         ],
     )
     def test_saturation_temperature(
         self,
-        strategy:BermanStrategy,
-        verification_geometry:dict,
-        verification_mode:dict,
-        scenario_name:str,
-        W_main:float,
-        W_builtin:float,
-        expected_t_sat:float,
+        strategy: BermanStrategy,
+        verification_geometry: dict,
+        verification_mode: dict,
+        scenario_name: str,
+        W_main: float,
+        W_builtin: float,
+        expected_t_sat: float,
     ) -> None:
         params = build_calculation_params(
             geometry=verification_geometry,
@@ -59,7 +61,9 @@ class TestDocumentationVerification:
         print(type(strategy))
         result = strategy.calculate(params)
 
-        assert len(result["main_results"]) > 0, f"Сценарий '{scenario_name}': результаты не получены"
+        assert len(result["main_results"]) > 0, (
+            f"Сценарий '{scenario_name}': результаты не получены"
+        )
 
         calculated_t_sat = result["main_results"][0]["t_sat"]
 
@@ -78,11 +82,11 @@ class TestDocumentationVerification:
     )
     def test_ejector_pressure(
         self,
-        strategy:BermanStrategy,
-        verification_geometry:dict,
-        verification_mode:dict,
-        num_ejectors:int,
-        expected_pressure_atm:float,
+        strategy: BermanStrategy,
+        verification_geometry: dict,
+        verification_mode: dict,
+        num_ejectors: int,
+        expected_pressure_atm: float,
     ) -> None:
         params = build_calculation_params(
             geometry=verification_geometry,
@@ -99,10 +103,14 @@ class TestDocumentationVerification:
         result = strategy.calculate(params)
 
         ejector_results = [
-            ej for ej in result["ejector_results"] if ej["number_of_ejectors"] == num_ejectors
+            ej
+            for ej in result["ejector_results"]
+            if ej["number_of_ejectors"] == num_ejectors
         ]
 
-        assert len(ejector_results) > 0, f"Результат для {num_ejectors} эжектора(ов) не найден"
+        assert len(ejector_results) > 0, (
+            f"Результат для {num_ejectors} эжектора(ов) не найден"
+        )
 
         calculated = ejector_results[0]["P_ejector_atm"]
 
@@ -111,4 +119,3 @@ class TestDocumentationVerification:
             f"  Ожидаемое P = {expected_pressure_atm} кгс/см²\n"
             f"  Рассчитанное P = {calculated:.5f} кгс/см²"
         )
-

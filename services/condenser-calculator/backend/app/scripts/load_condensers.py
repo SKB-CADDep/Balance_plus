@@ -1,4 +1,5 @@
 """Загружает базовые данные конденсаторов в PostgreSQL."""
+
 from sqlalchemy.orm import Session
 
 from app.models.condenser import Condenser
@@ -15,7 +16,7 @@ def load_condensers(db: Session) -> None:
         doc_num_passport="ПС-1",
         diameter_internal=24.0,
         wall_thickness=1.0,
-        material_id=1, # Привязка к материалу, который загружается первым
+        material_id=1,  # Привязка к материалу, который загружается первым
         main_length=8950.0,
         main_count=8400,
         builtin_length=8950.0,
@@ -26,7 +27,7 @@ def load_condensers(db: Session) -> None:
         ejectors_count=1,
         mass_flow_steam_nom=155000.0,
         mass_flow_air=40.0,
-        water_flow_limits=[4000.0, 20000.0]
+        water_flow_limits=[4000.0, 20000.0],
     )
 
     existing = db.query(Condenser).filter(Condenser.id == 1).first()

@@ -10,8 +10,38 @@ from .uniconv import UnitConverter
 coefficient_B_const = 1.0
 
 k_interpolation_data = {
-    "temperature_points": [5, 15, 27, 38, 50, 70, 95, 120, 150],  # Средняя температура tср [°C]
-    "speed_points": [0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 1.9, 2.0, 2.1, 2.2, 2.4, 2.6, 2.8, 3.0, 3.2, 3.4, 3.6], # Скорость воды Cов [м/с]
+    "temperature_points": [
+        5,
+        15,
+        27,
+        38,
+        50,
+        70,
+        95,
+        120,
+        150,
+    ],  # Средняя температура tср [°C]
+    "speed_points": [
+        0.4,
+        0.6,
+        0.8,
+        1.0,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        1.9,
+        2.0,
+        2.1,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3.0,
+        3.2,
+        3.4,
+        3.6,
+    ],  # Скорость воды Cов [м/с]
     "k_values_matrix": [
         [800, 1050, 1260, 1430, 1540, 1670, 1770, 1870, 1930],
         [1260, 1510, 1720, 1890, 2000, 2170, 2270, 2370, 2430],
@@ -31,17 +61,21 @@ k_interpolation_data = {
         [3440, 3690, 3870, 4050, 4180, 4390, 4500, 4600, 4670],
         [3500, 3750, 3930, 4100, 4230, 4460, 4560, 4660, 4730],
         [3560, 3810, 3990, 4160, 4290, 4520, 4620, 4720, 4790],
-        [3600, 3850, 4040, 4200, 4340, 4560, 4660, 4760, 4840]
-    ]
+        [3600, 3850, 4040, 4200, 4340, 4560, 4660, 4760, 4840],
+    ],
 }
 
-def calculate_pressure(params:dict) -> dict:
+
+def calculate_pressure(params: dict) -> dict:
     get_k_from_table_temp = RegularGridInterpolator(
-        (k_interpolation_data["speed_points"], k_interpolation_data["temperature_points"]),
+        (
+            k_interpolation_data["speed_points"],
+            k_interpolation_data["temperature_points"],
+        ),
         np.array(k_interpolation_data["k_values_matrix"]),
         method="linear",
         bounds_error=False,
-        fill_value=None
+        fill_value=None,
     )
 
     def get_heat_of_vaporization(temperature: float) -> float:
@@ -49,29 +83,30 @@ def calculate_pressure(params:dict) -> dict:
 
     uc = UnitConverter()
 
-    d_in = params['diameter_inside_of_pipes']
-    s_w = params['thickness_pipe_wall']
-    L = params['length_cooling_tubes_of_the_main_bundle']
-    N_main = params['number_cooling_tubes_of_the_main_bundle']
-    N_extra = params['number_cooling_tubes_of_the_built_in_bundle']
-    n_passes = params['number_cooling_water_passes_of_the_main_bundle']
-    m_cw = params['mass_flow_cooling_water']
-    T_cw1 = params['temperature_cooling_water_1']
-    lambda_mat = params['thermal_conductivity_cooling_surface_tube_material']
-    b = params.get('coefficient_b', 1.0)
-    m_flow = params['mass_flow_flow_path_1']
-    dryness = params['degree_dryness_flow_path_1']
-    N_total = params.get('number_air_cooler_total_pipes', (N_main + N_extra) * 0.15)
+    d_in = params["diameter_inside_of_pipes"]
+    s_w = params["thickness_pipe_wall"]
+    L = params["length_cooling_tubes_of_the_main_bundle"]
+    N_main = params["number_cooling_tubes_of_the_main_bundle"]
+    N_extra = params["number_cooling_tubes_of_the_built_in_bundle"]
+    n_passes = params["number_cooling_water_passes_of_the_main_bundle"]
+    m_cw = params["mass_flow_cooling_water"]
+    T_cw1 = params["temperature_cooling_water_1"]
+    lambda_mat = params["thermal_conductivity_cooling_surface_tube_material"]
+    b = params.get("coefficient_b", 1.0)
+    m_flow = params["mass_flow_flow_path_1"]
+    dryness = params["degree_dryness_flow_path_1"]
+    N_total = params.get("number_air_cooler_total_pipes", (N_main + N_extra) * 0.15)
 
     d_out = d_in + 2 * s_w
-    area_total = (math.pi * L * N_main * d_out * 1e-6)
-    area_air = (math.pi * L * N_total * d_out * 1e-6)
+    area_total = math.pi * L * N_main * d_out * 1e-6
+    area_air = math.pi * L * N_total * d_out * 1e-6
 
     Kf = 1 - 0.225 * (area_air / area_total) if area_total > 0 else 1.0
-    R1 = ((2 * s_w / 1000 * d_out / 1000) /
-          ((d_out / 1000 + d_in / 1000) * lambda_mat))
+    R1 = (2 * s_w / 1000 * d_out / 1000) / ((d_out / 1000 + d_in / 1000) * lambda_mat)
 
-    speed = (m_cw * n_passes) / (900 * math.pi * (N_main + N_extra) * (d_in / 1000) ** 2)
+    speed = (m_cw * n_passes) / (
+        900 * math.pi * (N_main + N_extra) * (d_in / 1000) ** 2
+    )
     r_vap = get_heat_of_vaporization(T_cw1)
 
     dT = (m_flow * r_vap * dryness) / m_cw
@@ -100,20 +135,36 @@ def calculate_pressure(params:dict) -> dict:
 
     _T_K = uc.convert(T_sat, from_unit="°C", to_unit="K", parameter_type="temperature")
     p_MPa = seuif97.tx2p(T_sat, 1)
-    p_kgf = uc.convert(p_MPa, from_unit="МПа", to_unit="кгс/см²", parameter_type="pressure")
+    p_kgf = uc.convert(
+        p_MPa, from_unit="МПа", to_unit="кгс/см²", parameter_type="pressure"
+    )
 
     res_str = f"| {m_cw:<8.1f} | {T_cw1:<8.1f} | {T_cw2:<8.2f} | {T_sat:<8.2f} | {m_flow:<7.1f} | {p_kgf:<11.4f} |"
     print(res_str)
 
     return {
-        'd_out': d_out, 'area_total': area_total, 'area_air': area_air, 'Kf': Kf, 'R1': R1,
-        'speed': speed, 'r_vap': r_vap, 'T_cw2': T_cw2, 'T_avg': T_avg, 'K_temp': K_temp,
-        'K_clean': K_clean, 'R': R, 'K_zag': K_zag, 'delta_T_rel': delta_T_rel,
-        'T_sat': T_sat, 'p_kgf': p_kgf
+        "d_out": d_out,
+        "area_total": area_total,
+        "area_air": area_air,
+        "Kf": Kf,
+        "R1": R1,
+        "speed": speed,
+        "r_vap": r_vap,
+        "T_cw2": T_cw2,
+        "T_avg": T_avg,
+        "K_temp": K_temp,
+        "K_clean": K_clean,
+        "R": R,
+        "K_zag": K_zag,
+        "delta_T_rel": delta_T_rel,
+        "T_sat": T_sat,
+        "p_kgf": p_kgf,
     }
 
 
-def batch_calculate(params_template:dict[str, Any], varying_params: dict) -> list[dict[str, Any]]:
+def batch_calculate(
+    params_template: dict[str, Any], varying_params: dict
+) -> list[dict[str, Any]]:
     from itertools import product
 
     keys = list(varying_params.keys())

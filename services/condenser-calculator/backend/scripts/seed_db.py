@@ -107,7 +107,9 @@ def seed_data(db: Session) -> None:
         db.merge(Condenser(**cond_data))
 
     db.commit()
-    print("✅ Тестовые данные (Материалы и 3 Конденсатора) успешно загружены (merge) в БД.")
+    print(
+        "✅ Тестовые данные (Материалы и 3 Конденсатора) успешно загружены (merge) в БД."
+    )
 
 
 if __name__ == "__main__":

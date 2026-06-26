@@ -2,6 +2,7 @@
 Главный скрипт для инициализации базы данных.
 Запускать так: py seed.py
 """
+
 import os
 import sys
 from pathlib import Path
@@ -10,7 +11,7 @@ from pathlib import Path
 os.environ["POSTGRES_SERVER"] = "localhost"
 os.environ["DB_HOST"] = "localhost"
 os.environ["POSTGRES_PORT"] = "5255"  # <-- Указываем правильный порт!
-os.environ["DB_PORT"] = "5255"        # На всякий случай
+os.environ["DB_PORT"] = "5255"  # На всякий случай
 
 # Принудительно добавляем текущую папку (backend) в пути Python
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -26,7 +27,9 @@ from app.scripts.load_materials import load_materials
 
 
 def main() -> None:
-    print(f"[*] Подключение к БД на {os.environ.get('POSTGRES_SERVER')}:{os.environ.get('POSTGRES_PORT')}...")
+    print(
+        f"[*] Подключение к БД на {os.environ.get('POSTGRES_SERVER')}:{os.environ.get('POSTGRES_PORT')}..."
+    )
     print("[1/3] Создание таблиц в базе данных...")
     Base.metadata.create_all(bind=engine)
     print("[+] Таблицы готовы.")
@@ -51,6 +54,7 @@ def main() -> None:
     finally:
         db.close()
         print("\n[*] Готово! Теперь можно запускать тесты.")
+
 
 if __name__ == "__main__":
     main()
