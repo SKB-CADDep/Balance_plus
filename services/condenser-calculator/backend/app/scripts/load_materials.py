@@ -7,6 +7,7 @@ from app.models.material import Material
 
 logger = logging.getLogger(__name__)
 
+
 def load_materials(db: Session, materials_dir: Path):
     """
     Читает JSON-файлы материалов из указанной директории и загружает их в БД.
@@ -27,7 +28,9 @@ def load_materials(db: Session, materials_dir: Path):
             # Достаем имя по реальной структуре твоего JSON
             material_name = data.get("metadata", {}).get("name_material_standard")
             if not material_name:
-                logger.warning(f"Файл {json_file.name} не содержит 'name_material_standard'. Пропускаем.")
+                logger.warning(
+                    f"Файл {json_file.name} не содержит 'name_material_standard'. Пропускаем."
+                )
                 continue
 
             # 1. Защита от дубликатов (лекарство от UniqueViolation)
@@ -51,7 +54,7 @@ def load_materials(db: Session, materials_dir: Path):
                 material_uuid=mat_uuid,
                 name=material_name,
                 thermal_conductivity_points=thermal_points,
-                full_properties=data  # Закидываем весь JSON целиком для будущих расчетов
+                full_properties=data,  # Закидываем весь JSON целиком для будущих расчетов
             )
 
             db.add(new_material)
@@ -69,7 +72,9 @@ def load_materials(db: Session, materials_dir: Path):
             logger.info(f"[+] Успешно загружено новых материалов: {added_count}")
         else:
             db.rollback()
-            logger.info("[*] Новых материалов для загрузки не найдено (все уже в базе).")
+            logger.info(
+                "[*] Новых материалов для загрузки не найдено (все уже в базе)."
+            )
     except Exception as e:
         db.rollback()
         logger.error(f"[!] Ошибка при сохранении материалов в БД: {e}")

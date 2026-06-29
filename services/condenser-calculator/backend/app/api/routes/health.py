@@ -11,11 +11,7 @@ router = APIRouter(tags=["Health"])
 @router.get("/", include_in_schema=True)
 def health_check():
     """Быстрая проверка доступности сервиса (для Docker/K8s)."""
-    return {
-        "status": "ok",
-        "service": "condenser-calculator",
-        "version": "0.1.0"
-    }
+    return {"status": "ok", "service": "condenser-calculator", "version": "0.1.0"}
 
 
 @router.get("/db", include_in_schema=True)
@@ -27,14 +23,10 @@ def health_check_db(db: Session = Depends(get_db)):
         return {
             "status": "ok",
             "database": "connected",
-            "details": "PostgreSQL is reachable"
+            "details": "PostgreSQL is reachable",
         }
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail={
-                "status": "error",
-                "database": "disconnected",
-                "details": str(e)
-            }
+            detail={"status": "error", "database": "disconnected", "details": str(e)},
         )

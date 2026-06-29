@@ -27,6 +27,7 @@ from app.models.material import Material
 
 # Импортируем ваши функции
 from app.scripts.load_materials import load_materials
+from app.scripts.load_condensers import load_condensers
 
 
 def main() -> None:
@@ -61,7 +62,7 @@ def main() -> None:
             print("[+] Конденсаторы загружены.")
         else:
             print(f"[-] Файл Excel не найден по пути: {excel_path}")
-        
+
     except Exception as e:
         print(f"[!] Произошла ошибка: {e}")
     finally:

@@ -7,9 +7,20 @@ from app.models.base import Base
 condenser_material_association = Table(
     "condenser_material_association",
     Base.metadata,
-    Column("condenser_id", Integer, ForeignKey("condensers.id", ondelete="CASCADE"), primary_key=True),
-    Column("material_id", Integer, ForeignKey("materials.id", ondelete="CASCADE"), primary_key=True)
+    Column(
+        "condenser_id",
+        Integer,
+        ForeignKey("condensers.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+    Column(
+        "material_id",
+        Integer,
+        ForeignKey("materials.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
 )
+
 
 class Condenser(Base):
     __tablename__ = "condensers"
@@ -43,7 +54,7 @@ class Condenser(Base):
     materials = relationship(
         "Material",
         secondary=condenser_material_association,
-        back_populates="condensers"
+        back_populates="condensers",
     )
 
     calculations = relationship(

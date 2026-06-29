@@ -1,9 +1,11 @@
 import logging
 import unittest
 
-from app.domain.valve_physics_engine import ValvePhysicsEngine
-from app.domain.models import  ValveGeometry, ThermoConditions
 from seuif97 import pt2h
+
+from app.domain.models import ThermoConditions, ValveGeometry
+from app.domain.valve_physics_engine import ValvePhysicsEngine
+
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -18,18 +20,20 @@ class TestValveCalculator(unittest.TestCase):
         t_start_c = 555.0
         geometry = ValveGeometry(
             count_parts=3,
-            diameter_m= 0.04,
-            clearance_m= 0.000215,
-            radius_rounding_m= 0.002,
-            len_parts_m= [0.3135, 0.05, 0.0975])
+            diameter_m=0.04,
+            clearance_m=0.000215,
+            radius_rounding_m=0.002,
+            len_parts_m=[0.3135, 0.05, 0.0975],
+        )
         termo = ThermoConditions(
-            count_valves= 2,
-            p_in_mpa= [p_fresh_mpa, p_intermediate_mpa, p_vacuum_mpa],
-            t_start_c= 555.0,
-            h_start_kj_kg= pt2h(p_fresh_mpa, t_start_c),
-            t_air_c= 40.0,
-            p_suctions_mpa= [p_suctions_mpa, p_suctions_mpa])
-        self.calculator = ValvePhysicsEngine(geometry,termo)
+            count_valves=2,
+            p_in_mpa=[p_fresh_mpa, p_intermediate_mpa, p_vacuum_mpa],
+            t_start_c=555.0,
+            h_start_kj_kg=pt2h(p_fresh_mpa, t_start_c),
+            t_air_c=40.0,
+            p_suctions_mpa=[p_suctions_mpa, p_suctions_mpa],
+        )
+        self.calculator = ValvePhysicsEngine(geometry, termo)
 
     def test_execute_calculations(self):
         result = self.calculator.execute()
@@ -49,7 +53,7 @@ class TestValveCalculator(unittest.TestCase):
             self.assertAlmostEqual(result.hi_kj_kg[i], expected_hi_kj_kg[i], places=0)
 
         deaerator_props = [result.dea_g, result.dea_t, result.dea_h, result.dea_p_mpa / 0.0980665]
-        expected_deaerator_props = [0.9250777918, 503.6, 832.8619847*4.1868, 10]
+        expected_deaerator_props = [0.9250777918, 503.6, 832.8619847 * 4.1868, 10]
         for i, expected_value in enumerate(expected_deaerator_props):
             self.assertAlmostEqual(deaerator_props[i], expected_value, places=1)
 
@@ -57,10 +61,10 @@ class TestValveCalculator(unittest.TestCase):
         self.assertEqual(len(result.ej_results), len(expected_ejector_props))
         for i, expected in enumerate(expected_ejector_props):
             actual = result.ej_results[i]
-            self.assertAlmostEqual(actual['g'], expected['g'], places=2)
-            self.assertAlmostEqual(actual['t'], expected['t'], places=1)
-            self.assertAlmostEqual(actual['h'], expected['h'], places=0)
-            self.assertAlmostEqual(actual['p_mpa'] / 0.0980665, expected['p'], places=2)
+            self.assertAlmostEqual(actual["g"], expected["g"], places=2)
+            self.assertAlmostEqual(actual["t"], expected["t"], places=1)
+            self.assertAlmostEqual(actual["h"], expected["h"], places=0)
+            self.assertAlmostEqual(actual["p_mpa"] / 0.0980665, expected["p"], places=2)
 
 
 class TestValveCalculatorTwo(unittest.TestCase):
@@ -74,14 +78,16 @@ class TestValveCalculatorTwo(unittest.TestCase):
             diameter_m=0.05,
             clearance_m=0.00023,
             radius_rounding_m=0.002,
-            len_parts_m=[0.190, 0.110])
+            len_parts_m=[0.190, 0.110],
+        )
         termo = ThermoConditions(
             count_valves=2,
             p_in_mpa=[p_fresh_mpa, p_vacuum_mpa],
             t_start_c=t_start_c,
             h_start_kj_kg=pt2h(p_fresh_mpa, t_start_c),
             t_air_c=40.0,
-            p_suctions_mpa=[p_suctions_mpa])
+            p_suctions_mpa=[p_suctions_mpa],
+        )
         self.calculator = ValvePhysicsEngine(geometry, termo)
 
     def test_execute_calculations_two(self):
@@ -90,7 +96,7 @@ class TestValveCalculatorTwo(unittest.TestCase):
         expected_gi_t_h = [0.9634638651, 0.004586641266]
         expected_pi_in_mpa = [12.749, 0.101]
         expected_ti_c = [555.005, 39.980]
-        expected_hi_kj_kg = [832.8619847*4.1868, 40.24]
+        expected_hi_kj_kg = [832.8619847 * 4.1868, 40.24]
 
         for i in range(len(expected_gi_t_h)):
             self.assertAlmostEqual(result.gi_t_h[i], expected_gi_t_h[i], places=3)
@@ -106,10 +112,11 @@ class TestValveCalculatorTwo(unittest.TestCase):
         self.assertEqual(len(result.ej_results), len(expected_ejector_props))
         for i, expected in enumerate(expected_ejector_props):
             actual = result.ej_results[i]
-            self.assertAlmostEqual(actual['g'], expected['g'], places=2)
-            self.assertAlmostEqual(actual['t'], expected['t'], places=0)
-            self.assertAlmostEqual(actual['h'], expected['h'], places=0)
-            self.assertAlmostEqual(actual['p_mpa'] / 0.0980665, expected['p'], places=2)
+            self.assertAlmostEqual(actual["g"], expected["g"], places=2)
+            self.assertAlmostEqual(actual["t"], expected["t"], places=0)
+            self.assertAlmostEqual(actual["h"], expected["h"], places=0)
+            self.assertAlmostEqual(actual["p_mpa"] / 0.0980665, expected["p"], places=2)
+
 
 # class TestValveCalculatorThree(unittest.TestCase):
 #     def setUp(self):

@@ -1,6 +1,7 @@
 """
 Валидация математики: Расчет Бермана по эталонным сценариям из документации
 """
+
 import math
 from typing import Any
 from app.utils.berman_strategy import BermanStrategy
@@ -106,8 +107,6 @@ tests = [
             "W_main_list": [12000.0],
             "check_ejectors": 2,
         },
-        "expected": {
-            "P_ejector": 0.03702
-        }
-    }
+        "expected": {"P_ejector": 0.03702},
+    },
 ]

@@ -1,6 +1,5 @@
 from typing import Annotated, Any, Literal
 from pydantic import BaseModel, Field, model_validator, field_validator, ConfigDict
-from typing import Literal, Annotated, Any
 
 from app.core.range_parser import parse_range_input
 
@@ -13,27 +12,38 @@ FractionValue = Annotated[float, Field(ge=0.0, le=1.0)]
 # =====================================================================
 class CalculationInput(BaseModel):
     """Входные данные для расчета матрицы режимов конденсатора."""
-    
-    condenser_id: int = Field(..., description="ID конденсатора из БД оборудования (DB-EQUIP-CONDENSER)")
+
+    condenser_id: int = Field(
+        ..., description="ID конденсатора из БД оборудования (DB-EQUIP-CONDENSER)"
+    )
 
     # --- НОВАЯ ЛОГИКА: material_id теперь опциональный ---
     material_id: int | None = Field(
         default=None,
-        description="ID материала трубок. Если не передан, возьмется первый доступный для данного конденсатора"
+        description="ID материала трубок. Если не передан, возьмется первый доступный для данного конденсатора",
     )
 
-    method: Literal["berman", "metro-vickers"] = Field(..., description="Методика расчета (BR-01)")
+    method: Literal["berman", "metro-vickers"] = Field(
+        ..., description="Методика расчета (BR-01)"
+    )
 
     coefficient_b: str | list[FractionValue] = Field(
-        default=[1.0], 
-        description="Коэффициент чистоты (от 0 до 1)"
+        default=[1.0], description="Коэффициент чистоты (от 0 до 1)"
     )
     G_steam: str | list[float] = Field(..., description="Массив расходов пара (Ось X)")
-    W_main: str | list[float] = Field(..., description="Массив расходов основной охл. воды")
-    W_builtin: str | list[float] | None = Field(default=None, description="Массив расходов воды встроенного пучка")
-    t1_main: str | list[float] = Field(..., description="Массив температур воды на входе (Ось Y)")
-    t1_builtin: str | list[float] | None = Field(default=None, description="Температуры встроенного пучка")
-    
+    W_main: str | list[float] = Field(
+        ..., description="Массив расходов основной охл. воды"
+    )
+    W_builtin: str | list[float] | None = Field(
+        default=None, description="Массив расходов воды встроенного пучка"
+    )
+    t1_main: str | list[float] = Field(
+        ..., description="Массив температур воды на входе (Ось Y)"
+    )
+    t1_builtin: str | list[float] | None = Field(
+        default=None, description="Температуры встроенного пучка"
+    )
+
     # Скалярные параметры (Конструктив)
     Z_ejectors: int = Field(default=1, ge=0, description="Количество рабочих эжекторов")
     Z_main: int = Field(default=2, ge=1, description="Число ходов основной воды")

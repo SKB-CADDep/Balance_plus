@@ -8,7 +8,7 @@ celery_app = Celery(
     "condenser_worker",
     broker=REDIS_URL,
     backend=REDIS_URL,
-    include=["app.worker"] # Указываем, где искать задачи
+    include=["app.worker"],  # Указываем, где искать задачи
 )
 
 celery_app.conf.update(

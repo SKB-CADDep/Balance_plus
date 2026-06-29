@@ -12,7 +12,7 @@ os.environ["POSTGRES_PORT"] = "5254"
 from sqlalchemy import text
 
 from app.adapters.calculation_adapter import CalculationAdapter
-from app.schemas import MultiCalculationParams, CalculationGlobals, ValveGroupInput
+from app.schemas import CalculationGlobals, MultiCalculationParams, ValveGroupInput
 
 
 class DummyValveInfo:
@@ -91,10 +91,10 @@ def calculate_wrapper(payload: dict):
                         p_leak_offs=group.get("p_leak_offs", []),
                         p_leak_offs_unit=group.get("p_leak_offs_unit", "кгс/см²"),
                     )
-                ]
+                ],
             )
             calc_res = CalculationAdapter.run_calculation(multi_params, valve_info)
-            
+
             group_total_g = sum(calc_res.Gi) * group["quantity"]
             detail = {
                 "valve_id": valve_id,

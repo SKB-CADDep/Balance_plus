@@ -2,9 +2,8 @@
 Тесты для turbines check endpoints.
 """
 
-import pytest
-
 from app.tests.crud.test_crud import create_test_turbine, create_test_valve
+
 
 async def test_create_turbine(async_client, db_session):
     """Тест проверки создания сущностей(POST)."""
@@ -61,11 +60,3 @@ async def test_get_turbine_not_found(async_client, db_session):
     turbine_id = 999
     response = await async_client.get(f"/api/v1/turbines/{turbine_id}")
     assert response.status_code == 404
-
-
-
-
-
-
-
-

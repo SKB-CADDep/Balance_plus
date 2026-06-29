@@ -1,6 +1,7 @@
 """
 Юнит-тест: Проверка правильности формирования Excel-отчета (матрицы, листы, округление).
 """
+
 from openpyxl import load_workbook
 
 from app.services.excel_exporter import ExcelExporter
@@ -36,15 +37,17 @@ def test_excel_structure_and_rounding() -> None:
         MockMatrixResult(
             meta={"coefficient_b": 0.8, "W_main": 8000.0},
             columns=[100.0, 120.0],  # Колонки (G)
-            rows=[15.0, 20.0],       # Строки (t1)
-            values=[[10.12345, 0.00001],  # 0.00001 - проверка правила: не должен округляться до 0.0
-                    [20.99999, 30.5]     # 20.99999 -> 21.0
-                    ]
+            rows=[15.0, 20.0],  # Строки (t1)
+            values=[
+                [
+                    10.12345,
+                    0.00001,
+                ],  # 0.00001 - проверка правила: не должен округляться до 0.0
+                [20.99999, 30.5],  # 20.99999 -> 21.0
+            ],
         )
     ]
-    ejector_results = [
-        {"P_ejector_kPa": 12.34567, "P_ejector_atm": 0.1218}
-    ]
+    ejector_results = [{"P_ejector_kPa": 12.34567, "P_ejector_atm": 0.1218}]
     calc_out = MockCalculationOutput(tables, ejector_results)
 
     # 2. Выполняем экспорт

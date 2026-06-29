@@ -12,9 +12,11 @@ router = APIRouter(prefix="/tasks", tags=["Tasks"])
 
 @router.get("", response_model=list[TaskInfo])
 async def list_tasks(
-    project_id: int = Query(..., description="ID проекта обязателен"), # Делаем обязательным для 422
-    state: str = "opened", 
-    my_only: bool = False
+    project_id: int = Query(
+        ..., description="ID проекта обязателен"
+    ),  # Делаем обязательным для 422
+    state: str = "opened",
+    my_only: bool = False,
 ):
     """
     Получить список задач.

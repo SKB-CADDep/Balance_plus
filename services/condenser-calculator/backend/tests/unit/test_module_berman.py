@@ -1,6 +1,7 @@
 """
 Юнит-тесты для физического движка Berman (расчет температур и давления)
 """
+
 import pytest
 
 from app.utils.berman_strategy import BermanStrategy

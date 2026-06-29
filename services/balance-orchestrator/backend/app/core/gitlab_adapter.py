@@ -1,7 +1,7 @@
 # gitlab_adapter.py — ДОПОЛНЯЕМ существующий файл
+import logging
 import os
 import time
-import logging
 from typing import ClassVar
 
 import gitlab
@@ -12,6 +12,7 @@ from gitlab.exceptions import GitlabGetError
 load_dotenv()
 
 logger = logging.getLogger(__name__)
+
 
 class GitLabAdapter:
     # КЕШ ДЛЯ ПРОЕКТОВ (Чтобы не бомбить API)
@@ -66,6 +67,7 @@ class GitLabAdapter:
         except (gitlab.exceptions.GitlabGetError, Exception):
             print(f"❌ Проект ID {project_id} не найден в GitLab")
             return None
+
     @property
     def default_branch(self) -> str:
         """Возвращает дефолтную ветку проекта"""
@@ -250,27 +252,31 @@ class GitLabAdapter:
         """Получает ВСЕ задачи. Пропускает те, к проектам которых нет доступа."""
         try:
             self.gl.auth()
-            issues = self.gl.issues.list(assignee_id=self.gl.user.id, state=state, scope='all', all=True)
+            issues = self.gl.issues.list(
+                assignee_id=self.gl.user.id, state=state, scope="all", all=True
+            )
 
             result = []
             for issue in issues:
                 proj = self.get_project_by_id(issue.project_id)
                 if not proj:
-                    continue # Пропускаем задачу, если проект не найден
+                    continue  # Пропускаем задачу, если проект не найден
 
-                result.append({
-                    "iid": issue.iid,
-                    "project_id": issue.project_id,
-                    "project_name": proj.name,
-                    "title": issue.title,
-                    "description": issue.description,
-                    "state": issue.state,
-                    "labels": issue.labels,
-                    "assignee": issue.assignee["username"] if issue.assignee else None,
-                    "created_at": issue.created_at,
-                    "due_date": issue.due_date,
-                    "web_url": issue.web_url,
-                })
+                result.append(
+                    {
+                        "iid": issue.iid,
+                        "project_id": issue.project_id,
+                        "project_name": proj.name,
+                        "title": issue.title,
+                        "description": issue.description,
+                        "state": issue.state,
+                        "labels": issue.labels,
+                        "assignee": issue.assignee["username"] if issue.assignee else None,
+                        "created_at": issue.created_at,
+                        "due_date": issue.due_date,
+                        "web_url": issue.web_url,
+                    }
+                )
             return result
         except Exception as e:
             logger.error(f"Ошибка получения задач: {e}")

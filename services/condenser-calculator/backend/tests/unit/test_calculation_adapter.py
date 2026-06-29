@@ -25,15 +25,12 @@ def create_mock_matrix(
         meta=meta or {"coefficient_b": 1.0},
         headers=[],
         data=[],
-        warnings=warnings or []
+        warnings=warnings or [],
     )
 
 
 def create_mock_ejector():
-    return EjectorResult.model_construct(
-        mass_flow_air=40.0,
-        steam_consumption=150.0
-    )
+    return EjectorResult.model_construct(mass_flow_air=40.0, steam_consumption=150.0)
 
 
 # ===================================================================
@@ -69,8 +66,7 @@ def mock_material() -> MagicMock:
     m = MagicMock()
     m.id = 7
     m.name = "12МХЛ"
-    m.thermal_conductivity_points = [
-        [20.0, 110.0], [100.0, 105.0], [300.0, 98.0]]
+    m.thermal_conductivity_points = [[20.0, 110.0], [100.0, 105.0], [300.0, 98.0]]
     return m
 
 
@@ -104,10 +100,14 @@ def input_metrovickers(input_berman: CalculationInput) -> CalculationInput:
 # ПАРАМЕТРИЗОВАННЫЕ БАЗОВЫЕ ТЕСТЫ
 # ===================================================================
 
-@pytest.mark.parametrize("method, h_steam, x_steam, engine_mock_name", [
-    ("berman", 560.5, 0.95, "_run_berman"),
-    ("metro-vickers", None, 0.95, "_run_metrovickers"),
-])
+
+@pytest.mark.parametrize(
+    "method, h_steam, x_steam, engine_mock_name",
+    [
+        ("berman", 560.5, 0.95, "_run_berman"),
+        ("metro-vickers", None, 0.95, "_run_metrovickers"),
+    ],
+)
 def test_calculate_different_methods(
     adapter: CondenserCalculationAdapter,
     mock_condenser: MagicMock,
@@ -133,8 +133,7 @@ def test_calculate_different_methods(
     with patch.object(adapter, engine_mock_name) as mock_run:
         # ИСПРАВЛЕНИЕ: Методы возвращают разные типы данных
         if method == "berman":
-            mock_run.return_value = ([create_mock_matrix()], [
-                                     create_mock_ejector()])
+            mock_run.return_value = ([create_mock_matrix()], [create_mock_ejector()])
         else:
             mock_run.return_value = [create_mock_matrix()]
 
@@ -218,10 +217,8 @@ def test_metrovickers_warning_extrapolation(
             )
         ]
 
-        result = adapter.calculate(
-            input_metrovickers, mock_condenser, mock_material)
-        assert any("экстраполяц" in w.lower()
-                   for w in result.tables[0].warnings)
+        result = adapter.calculate(input_metrovickers, mock_condenser, mock_material)
+        assert any("экстраполяц" in w.lower() for w in result.tables[0].warnings)
 
 
 # ===================================================================

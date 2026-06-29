@@ -22,7 +22,10 @@ class CondenserDetail(CondenserBase):
     wall_thickness: float
 
     # --- НОВОЕ ПОЛЕ: Список доступных материалов ---
-    materials: List[MaterialShort] = Field(default_factory=list, description="Список доступных материалов для данного аппарата")
+    materials: List[MaterialShort] = Field(
+        default_factory=list,
+        description="Список доступных материалов для данного аппарата",
+    )
 
     main_length: float
     main_count: int

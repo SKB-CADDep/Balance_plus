@@ -24,6 +24,7 @@ _results = load_results(4)
 _test_cases = generate_test_cases_from_results(_results, _mode)
 _ejector_cases = generate_ejector_test_cases(_results)
 
+
 @pytest.mark.skip(reason="Ожидаем эталонные данные от аналитиков (задача QA-2)")
 class TestPressureMatrixMode4:
     """Полная проверка матрицы давлений из results_4.json."""
@@ -53,6 +54,7 @@ class TestPressureMatrixMode4:
             expected=case["expected_pressure"],
             context=f"Тест: {case['id']}",
         )
+
 
 @pytest.mark.skip(reason="Ожидаем эталонные данные от аналитиков (задача QA-2)")
 class TestEjectorsMode4:
@@ -130,6 +132,7 @@ class TestEjectorsMode4:
             f"P(G_air=20)={P_high:.6f} должно быть > P(G_air=16.5)={P_low:.6f}"
         )
 
+
 @pytest.mark.skip(reason="Ожидаем эталонные данные от аналитиков (задача QA-2)")
 class TestExtendedWaterFlowRange:
     """Проверка расширенного диапазона расхода воды (8000-16000 м³/ч)."""
@@ -170,6 +173,7 @@ class TestExtendedWaterFlowRange:
         print(f"  Снижение: {reduction:.1f}%")
 
         assert 15 < reduction < 30
+
 
 @pytest.mark.skip(reason="Ожидаем эталонные данные от аналитиков (задача QA-2)")
 class TestMode4VsMode3:

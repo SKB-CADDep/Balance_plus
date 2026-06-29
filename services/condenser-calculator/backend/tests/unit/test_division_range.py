@@ -1,6 +1,7 @@
 """
 Юнит-тесты для утилиты разбиения диапазона на равные части
 """
+
 import numpy as np
 import pytest
 
@@ -18,8 +19,9 @@ class TestSplitIntoParts:
         """
         number = 1000
         n_parts = 10
-        expected = np.array([0., 100., 200., 300., 400.,
-                            500., 600., 700., 800., 900., 1000.])
+        expected = np.array(
+            [0.0, 100.0, 200.0, 300.0, 400.0, 500.0, 600.0, 700.0, 800.0, 900.0, 1000.0]
+        )
         result = split_into_parts(number, n_parts)
         assert np.array_equal(result, expected)  # проверка идентичности
 

@@ -18,7 +18,7 @@ class Material(Base):
     full_properties = Column(JSON)
 
     condensers = relationship(
-        "Condenser", 
-        secondary="condenser_material_association", 
-        back_populates="materials"
+        "Condenser",
+        secondary="condenser_material_association",
+        back_populates="materials",
     )

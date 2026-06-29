@@ -4,8 +4,7 @@ from contextvars import ContextVar
 from typing import Any
 
 # ContextVar для хранения request_id в текущем контексте выполнения
-request_id_ctx_var: ContextVar[str] = ContextVar(
-    "request_id", default="nosession")
+request_id_ctx_var: ContextVar[str] = ContextVar("request_id", default="nosession")
 
 
 class JSONFormatter(logging.Formatter):

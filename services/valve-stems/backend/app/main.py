@@ -11,13 +11,14 @@ from app.core.config import settings
 from app.core.error_handlers import setup_exception_handlers
 from app.core.logging_config import setup_logging
 from app.middleware.logging_middleware import RequestLoggingMiddleware
-
+from app.api.routes import health
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Application starting up", extra={"log_level": log_level})
     yield
+
 
 log_level = os.getenv("LOG_LEVEL", "INFO")
 setup_logging(log_level)

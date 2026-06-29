@@ -40,7 +40,7 @@ tests = [
         "expected": {
             "efficiency": 0.85,
             # Реальный ответ будет 100.0, но мы ждем 999.0
-            "power_output": 100.0
-        }
-    }
+            "power_output": 100.0,
+        },
+    },
 ]
