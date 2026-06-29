@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import * as XLSX from 'xlsx';
 import {
     Box, Button, Heading, Text, VStack, Table, Thead, Tbody, Tr, Th, Td,
@@ -19,11 +19,17 @@ type Props = {
     onGoBack?: () => void;
 };
 
+// Реализация BR-06 (если округляется до 0.00, но число не 0, показываем целиком)
 const roundNumber = (num: any, decimals: number = 4): string | number => {
     const parsed = parseFloat(num);
     if (isNaN(parsed)) return '-';
-    if (parsed !== 0 && Math.abs(parsed) < 0.0001) return parsed.toExponential(2);
-    return Number(parsed.toFixed(decimals));
+    if (parsed === 0) return 0;
+    
+    const rounded = Number(parsed.toFixed(decimals));
+    if (rounded === 0) {
+        return parsed.toString();
+    }
+    return rounded;
 };
 
 const ResultsPage: React.FC<Props> = ({ stockId, inputData, outputData, onGoBack }) => {
@@ -34,16 +40,46 @@ const ResultsPage: React.FC<Props> = ({ stockId, inputData, outputData, onGoBack
     const [isDownloadingDrawio, setIsDownloadingDrawio] = useState<Record<number, boolean>>({});
 
     const details = outputData?.details || [];
-    const summary = outputData?.summary;
     const pUnit = inputData?.globals?.P_fresh_unit || "кгс/см²";
 
-    // --- ИНТЕГРАЦИЯ С BALANCE+ (IDE) ---
     const [isEmbedded, setIsEmbedded] = useState(false);
 
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
         setIsEmbedded(urlParams.get('embedded') === 'true');
     }, []);
+
+    // Сбор всех отсосов для новой итоговой таблицы
+    const allSuctions = useMemo(() => {
+        const suctions: any[] = [];
+        details.forEach(group => {
+            const groupName = `${group.valve_names.join(', ')} (${group.quantity} шт.)`;
+            
+            if (group.deaerator_props && group.deaerator_props[0] > 0.000001) {
+                suctions.push({
+                    groupName,
+                    type: 'Деаэратор',
+                    g: group.deaerator_props[0],
+                    p: group.deaerator_props[3],
+                    t: group.deaerator_props[1],
+                    h: group.deaerator_props[2]
+                });
+            }
+            if (group.ejector_props) {
+                group.ejector_props.forEach((ej, idx) => {
+                    suctions.push({
+                        groupName,
+                        type: `Отсос №${idx + 1}`,
+                        g: ej.g,
+                        p: ej.p,
+                        t: ej.t,
+                        h: ej.h
+                    });
+                });
+            }
+        });
+        return suctions;
+    }, [details]);
 
     const handleSaveToIde = () => {
         const message = {
@@ -64,7 +100,6 @@ const ResultsPage: React.FC<Props> = ({ stockId, inputData, outputData, onGoBack
         });
     };
 
-    // --- СКАЧИВАНИЕ DRAW.IO СХЕМЫ (Для конкретного клапана из группы) ---
     const handleDownloadDrawio = async (groupDetail: GroupCalculationDetails) => {
         const groupInput = inputData?.groups.find(g => g.valve_id === groupDetail.valve_id);
         
@@ -91,7 +126,7 @@ const ResultsPage: React.FC<Props> = ({ stockId, inputData, outputData, onGoBack
                 body: JSON.stringify(mockValveInfo), 
             });
             
-            if (!response.ok) throw new Error("Ошибка сервера при генерации схемы. Возможно, нужны полные размеры клапана.");
+            if (!response.ok) throw new Error("Ошибка сервера при генерации схемы.");
             
             const blob = await response.blob();
             const downloadUrl = window.URL.createObjectURL(blob);
@@ -108,82 +143,93 @@ const ResultsPage: React.FC<Props> = ({ stockId, inputData, outputData, onGoBack
         }
     };
 
-    // --- ЭКСПОРТ В EXCEL ---
     const handleDownloadExcel = () => {
         try {
-            const wb = XLSX.utils.book_new();
+            const excelData: any[][] = [];
 
-            // Лист 1: Глобальные параметры
-            const globalsData = [{
-                'Турбина': inputData?.turbine_id, 
-                'P свежего пара': inputData?.globals?.P_fresh,
-                'T свежего пара': inputData?.globals?.T_fresh,
-                'Энтальпия пара': inputData?.globals?.H_fresh,
-                'P воздуха': inputData?.globals?.P_air,
-                'T воздуха': inputData?.globals?.T_air,
-                'Вакуум': inputData?.globals?.P_lst_leak_off,
-            }];
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(globalsData), 'Глобальные параметры');
-
-            // Лист 2: По участкам
-            const sectionsData: any[] = [];
+            // Блок 1: Данные по каждой группе клапанов (Таблица 1 и 2)
             details.forEach((group) => {
-                group.Gi.forEach((g, i) => {
-                    sectionsData.push({
-                        'Группа клапанов': `${group.valve_names.join(', ')} (${group.quantity} шт)`,
-                        'Участок': i + 1,
-                        'Расход 1 шт (G), т/ч': roundNumber(g),
-                        'Давление вх. (P)': roundNumber(group.Pi_in[i]),
-                        'Температура (T), °C': roundNumber(group.Ti[i]),
-                        'Энтальпия (H), кДж/кг': roundNumber(group.Hi[i]),
-                    });
-                });
-            });
-            if (sectionsData.length > 0) {
-                XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(sectionsData), 'По участкам');
-            }
+                const partsCount = group.Gi.length;
+                
+                // ТАБЛИЦА 1
+                excelData.push([`Таблица 1 - Вывод результатов по участкам. Группа: ${group.valve_names.join(', ')}`]);
+                const headerRow1 = ['Обозначение', 'Размерность', ...Array.from({length: partsCount}, (_, i) => i + 1)];
+                excelData.push(headerRow1);
 
-            // Лист 3: Отсосы
-            const suctionData: any[] = [];
-            details.forEach((group) => {
+                excelData.push(['P0', pUnit, ...group.Pi_in.map(v => roundNumber(v))]);
+                excelData.push(['T0', '°C', ...group.Ti.map(v => roundNumber(v))]);
+                excelData.push(['H', 'ккал/кг', ...group.Hi.map(v => roundNumber(v))]);
+                excelData.push(['G', 'т/ч', ...group.Gi.map(v => roundNumber(v))]);
+                excelData.push([]); 
+
+                // ТАБЛИЦА 2
+                excelData.push([`Таблица 2 - Вывод результатов по отсосам. Группа: ${group.valve_names.join(', ')}`]);
+                excelData.push([' ', 'Расход', 'Давление', 'Температура', 'Энтальпия']);
+                excelData.push([' ', 'т/ч', pUnit, '°C', 'ккал/кг']);
+
+                let hasSuctions = false;
+
                 if (group.deaerator_props && group.deaerator_props[0] > 0.000001) {
-                    suctionData.push({
-                        'Группа клапанов': `${group.valve_names.join(', ')} (${group.quantity} шт)`,
-                        'Потребитель': 'Деаэратор (Камера 2)',
-                        'Расход ΣG, т/ч': roundNumber(group.deaerator_props[0]),
-                        'Давление (P)': roundNumber(group.deaerator_props[3]),
-                        'Температура (T), °C': roundNumber(group.deaerator_props[1]),
-                        'Энтальпия (H), кДж/кг': roundNumber(group.deaerator_props[2]),
-                    });
+                    excelData.push([
+                        'Деаэратор',
+                        roundNumber(group.deaerator_props[0]),
+                        roundNumber(group.deaerator_props[3]),
+                        roundNumber(group.deaerator_props[1]),
+                        roundNumber(group.deaerator_props[2])
+                    ]);
+                    hasSuctions = true;
                 }
+
                 if (group.ejector_props) {
                     group.ejector_props.forEach((ej, idx) => {
-                        suctionData.push({
-                            'Группа клапанов': `${group.valve_names.join(', ')} (${group.quantity} шт)`,
-                            'Потребитель': `Эжектор / Отсос ${idx + 1}`,
-                            'Расход ΣG, т/ч': roundNumber(ej.g),
-                            'Давление (P)': roundNumber(ej.p),
-                            'Температура (T), °C': roundNumber(ej.t),
-                            'Энтальпия (H), кДж/кг': roundNumber(ej.h),
-                        });
+                        excelData.push([
+                            `Отсос №${idx + 1}`,
+                            roundNumber(ej.g),
+                            roundNumber(ej.p),
+                            roundNumber(ej.t),
+                            roundNumber(ej.h)
+                        ]);
+                        hasSuctions = true;
                     });
                 }
+
+                if (!hasSuctions) {
+                    excelData.push(['Нет отсосов', '-', '-', '-', '-']);
+                }
+
+                excelData.push([]); 
+                excelData.push([]); 
             });
-            if (suctionData.length > 0) {
-                XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(suctionData), 'Отсосы');
+
+            // Блок 2: Итоговая сводная таблица по всем отсосам
+            excelData.push(['Итоговая сводная таблица отсосов (по чертежам/группам)']);
+            excelData.push(['Группа клапанов', 'Потребитель', 'Расход (т/ч)', `Давление (${pUnit})`, 'Температура (°C)', 'Энтальпия (ккал/кг)']);
+            
+            if (allSuctions.length > 0) {
+                allSuctions.forEach(s => {
+                    excelData.push([
+                        s.groupName, 
+                        s.type, 
+                        roundNumber(s.g), 
+                        roundNumber(s.p), 
+                        roundNumber(s.t), 
+                        roundNumber(s.h)
+                    ]);
+                });
+            } else {
+                excelData.push(['Отсосы отсутствуют', '-', '-', '-', '-', '-']);
             }
 
-            // Лист 4: Итоги (Суммы)
-            if (summary) {
-                const summaryData = [];
-                if (summary.sk.total_g > 0) summaryData.push({ 'Тип клапанов': 'Стопорные (СК)', 'Суммарный расход ΣG, т/ч': roundNumber(summary.sk.total_g), 'Ср. Энтальпия, кДж/кг': roundNumber(summary.sk.mixed_h) });
-                if (summary.rk.total_g > 0) summaryData.push({ 'Тип клапанов': 'Регулирующие (РК)', 'Суммарный расход ΣG, т/ч': roundNumber(summary.rk.total_g), 'Ср. Энтальпия, кДж/кг': roundNumber(summary.rk.mixed_h) });
-                if (summary.srk.total_g > 0) summaryData.push({ 'Тип клапанов': 'Стопорно-регулирующие (СРК)', 'Суммарный расход ΣG, т/ч': roundNumber(summary.srk.total_g), 'Ср. Энтальпия, кДж/кг': roundNumber(summary.srk.mixed_h) });
-                
-                XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summaryData), 'Итоги');
-            }
+            // Создаем лист
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(excelData);
+            
+            // Настройка ширины колонок
+            ws['!cols'] = [{ wch: 30 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }];
 
+            XLSX.utils.book_append_sheet(wb, ws, 'Результаты');
             XLSX.writeFile(wb, `Расчет_${stockId}.xlsx`);
+            
             toast({ title: "Excel файл успешно создан", status: "success" });
         } catch (e: any) {
             console.error(e);
@@ -209,10 +255,8 @@ const ResultsPage: React.FC<Props> = ({ stockId, inputData, outputData, onGoBack
                 )}
             </VStack>
 
-            {/* БЛОК 1: ДЕТАЛИЗАЦИЯ ПО КАЖДОЙ ГРУППЕ КЛАПАНОВ */}
+            {/* ДЕТАЛИЗАЦИЯ ПО КАЖДОЙ ГРУППЕ КЛАПАНОВ */}
             {details.map((group, idx) => {
-                const singleValveTotalG = group.Gi[0] || 0; // Основной расход через клапан идет по 1 участку
-                
                 return (
                     <Box key={idx} borderWidth="1px" borderRadius="lg" p={5} bg={useColorModeValue("white", "gray.800")} shadow="sm">
                         <HStack mb={4} justify="space-between" wrap="wrap">
@@ -234,7 +278,10 @@ const ResultsPage: React.FC<Props> = ({ stockId, inputData, outputData, onGoBack
                             </HStack>
                         </HStack>
 
-                        <TableContainer mb={2}>
+                        <Text fontWeight="bold" mb={2} fontSize="sm" color="gray.500">
+                            Таблица 1 - Основные параметры участков
+                        </Text>
+                        <TableContainer mb={6}>
                             <Table variant="simple" size="sm">
                                 <Thead bg={tableHeaderBg}>
                                     <Tr>
@@ -242,7 +289,7 @@ const ResultsPage: React.FC<Props> = ({ stockId, inputData, outputData, onGoBack
                                         <Th isNumeric>Расход 1 шт. G (т/ч)</Th>
                                         <Th isNumeric>Давление P ({pUnit})</Th>
                                         <Th isNumeric>Температура T (°C)</Th>
-                                        <Th isNumeric>Энтальпия H (кДж/кг)</Th>
+                                        <Th isNumeric>Энтальпия H (ккал/кг)</Th>
                                     </Tr>
                                 </Thead>
                                 <Tbody>
@@ -259,16 +306,8 @@ const ResultsPage: React.FC<Props> = ({ stockId, inputData, outputData, onGoBack
                             </Table>
                         </TableContainer>
 
-                        {/* Плашка Итого по группе */}
-                        <Box mb={6} p={3} bg={useColorModeValue("teal.50", "gray.700")} borderRadius="md" borderLeftWidth="4px" borderLeftColor="teal.500">
-                            <Text fontWeight="bold" fontSize="md">
-                                Итого 1 клапан: <Text as="span" color="teal.600">{roundNumber(singleValveTotalG)} т/ч</Text> × {group.quantity} шт = <Text as="span" color="teal.600">{roundNumber(group.group_total_g)} т/ч</Text>
-                            </Text>
-                        </Box>
-
-                        {/* Отсосы этой группы */}
                         <Text fontWeight="bold" mb={2} fontSize="sm" color="gray.500">
-                            Потребители (суммарно для {group.quantity} шт.):
+                            Таблица 2 - Потребители (суммарно для {group.quantity} шт.)
                         </Text>
                         <TableContainer>
                             <Table variant="simple" size="sm">
@@ -278,11 +317,10 @@ const ResultsPage: React.FC<Props> = ({ stockId, inputData, outputData, onGoBack
                                         <Th isNumeric>Расход ΣG (т/ч)</Th>
                                         <Th isNumeric>Давление P ({pUnit})</Th>
                                         <Th isNumeric>Температура T (°C)</Th>
-                                        <Th isNumeric>Энтальпия H (кДж/кг)</Th>
+                                        <Th isNumeric>Энтальпия H (ккал/кг)</Th>
                                     </Tr>
                                 </Thead>
                                 <Tbody>
-                                    {/* Индексы массива деаэратора: [G, T, H, P] */}
                                     {group.deaerator_props && group.deaerator_props[0] > 0.000001 && (
                                         <Tr _hover={{ bg: buttonHoverBg }}>
                                             <Td><Badge colorScheme="blue">Деаэратор</Badge></Td>
@@ -292,10 +330,9 @@ const ResultsPage: React.FC<Props> = ({ stockId, inputData, outputData, onGoBack
                                             <Td isNumeric color="gray.500">{roundNumber(group.deaerator_props[2])}</Td>
                                         </Tr>
                                     )}
-                                    {/* Эжекторы */}
                                     {group.ejector_props && group.ejector_props.map((ej, e_idx) => (
                                         <Tr key={`ej-${e_idx}`} _hover={{ bg: buttonHoverBg }}>
-                                            <Td><Badge colorScheme="gray">Эжектор {e_idx + 1}</Badge></Td>
+                                            <Td><Badge colorScheme="gray">Отсос №{e_idx + 1}</Badge></Td>
                                             <Td isNumeric fontWeight="bold">{roundNumber(ej.g)}</Td>
                                             <Td isNumeric>{roundNumber(ej.p)}</Td>
                                             <Td isNumeric>{roundNumber(ej.t)}</Td>
@@ -311,61 +348,43 @@ const ResultsPage: React.FC<Props> = ({ stockId, inputData, outputData, onGoBack
 
             <Divider />
 
-            {/* БЛОК 2: СВОДНЫЕ ТАБЛИЦЫ ПО ТУРБИНЕ (ИЗ ОБЪЕКТА SUMMARY) */}
-            {summary && (
-                <Box borderWidth="1px" borderRadius="lg" p={5} bg={useColorModeValue("white", "gray.800")} shadow="sm">
-                    <Heading as="h3" size="md" mb={4} textAlign="center">
-                        Сводные таблицы по типам клапанов
-                    </Heading>
-                    
+            {/* НОВАЯ СВОДНАЯ ТАБЛИЦА ПО ОТСОСАМ (ВМЕСТО СТАРОЙ) */}
+            <Box borderWidth="1px" borderRadius="lg" p={5} bg={useColorModeValue("white", "gray.800")} shadow="sm" borderTopWidth="4px" borderTopColor="teal.500">
+                <Heading as="h3" size="md" mb={4} textAlign="center">
+                    Итоговая сводная таблица отсосов
+                </Heading>
+                
+                {allSuctions.length > 0 ? (
                     <TableContainer>
-                        <Table variant="simple">
+                        <Table variant="simple" size="md">
                             <Thead bg={tableHeaderBg}>
                                 <Tr>
-                                    <Th>Тип клапанов</Th>
-                                    <Th isNumeric>Суммарный расход ΣG (т/ч)</Th>
-                                    <Th isNumeric>Средняя энтальпия (кДж/кг)</Th>
+                                    <Th>Группа клапанов (Чертеж)</Th>
+                                    <Th>Потребитель</Th>
+                                    <Th isNumeric>Расход ΣG (т/ч)</Th>
+                                    <Th isNumeric>Давление ({pUnit})</Th>
+                                    <Th isNumeric>Температура (°C)</Th>
+                                    <Th isNumeric>Энтальпия (ккал/кг)</Th>
                                 </Tr>
                             </Thead>
                             <Tbody>
-                                {summary.sk.total_g > 0 && (
-                                    <Tr _hover={{ bg: buttonHoverBg }}>
-                                        <Td fontWeight="bold">Стопорные (СК)</Td>
-                                        <Td isNumeric fontWeight="bold" color="teal.600" fontSize="lg">
-                                            {roundNumber(summary.sk.total_g)}
-                                        </Td>
-                                        <Td isNumeric color="gray.500">
-                                            {roundNumber(summary.sk.mixed_h)}
-                                        </Td>
+                                {allSuctions.map((s, idx) => (
+                                    <Tr key={idx} _hover={{ bg: buttonHoverBg }}>
+                                        <Td fontWeight="medium">{s.groupName}</Td>
+                                        <Td>{s.type}</Td>
+                                        <Td isNumeric fontWeight="bold" color="teal.600">{roundNumber(s.g)}</Td>
+                                        <Td isNumeric>{roundNumber(s.p)}</Td>
+                                        <Td isNumeric>{roundNumber(s.t)}</Td>
+                                        <Td isNumeric color="gray.500">{roundNumber(s.h)}</Td>
                                     </Tr>
-                                )}
-                                {summary.rk.total_g > 0 && (
-                                    <Tr _hover={{ bg: buttonHoverBg }}>
-                                        <Td fontWeight="bold">Регулирующие (РК)</Td>
-                                        <Td isNumeric fontWeight="bold" color="teal.600" fontSize="lg">
-                                            {roundNumber(summary.rk.total_g)}
-                                        </Td>
-                                        <Td isNumeric color="gray.500">
-                                            {roundNumber(summary.rk.mixed_h)}
-                                        </Td>
-                                    </Tr>
-                                )}
-                                {summary.srk.total_g > 0 && (
-                                    <Tr _hover={{ bg: buttonHoverBg }}>
-                                        <Td fontWeight="bold">Стопорно-регулирующие (СРК)</Td>
-                                        <Td isNumeric fontWeight="bold" color="teal.600" fontSize="lg">
-                                            {roundNumber(summary.srk.total_g)}
-                                        </Td>
-                                        <Td isNumeric color="gray.500">
-                                            {roundNumber(summary.srk.mixed_h)}
-                                        </Td>
-                                    </Tr>
-                                )}
+                                ))}
                             </Tbody>
                         </Table>
                     </TableContainer>
-                </Box>
-            )}
+                ) : (
+                    <Text textAlign="center" color="gray.500">Отсосы в данной схеме отсутствуют.</Text>
+                )}
+            </Box>
 
             {/* КНОПКИ ДЕЙСТВИЙ */}
             <HStack spacing={6} justifyContent="center" pt={4} pb={10}>

@@ -8,19 +8,22 @@ import sys
 from pathlib import Path
 
 # --- БРОНЕБОЙНЫЙ ФИКС (Хост + Порт) ---
-os.environ["POSTGRES_SERVER"] = "localhost"
-os.environ["DB_HOST"] = "localhost"
-os.environ["POSTGRES_PORT"] = "5255"  # <-- Указываем правильный порт!
-os.environ["DB_PORT"] = "5255"  # На всякий случай
+if "POSTGRES_SERVER" not in os.environ:
+    os.environ["POSTGRES_SERVER"] = "localhost"
+if "DB_HOST" not in os.environ:
+    os.environ["DB_HOST"] = "localhost"
+if "POSTGRES_PORT" not in os.environ:
+    os.environ["POSTGRES_PORT"] = "5255"
+if "DB_PORT" not in os.environ:
+    os.environ["DB_PORT"] = "5255"
 
 # Принудительно добавляем текущую папку (backend) в пути Python
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from app.core.database import SessionLocal, engine
 from app.models.base import Base
-
-# Обязательно импортируем модели, чтобы SQLAlchemy узнала о них до создания таблиц
-from app.scripts.load_condensers import load_condensers
+from app.models.condenser import Condenser
+from app.models.material import Material
 
 # Импортируем ваши функции
 from app.scripts.load_materials import load_materials
@@ -37,18 +40,28 @@ def main() -> None:
     # Открываем сессию базы данных
     db = SessionLocal()
     try:
+        BASE_DIR = Path(__file__).resolve().parent
+
         print("\n[2/3] Загрузка материалов...")
-        materials_dir = Path(__file__).parent.parent / "db" / "materials"
-        if materials_dir.exists():
+        # Теперь путь будет backend/data/materials
+        materials_dir = BASE_DIR / "data" / "materials"
+
+        if materials_dir.exists() and any(materials_dir.iterdir()):
             load_materials(db, materials_dir)
             print("[+] Материалы загружены.")
         else:
-            print(f"[-] Папка с материалами не найдена: {materials_dir}")
+            print(f"[-] Папка с материалами не найдена или пуста: {materials_dir}")
 
         print("\n[3/3] Загрузка конденсаторов...")
-        load_condensers(db)
-        print("[+] Конденсаторы загружены.")
+        # Теперь путь будет backend/data/default.xlsx
+        excel_path = BASE_DIR / "data" / "default.xlsx"
 
+        if excel_path.exists():
+            load_condensers(db, str(excel_path))
+            print("[+] Конденсаторы загружены.")
+        else:
+            print(f"[-] Файл Excel не найден по пути: {excel_path}")
+        
     except Exception as e:
         print(f"[!] Произошла ошибка: {e}")
     finally:

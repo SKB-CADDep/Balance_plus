@@ -153,7 +153,7 @@ const EarlyCalculationPage: React.FC<Props> = ({stockId, lastCalculation, onReca
                                 <Th>Расход, т/ч (G<sub>i</sub>)</Th>
                                 <Th>Давление, МПа (P<sub>вхi</sub>)</Th>
                                 <Th>Температура, °C (T<sub>i</sub>)</Th>
-                                <Th>Энтальпия, кДж/кг (H<sub>i</sub>)</Th>
+                                <Th>Энтальпия, ккал/кг (H<sub>i</sub>)</Th>
                             </Tr>
                         </Thead>
                         <Tbody>

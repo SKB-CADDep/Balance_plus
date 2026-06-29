@@ -17,5 +17,8 @@ class Material(Base):
     # Полный JSON материала (для будущих расчётов)
     full_properties = Column(JSON)
 
-    # Обратная связь
-    condensers = relationship("Condenser", back_populates="material")
+    condensers = relationship(
+        "Condenser", 
+        secondary="condenser_material_association", 
+        back_populates="materials"
+    )

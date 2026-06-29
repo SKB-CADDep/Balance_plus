@@ -1,4 +1,8 @@
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import ConfigDict, BaseModel, Field
+from typing import Optional, List
+
+# Импортируем схему материала (путь может немного отличаться в зависимости от твоей структуры)
+from app.schemas.material import MaterialShort
 
 
 class CondenserBase(BaseModel):
@@ -16,6 +20,10 @@ class CondenserDetail(CondenserBase):
     id: int
     diameter_internal: float
     wall_thickness: float
+
+    # --- НОВОЕ ПОЛЕ: Список доступных материалов ---
+    materials: List[MaterialShort] = Field(default_factory=list, description="Список доступных материалов для данного аппарата")
+
     main_length: float
     main_count: int
     builtin_length: float | None

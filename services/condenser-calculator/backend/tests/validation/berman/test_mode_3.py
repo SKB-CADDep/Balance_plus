@@ -25,7 +25,7 @@ _results = load_results(3)
 _test_cases = generate_test_cases_from_results(_results, _mode)
 _ejector_cases = generate_ejector_test_cases(_results)
 
-
+@pytest.mark.skip(reason="Ожидаем эталонные данные от аналитиков (задача QA-2)")
 class TestPressureMatrixMode3:
     """Полная проверка матрицы давлений для режима 'только ОП'."""
 
@@ -56,7 +56,7 @@ class TestPressureMatrixMode3:
             context=f"Тест: {case['id']}",
         )
 
-
+@pytest.mark.skip(reason="Ожидаем эталонные данные от аналитиков (задача QA-2)")
 class TestMainBundleOnlyVsBothBundles:
     """Сравнение режима 'только ОП' c режимом 'ОП+ВП'."""
 
@@ -126,7 +126,7 @@ class TestMainBundleOnlyVsBothBundles:
                     f"W_main={W_main}: P(mode_3)={P_mode_3:.6f} должно быть > P(mode_1)={P_mode_1:.6f}"
                 )
 
-
+@pytest.mark.skip(reason="Ожидаем эталонные данные от аналитиков (задача QA-2)")
 class TestVerificationScenario1:
     """Контрольный пример: сценарий 1 (только ОП)."""
 

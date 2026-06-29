@@ -1,3 +1,6 @@
+"""
+Юнит-тесты для валидаторов входных данных (расходы воды, температуры, параметры БД)
+"""
 import pytest
 
 from app.core.condenser_validators import (
@@ -74,7 +77,8 @@ def test_water_flow_limits_br07() -> None:
 
 def test_water_flow_limits_zero() -> None:
     # Both zero
-    warnings = validate_water_flow_limits(0.0, 0.0, {"main_bundle": {"min": 100}})
+    warnings = validate_water_flow_limits(
+        0.0, 0.0, {"main_bundle": {"min": 100}})
     assert len(warnings) == 1
     assert "Оба расхода воды равны нулю" in warnings[0]
 

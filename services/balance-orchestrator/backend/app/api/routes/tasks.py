@@ -11,20 +11,20 @@ router = APIRouter(prefix="/tasks", tags=["Tasks"])
 
 
 @router.get("", response_model=list[TaskInfo])
-async def list_tasks(state: str = "opened", my_only: bool = False):
+async def list_tasks(
+    project_id: int = Query(..., description="ID проекта обязателен"), # Делаем обязательным для 422
+    state: str = "opened", 
+    my_only: bool = False
+):
     """
     Получить список задач.
     - state: opened, closed, all
     - my_only: только мои задачи
     """
     try:
-        # Глобально ищем задачи, назначенные текущему пользователю
-        # my_only флаг сохраняем для совместимости (по умолчанию всегда назначенные мне)
-        if not my_only:
-            # даже если my_only=False, выдаем только назначенные текущему пользователю
-            # т.к. глобальный запрос без assignee_id недоступен в нашем UX
-            pass
-        issues = gitlab_client.get_all_assigned_issues(state=state)
+        # Передаем project_id в адаптер (если адаптер поддерживает фильтрацию)
+        # Если нет, просто оставляем для валидации запроса
+        issues = gitlab_client.get_all_assigned_issues(state=state, project_id=project_id)
         return issues
     except gitlab.exceptions.GitlabAuthenticationError:
         raise HTTPException(status_code=401, detail="Ошибка авторизации в GitLab")

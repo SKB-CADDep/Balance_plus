@@ -55,7 +55,8 @@ def extract_yaml_description(filepath):
             if data and isinstance(data, dict):
                 # Поддержка Tavern (test_name) и кастомных DB YAML (description)
                 desc = str(
-                    data.get("test_name", data.get("description", "Нет описания"))
+                    data.get("test_name", data.get(
+                        "description", "Нет описания"))
                 ).strip()
                 return desc if len(desc) <= 60 else desc[:57] + "..."
     except Exception:
@@ -105,7 +106,8 @@ def scan_for_test_groups(root_dir):
                     )
 
                 test_files.append(
-                    {"name": file, "path": filepath, "icon": file_icon, "desc": desc}
+                    {"name": file, "path": filepath,
+                        "icon": file_icon, "desc": desc}
                 )
 
         if test_files:
@@ -219,7 +221,8 @@ def main_menu():
             g_data = groups[g_name]
             file_count = len(g_data["files"])
             print(
-                f"[{Colors.GREEN}{i:2}{Colors.RESET}] {Colors.BOLD}{g_name:<25}{Colors.RESET} {Colors.GRAY}— {g_data['desc']} (файлов: {file_count}){Colors.RESET}"
+                f"[{Colors.GREEN}{i:2}{Colors.RESET}] {Colors.BOLD}{g_name:<25}{Colors.RESET} \
+                    {Colors.GRAY}— {g_data['desc']} (файлов: {file_count}){Colors.RESET}"
             )
 
         print(f"\n[{Colors.GREEN}#{Colors.RESET}] Запустить ВСЕ группы")
@@ -236,7 +239,7 @@ def main_menu():
         print(f"[{Colors.GREEN}q{Colors.RESET}] Выход")
         print(f"{Colors.CYAN}{'-'*80}{Colors.RESET}")
 
-        choice = input(f"Введите номер группы или действие: ").strip().lower()
+        choice = input("Введите номер группы или действие: ").strip().lower()
 
         if choice == "q":
             clear_screen()
@@ -252,7 +255,8 @@ def main_menu():
             try:
                 idx = int(choice)
                 if 1 <= idx <= len(group_names):
-                    group_menu(groups[group_names[idx - 1]], group_names[idx - 1])
+                    group_menu(groups[group_names[idx - 1]],
+                               group_names[idx - 1])
             except ValueError:
                 pass
 
@@ -266,7 +270,8 @@ def group_menu(group_data, group_name):
         files = group_data["files"]
         for i, f in enumerate(files, 1):
             print(
-                f"[{Colors.GREEN}{i:2}{Colors.RESET}] {f['icon']} {Colors.BOLD}{f['name']:<30}{Colors.RESET} {Colors.GRAY}{f['desc']}{Colors.RESET}"
+                f"[{Colors.GREEN}{i:2}{Colors.RESET}] {f['icon']} {Colors.BOLD}{f['name']:<30}{Colors.RESET} \
+                    {Colors.GRAY}{f['desc']}{Colors.RESET}"
             )
 
         print(f"\n[{Colors.GREEN}#{Colors.RESET}] Запустить ВСЕ файлы в группе")
@@ -283,7 +288,7 @@ def group_menu(group_data, group_name):
         print(f"[{Colors.GREEN}0{Colors.RESET}] Назад")
         print(f"{Colors.CYAN}{'-'*80}{Colors.RESET}")
 
-        choice = input(f"Выберите тесты (например 1,3 или 1-3): ").strip()
+        choice = input("Выберите тесты (например 1,3 или 1-3): ").strip()
 
         if choice == "0":
             break

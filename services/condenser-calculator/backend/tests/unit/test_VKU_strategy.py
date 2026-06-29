@@ -1,3 +1,6 @@
+"""
+Тестирование физического движка VKU (расчет давления в конденсаторе)
+"""
 import pytest
 
 from app.utils.VKU_strategy import VKUStrategy
@@ -31,12 +34,10 @@ class TestVKUStrategy:
         result = self.strategy.calculate(params)
 
         assert isinstance(result, dict)
-        assert result["mass_flow_reduced_steam_condencer"] == pytest.approx(
-            100.0, abs=1e-5
-        )
-        assert result["pressure_flow_path_1"] == pytest.approx(
-            self.p_at_100_30, abs=1e-7
-        )
+        assert result['mass_flow_reduced_steam_condencer'] == pytest.approx(
+            100.0, abs=1e-5)
+        assert result['pressure_flow_path_1'] == pytest.approx(
+            self.p_at_100_30, abs=1e-7)
 
     def test_default_temperature(self) -> None:
         """Тест: Расчет с использованием температуры по умолчанию (20°С)."""
@@ -44,12 +45,10 @@ class TestVKUStrategy:
 
         result = self.strategy.calculate(params)
 
-        assert result["mass_flow_reduced_steam_condencer"] == pytest.approx(
-            100.0, abs=1e-5
-        )
-        assert result["pressure_flow_path_1"] == pytest.approx(
-            self.p_at_100_20, abs=1e-7
-        )
+        assert result['mass_flow_reduced_steam_condencer'] == pytest.approx(
+            100.0, abs=1e-5)
+        assert result['pressure_flow_path_1'] == pytest.approx(
+            self.p_at_100_20, abs=1e-7)
 
     def test_interpolation_between_points(self) -> None:
         """Тест: Расчет для точки, требующей интерполяции."""
@@ -62,12 +61,10 @@ class TestVKUStrategy:
         result = self.strategy.calculate(params)
 
         expected_pressure_approx = 0.08341
-        assert result["mass_flow_reduced_steam_condencer"] == pytest.approx(
-            95.0, abs=1e-5
-        )
-        assert result["pressure_flow_path_1"] == pytest.approx(
-            expected_pressure_approx, abs=1e-3
-        )
+        assert result['mass_flow_reduced_steam_condencer'] == pytest.approx(
+            95.0, abs=1e-5)
+        assert result['pressure_flow_path_1'] == pytest.approx(
+            expected_pressure_approx, abs=1e-3)
 
     def test_missing_required_param(self) -> None:
         """Тест: Проверка вызова исключения при отсутствии обязательного параметра."""

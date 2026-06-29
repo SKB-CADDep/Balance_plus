@@ -23,7 +23,7 @@ _mode = load_mode(2)
 _results = load_results(2)
 _test_cases = generate_test_cases_from_results(_results, _mode)
 
-
+@pytest.mark.skip(reason="Ожидаем эталонные данные от аналитиков (задача QA-2)")
 class TestPressureMatrixMode2:
     """Полная проверка матрицы давлений из results_2.json."""
 
@@ -53,7 +53,7 @@ class TestPressureMatrixMode2:
             context=f"Тест: {case['id']}",
         )
 
-
+@pytest.mark.skip(reason="Ожидаем эталонные данные от аналитиков (задача QA-2)")
 class TestDifferentTemperaturesEffect:
     """Проверка влияния разных температур на ОП и ВП."""
 

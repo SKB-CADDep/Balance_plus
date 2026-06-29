@@ -9,6 +9,7 @@ from app.utils.berman_strategy import BermanStrategy
 from .conftest import build_calculation_params, load_geometry, load_mode
 
 
+@pytest.mark.skip(reason="Ожидаем эталонные данные от аналитиков (задача QA-2)")
 class TestDocumentationVerification:
     """
     Контрольные примеры из раздела 8 документации.

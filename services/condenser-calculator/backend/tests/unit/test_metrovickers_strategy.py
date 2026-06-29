@@ -1,3 +1,6 @@
+"""
+Тестирование физического движка Metro-Vickers (расчет давления в конденсаторе)
+"""
 import pytest
 
 from app.utils.metrovickers_strategy import MetroVickersStrategy

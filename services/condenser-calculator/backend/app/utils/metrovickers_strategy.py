@@ -211,7 +211,8 @@ class MetroVickersStrategy:
             * (temperature_cooling_water_2 - temperature_cooling_water_1)
         )  # p.15
 
-        pressure_flow_path_1_mpa = seuif97.tx(temperature_saturation_steam, 1.0, 0)
+        pressure_flow_path_1_mpa = seuif97.tx(
+            temperature_saturation_steam, 1.0, 1)
 
         pressure_flow_path_1_kgf_cm2 = self.uc.convert(
             pressure_flow_path_1_mpa,

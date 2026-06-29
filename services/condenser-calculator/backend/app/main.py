@@ -3,21 +3,16 @@ import logging
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import calculations, condensers, health, materials
+from app.api.routes import calculations, condensers, materials, health, async_calculations, async_calculations
 from app.core.config import settings
+from app.core.logging import setup_logging
+from app.core.middleware import RequestIDMiddleware
 
-# Если вы хотите, чтобы таблицы создались мгновенно без настройки Alembic
-# from app.core.database import engine
-# from app.models.base import Base
+# Настройка структурированного JSON-логирования
+setup_logging()
+logger = logging.getLogger(__name__)
 
 api_router = APIRouter()
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
-
-# Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -26,6 +21,8 @@ app = FastAPI(
     docs_url="/docs",
 )
 
+# Добавляем Middleware
+app.add_middleware(RequestIDMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -35,12 +32,15 @@ app.add_middleware(
 )
 
 # Healthcheck на корневом уровне
-api_router.include_router(health.router, prefix="/health", tags=["health"])
+api_router.include_router(health.router, prefix="/health")
 api_router.include_router(
-    calculations.router, prefix="/calculations", tags=["calculations"]
-)
-api_router.include_router(condensers.router, prefix="/condensers", tags=["condensers"])
-api_router.include_router(materials.router, prefix="/materials", tags=["materials"])
+    calculations.router)
+api_router.include_router(
+    condensers.router)
+api_router.include_router(
+    materials.router)
+api_router.include_router(
+    async_calculations.router)
 
 # Все бизнес-роуты под /api/v1
 app.include_router(api_router, prefix=settings.API_V1_STR)

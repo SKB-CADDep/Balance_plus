@@ -7,6 +7,7 @@ WORKDIR /app
 RUN pip install --no-cache-dir poetry==2.1.4
 COPY pyproject.toml poetry.lock /app/
 RUN poetry config virtualenvs.create false \
+    && poetry lock \
     && poetry install --only=main --no-interaction --no-ansi
 
 FROM python:3.12-slim

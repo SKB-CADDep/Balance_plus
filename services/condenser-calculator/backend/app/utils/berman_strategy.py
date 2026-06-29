@@ -444,7 +444,7 @@ class BermanStrategy:
                             )
                             P_steam_formula_Pa = P_steam_formula_atm * 98.0665
 
-                            P_steam_seuif_Pa = tx(t_sat_final, 1.0, 0) * 1000
+                            P_steam_seuif_Pa = tx(t_sat_final,1.0,1) * 1000
                             P_steam_seuif_atm = P_steam_seuif_Pa / 98.0665
                         except (ValueError, ZeroDivisionError):
                             _condenser_pressure_Pa = 0.0

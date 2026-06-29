@@ -9,4 +9,4 @@ class CalculationSaveRequest(BaseModel):
     app_type: str  # например 'valves'
     input_data: dict[str, Any]
     output_data: dict[str, Any]
-    commit_message: str | None = "Сохранение результатов расчёта"
+    commit_message: str | None = None
