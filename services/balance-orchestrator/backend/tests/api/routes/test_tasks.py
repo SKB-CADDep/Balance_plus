@@ -12,6 +12,7 @@ from app.api.routes.tasks import (
 )
 from app.schemas.task import BranchCreateRequest, TaskCreate
 
+PROJECT_ID = 123
 
 class TestListTasks:
     """Tests for list_tasks endpoint."""
@@ -21,45 +22,45 @@ class TestListTasks:
     async def test_opened_all_users_returns_issues(self, mock_gitlab: MagicMock):
         """Should return issues for opened state and all users."""
         mock_gitlab.get_all_assigned_issues.return_value = [{"iid": 1, "title": "Test"}]
-        result = await list_tasks(state="opened", my_only=False)
+        result = await list_tasks(state="opened", my_only=False, project_id=PROJECT_ID)
         assert result == [{"iid": 1, "title": "Test"}]
-        mock_gitlab.get_all_assigned_issues.assert_called_once_with(state="opened")
+        mock_gitlab.get_all_assigned_issues.assert_called_once_with(state="opened", project_id=PROJECT_ID)
 
     @pytest.mark.asyncio
     @patch("app.api.routes.tasks.gitlab_client")
     async def test_opened_my_only_returns_issues(self, mock_gitlab: MagicMock):
         """Should return issues for opened state and my_only=True."""
         mock_gitlab.get_all_assigned_issues.return_value = [{"iid": 2, "title": "My task"}]
-        result = await list_tasks(state="opened", my_only=True)
+        result = await list_tasks(state="opened", my_only=True, project_id=PROJECT_ID)
         assert result == [{"iid": 2, "title": "My task"}]
-        mock_gitlab.get_all_assigned_issues.assert_called_once_with(state="opened")
+        mock_gitlab.get_all_assigned_issues.assert_called_once_with(state="opened", project_id=PROJECT_ID)
 
     @pytest.mark.asyncio
     @patch("app.api.routes.tasks.gitlab_client")
     async def test_closed_state_returns_issues(self, mock_gitlab: MagicMock):
         """Should handle closed state correctly."""
         mock_gitlab.get_all_assigned_issues.return_value = []
-        result = await list_tasks(state="closed", my_only=False)
+        result = await list_tasks(state="closed", my_only=False, project_id=PROJECT_ID)
         assert result == []
-        mock_gitlab.get_all_assigned_issues.assert_called_once_with(state="closed")
+        mock_gitlab.get_all_assigned_issues.assert_called_once_with(state="closed", project_id=PROJECT_ID)
 
     @pytest.mark.asyncio
     @patch("app.api.routes.tasks.gitlab_client")
     async def test_all_state_returns_issues(self, mock_gitlab: MagicMock):
         """Should handle all state correctly."""
         mock_gitlab.get_all_assigned_issues.return_value = [{"iid": 3}]
-        result = await list_tasks(state="all", my_only=False)
+        result = await list_tasks(state="all", my_only=False, project_id=PROJECT_ID)
         assert result == [{"iid": 3}]
-        mock_gitlab.get_all_assigned_issues.assert_called_once_with(state="all")
+        mock_gitlab.get_all_assigned_issues.assert_called_once_with(state="all", project_id=PROJECT_ID)
 
     @pytest.mark.asyncio
     @patch("app.api.routes.tasks.gitlab_client")
     async def test_empty_state_passes_to_gitlab(self, mock_gitlab: MagicMock):
         """Should pass empty state to gitlab_client."""
         mock_gitlab.get_all_assigned_issues.return_value = []
-        result = await list_tasks(state="")
+        result = await list_tasks(state="", project_id=PROJECT_ID)
         assert result == []
-        mock_gitlab.get_all_assigned_issues.assert_called_once_with(state="")
+        mock_gitlab.get_all_assigned_issues.assert_called_once_with(state="", project_id=PROJECT_ID)
 
     @pytest.mark.asyncio
     @patch("app.api.routes.tasks.gitlab_client")
@@ -67,7 +68,7 @@ class TestListTasks:
         """Should raise HTTPException 500 on gitlab_client error."""
         mock_gitlab.get_all_assigned_issues.side_effect = Exception("Connection failed")
         with pytest.raises(HTTPException) as exc_info:
-            await list_tasks()
+            await list_tasks(project_id=PROJECT_ID)
         assert exc_info.value.status_code == 500
         assert exc_info.value.detail == "Ошибка получения задач: Connection failed"
 
