@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.routes import calculations, drawio, turbines, utils, valves
+from app.api.routes import calculations, drawio, turbines, utils, valves, async_calculations
 
 
 api_router = APIRouter()
@@ -9,4 +9,5 @@ api_router.include_router(turbines.router, prefix="/turbines", tags=["turbines"]
 api_router.include_router(valves.router, prefix="/valves", tags=["valves"])
 api_router.include_router(calculations.router, tags=["calculations"])
 api_router.include_router(utils.router, prefix="/utils", tags=["utils"])
-api_router.include_router(drawio.router, tags=["drawio"])
+api_router.include_router(drawio.router)
+api_router.include_router(async_calculations.router)

@@ -1,2 +1,2 @@
-name: "Штоки: Интеграционные API-тесты"
-description: "Сквозные E2E сценарии REST API: от выбора турбины до получения расчета (Tavern)"
+name: "Штоки: API-тесты"
+description: "Интеграционные тесты REST-роутеров через httpx + in-memory SQLite"

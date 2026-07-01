@@ -1,5 +1,5 @@
 import logging
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import or_
 
 from app.models.condenser import Condenser
@@ -12,7 +12,10 @@ def get_condenser_by_id(db: Session, condenser_id: int) -> Condenser:
     """Получает конденсатор по ID. Выбрасывает ошибку, если не найден."""
     logger.info("DB: loading condenser", extra={"condenser_id": condenser_id})
     
-    condenser = db.query(Condenser).filter(Condenser.id == condenser_id).first()
+    # Добавлен selectinload для предзагрузки связанных материалов (Many-to-Many)
+    condenser = db.query(Condenser)\
+        .options(selectinload(Condenser.materials))\
+        .filter(Condenser.id == condenser_id).first()
     
     if not condenser:
         logger.warning("DB: condenser not found", extra={"condenser_id": condenser_id})
@@ -28,14 +31,14 @@ def search_condensers(
     limit: int = 100
 ) -> list[Condenser]:
     """Ищет конденсаторы по имени или проекту (case-insensitive) с пагинацией."""
-    query = db.query(Condenser)
+    query = db.query(Condenser).options(selectinload(Condenser.materials))
     
     if search:
         search_term = f"%{search}%"
         query = query.filter(
             or_(
                 Condenser.name_condenser.ilike(search_term),
-                Condenser.project_name.ilike(search_term)
+                Condenser.project_id.ilike(search_term)
             )
         )
         
@@ -44,4 +47,6 @@ def search_condensers(
 
 def get_condensers(db: Session, skip: int = 0, limit: int = 100) -> list[Condenser]:
     """Возвращает список всех конденсаторов с пагинацией."""
-    return db.query(Condenser).offset(skip).limit(limit).all()
+    return db.query(Condenser)\
+        .options(selectinload(Condenser.materials))\
+        .offset(skip).limit(limit).all()
