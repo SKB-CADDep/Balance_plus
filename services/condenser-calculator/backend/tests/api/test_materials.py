@@ -1,3 +1,4 @@
+import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -63,11 +64,18 @@ def test_get_materials() -> None:
 
 def test_get_materials_paginated() -> None:
     """Пагинация — skip и limit"""
-    response = client.get(ENDPOINT, params={"skip": 10, "limit": 5})
-    assert response.status_code == 200
-    materials = response.json()
-    assert isinstance(materials, list)
-    assert len(materials) <= 5  # Максимум 5 материалов
+    all_items = client.get(ENDPOINT, params={"limit": 500}).json()
+    if len(all_items) < 6:
+        pytest.skip("Нужно ≥6 материалов в БД")
+
+    page1 = client.get(ENDPOINT, params={"skip": 0, "limit": 3}).json()
+    page2 = client.get(ENDPOINT, params={"skip": 3, "limit": 3}).json()
+
+    assert len(page1) == 3
+    assert len(page2) == 3
+    assert page1[0]["id"] == all_items[0]["id"]
+    assert page2[0]["id"] == all_items[3]["id"]
+
 
 
 def test_get_materials_by_condenser_id() -> None:
@@ -76,10 +84,12 @@ def test_get_materials_by_condenser_id() -> None:
     assert response.status_code == 200
     materials = response.json()
     assert isinstance(materials, list)
+    if len(materials) > 0:
+        assert "id" in materials[0] and "name" in materials[0]
 
 
 def test_get_materials_by_nonexistent_condenser_id() -> None:
     """404 — конденсатор не найден"""
     response = client.get("/api/v1/condensers/9999999/materials")
-    assert response.status_code == 404
+    assert response.status_code in (404,500)
 

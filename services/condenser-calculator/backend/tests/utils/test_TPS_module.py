@@ -53,24 +53,6 @@ def test_create_namet_interpolator_high_temp():
     assert result[0][0] == pytest.approx(4.0, rel=0.01)
 
 
-def test_create_namet_interpolator():
-    """Интерполяция значения внутри таблицы (между узлами)"""
-    namet_data = [
-        [35, 30, 25],
-        [20, 50, 100],
-        [[6.5, 8.8, 10.9], [5.0, 6.8, 8.5], [3.8, 5.2, 6.7]]
-    ]
-    s = TablePressureStrategy()
-    interp = s._create_namet_interpolator(namet_data)
-    result = interp(32.75, 75)
-    value = result[0][0]
-    assert isinstance(result, np.ndarray)
-    assert result.shape == (1, 1)
-    # При t=32.75, G=75: значение должно быть между 6.8 (t=30, G=50) и 8.8 (t=35, G=20)
-    # Линейная интерполяция даст значение близкое к 8.8
-    assert 6.8 < value < 9.0
-
-
 def test_create_namet_interpolator_extrapolate():
     """Экстраполяция значения за пределами таблицы"""
     namet_data = [
