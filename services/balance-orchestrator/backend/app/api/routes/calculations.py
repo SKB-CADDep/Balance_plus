@@ -1,5 +1,6 @@
 import json
 
+import gitlab
 import gitlab.exceptions
 from fastapi import APIRouter, HTTPException, Query
 
@@ -12,45 +13,44 @@ router = APIRouter(prefix="/calculations", tags=["Calculations"])
 
 @router.post("/save")
 async def save_calculation_result(req: CalculationSaveRequest):
-    """
-    Сохраняет результаты расчёта в ветку задачи.
-    """
     try:
-        # 1. Ищем РЕАЛЬНУЮ ветку задачи (Умный поиск)
-        # Передаем project_id, так как мы теперь в мульти-репо
-        branch_name = gitlab_client.find_branch_by_issue_iid(req.task_iid, req.project_id)
+        # 1. Поиск ветки.
+        try:
+            branch_name = gitlab_client.find_branch_by_issue_iid(req.task_iid, req.project_id)
+        except (gitlab.exceptions.GitlabError, Exception) as e:
+            raise HTTPException(
+                status_code=400, detail=f"Ошибка доступа к GitLab или проекту: {e!s}"
+            )
 
-        # Строгая проверка: если ветка не найдена, немедленно возвращаем ошибку
         if not branch_name:
             raise HTTPException(
                 status_code=400,
-                detail=f"Ветка для задачи #{req.task_iid} не найдена в GitLab. Убедитесь, что работа над задачей начата."
+                detail=f"Ветка для задачи #{req.task_iid} не найдена в GitLab. Убедитесь, что работа над задачей начата.",
             )
 
-        print(f"💾 Сохраняем в ветку: {branch_name} (Проект ID: {req.project_id})")
-
-        # 2. Формируем фиксированный путь (перезаписываем файлы для работы Git Diff)
+        # 2. Подготовка данных (используем .get() для commit_message)
+        req_data = req.model_dump()
+        msg = req_data.get("commit_message") or "Результаты расчёта"
         base_path = f"calculations/{req.app_type}/current"
 
-        # 3. Готовим файлы
         files_to_commit = {
             f"{base_path}/input.json": json.dumps(req.input_data, indent=2, ensure_ascii=False),
-            f"{base_path}/result.json": json.dumps(req.output_data, indent=2, ensure_ascii=False)
+            f"{base_path}/result.json": json.dumps(req.output_data, indent=2, ensure_ascii=False),
         }
 
-        # 4. Коммитим (с указанием project_id!)
+        # 3. Коммит
         commit = gitlab_client.create_commit_multiple(
             files=files_to_commit,
-            commit_message=f"Calc Result: {req.commit_message}",
+            commit_message=f"Calc Result: {msg}",
             branch=branch_name,
-            project_id=req.project_id # <--- Важно!
+            project_id=req.project_id,
         )
 
         return {
             "status": "saved",
             "commit_id": commit.id,
             "path": base_path,
-            "web_url": commit.web_url
+            "web_url": commit.web_url,
         }
 
     except gitlab.exceptions.GitlabAuthenticationError:
@@ -62,12 +62,13 @@ async def save_calculation_result(req: CalculationSaveRequest):
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error saving calculation: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Internal Error: {e!s}")
 
 
 @router.get("/latest")
-async def get_latest_calculation(task_iid: int = Query(...), app_type: str = Query(...), project_id: int = Query(...)):
+async def get_latest_calculation(
+    task_iid: int = Query(...), app_type: str = Query(...), project_id: int = Query(...)
+):
     """
     Возвращает данные последнего расчёта для гидрации формы.
     Читает из фиксированного пути calculations/{app_type}/current/
@@ -81,8 +82,12 @@ async def get_latest_calculation(task_iid: int = Query(...), app_type: str = Que
 
         # 2. Читаем файлы напрямую из фиксированного пути
         base_path = f"calculations/{app_type}/current"
-        input_content = gitlab_client.get_file_content_decoded(f"{base_path}/input.json", ref=branch_name, project_id=project_id)
-        result_content = gitlab_client.get_file_content_decoded(f"{base_path}/result.json", ref=branch_name, project_id=project_id)
+        input_content = gitlab_client.get_file_content_decoded(
+            f"{base_path}/input.json", ref=branch_name, project_id=project_id
+        )
+        result_content = gitlab_client.get_file_content_decoded(
+            f"{base_path}/result.json", ref=branch_name, project_id=project_id
+        )
 
         if not input_content:
             return {"found": False, "reason": "Files missing"}
@@ -90,7 +95,7 @@ async def get_latest_calculation(task_iid: int = Query(...), app_type: str = Que
         return {
             "found": True,
             "input_data": json.loads(input_content),
-            "output_data": json.loads(result_content) if result_content else None
+            "output_data": json.loads(result_content) if result_content else None,
         }
 
     except gitlab.exceptions.GitlabAuthenticationError:

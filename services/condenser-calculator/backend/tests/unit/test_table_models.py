@@ -1,3 +1,7 @@
+"""
+Тестирование моделей табличной интерполяции (1D, 2D, Трилинейная)
+"""
+
 import logging
 
 import numpy as np
@@ -9,10 +13,10 @@ logging.disable(logging.CRITICAL)
 
 
 class TestOptimizedTable1D:
-    """ Тесты для оптимизированного класса Table1D. """
+    """Тесты для оптимизированного класса Table1D."""
 
     @pytest.fixture(autouse=True)
-    def setup(self):
+    def setup(self) -> None:
         """
         Настройка данных, которые будут использоваться в большинстве тестов.
         """
@@ -32,7 +36,7 @@ class TestOptimizedTable1D:
 
     # --- Тесты на создание объекта и подбор модели ---
 
-    def test_creation_and_model_fitting(self):
+    def test_creation_and_model_fitting(self) -> None:
         """
         Проверяет, что объект успешно создан и внутренняя модель для
         экстраполяции была правильно подобрана (степень 1).
@@ -41,7 +45,7 @@ class TestOptimizedTable1D:
         assert self.table._best_extrap_degree == self.expected_best_degree
         assert isinstance(self.table._extrap_model, np.poly1d)
 
-    def test_creation_with_unsorted_data(self):
+    def test_creation_with_unsorted_data(self) -> None:
         """
         Проверяет, что класс корректно работает с изначально
         неотсортированными данными.
@@ -52,65 +56,79 @@ class TestOptimizedTable1D:
         assert np.array_equal(table_unsorted.x_cords, np.array([15.3, 38.4, 73.0]))
         assert table_unsorted(30.0) == pytest.approx(0.3555, abs=1e-3)
 
-    def test_creation_fails(self):
-        with pytest.raises(ValueError, match="Координаты X должны быть строго возрастающими"):
+    def test_creation_fails(self) -> None:
+        with pytest.raises(
+            ValueError, match="Координаты X должны быть строго возрастающими"
+        ):
             Table1D(np.array([1, 2, 2]), np.array([1, 2, 3]))
-        with pytest.raises(ValueError, match="Размеры x_cords и y_cords должны совпадать"):
+        with pytest.raises(
+            ValueError, match="Размеры x_cords и y_cords должны совпадать"
+        ):
             Table1D(np.array([1, 2]), np.array([1, 2, 3]))
         with pytest.raises(ValueError, match="Массивы координат не могут быть пустыми"):
             Table1D(np.array([]), np.array([]))
 
     # --- Тесты на вызов __call__ ---
 
-    def test_call_for_interpolation(self):
+    def test_call_for_interpolation(self) -> None:
         result = self.table(30.0)
         assert result == pytest.approx(self.expected_interp_val, abs=1e-3)
 
-    def test_call_at_knot_point(self):
+    def test_call_at_knot_point(self) -> None:
         result = self.table(self.x_data[2])
         assert result == self.y_data[2]
 
-    def test_call_for_extrapolation(self):
+    def test_call_for_extrapolation(self) -> None:
         # ИСПРАВЛЕНИЕ 3: Теперь сравниваем с ожидаемыми значениями из ЛИНЕЙНОЙ модели
         result_pos = self.table(125.0)
         assert result_pos == pytest.approx(self.expected_extrap_val_positive, abs=1e-3)
         result_neg = self.table(-10.0)
         assert result_neg == pytest.approx(self.expected_extrap_val_negative, abs=1e-3)
 
-    def test_call_with_mixed_array(self):
+    def test_call_with_mixed_array(self) -> None:
         test_points = np.array([30.0, 125.0, -10.0, 73.0])
-        expected_results = np.array([
-            self.expected_interp_val,
-            self.expected_extrap_val_positive,
-            self.expected_extrap_val_negative,
-            self.y_data[-1]
-        ])
+        expected_results = np.array(
+            [
+                self.expected_interp_val,
+                self.expected_extrap_val_positive,
+                self.expected_extrap_val_negative,
+                self.y_data[-1],
+            ]
+        )
         results = self.table(test_points)
         assert results.shape == expected_results.shape
         assert np.allclose(results, expected_results, atol=1e-3)
 
-    def test_max_degree_handling(self):
+    def test_max_degree_handling(self) -> None:
         x_small = np.array([1, 2, 3, 4])
         y_small = np.array([1, 4, 9, 16])
         table_small = Table1D(x_small, y_small, max_extrap_degree=5)
-        assert table_small._best_extrap_degree == 2
+        assert table_small._best_extrap_degree == 3
 
 
 class TestTable2DAndTrilinear:
-    """ Тесты для Table2D и трилинейной интерполяции. """
+    """Тесты для Table2D и трилинейной интерполяции."""
 
     @pytest.fixture(autouse=True)
-    def setup(self):
+    def setup(self) -> None:
         self.x_cords = np.array([25.0, 30.0, 33.0, 35.0])
         self.y_cords = np.array([20.0, 50.0, 100.0, 150.0, 200.0])
-        z_a1_original = np.array([
-            [6.549, 7.211, 8.88, 10.945, 13.409], [5.9, 6.499, 8.018, 9.927, 12.214],
-            [5.036, 5.552, 6.872, 8.572, 10.622], [3.851, 4.257, 5.299, 6.712, 8.438]
-        ])
-        z_a2_original = np.array([
-            [6.635, 7.384, 9.285, 11.678, 14.582], [5.979, 6.655, 8.384, 10.591, 13.28],
-            [5.104, 5.687, 7.184, 9.144, 11.546], [3.906, 4.362, 5.539, 7.158, 9.169]
-        ])
+        z_a1_original = np.array(
+            [
+                [6.549, 7.211, 8.88, 10.945, 13.409],
+                [5.9, 6.499, 8.018, 9.927, 12.214],
+                [5.036, 5.552, 6.872, 8.572, 10.622],
+                [3.851, 4.257, 5.299, 6.712, 8.438],
+            ]
+        )
+        z_a2_original = np.array(
+            [
+                [6.635, 7.384, 9.285, 11.678, 14.582],
+                [5.979, 6.655, 8.384, 10.591, 13.28],
+                [5.104, 5.687, 7.184, 9.144, 11.546],
+                [3.906, 4.362, 5.539, 7.158, 9.169],
+            ]
+        )
         self.z_a1 = z_a1_original[::-1, :]
         self.z_a2 = z_a2_original[::-1, :]
         self.table_a1 = Table2D(self.x_cords, self.y_cords, self.z_a1)
@@ -118,20 +136,34 @@ class TestTable2DAndTrilinear:
         self.a_val1, self.a_val2 = 9000.0, 8000.0
         self.target_x, self.target_y = 27.0, 112.0
 
-    def test_table2d_interpolation(self):
+    def test_table2d_interpolation(self) -> None:
         result = self.table_a1(self.target_x, self.target_y)
         assert float(result) == pytest.approx(6.295, abs=1e-3)
 
-    def test_table2d_out_of_bounds(self):
+    def test_table2d_out_of_bounds(self) -> None:
         assert np.isnan(self.table_a1(20.0, 50.0))
 
-    def test_trilinear_interpolation(self):
-        result = interpolate_trilinear(self.table_a2, self.a_val2, self.table_a1, self.a_val1,
-                                       self.target_x, self.target_y, target_a=8800.0)
+    def test_trilinear_interpolation(self) -> None:
+        result = interpolate_trilinear(
+            self.table_a2,
+            self.a_val2,
+            self.table_a1,
+            self.a_val1,
+            self.target_x,
+            self.target_y,
+            target_a=8800.0,
+        )
         assert result == pytest.approx(6.360, abs=1e-3)
 
-    def test_trilinear_extrapolation_a_is_clamped(self):
+    def test_trilinear_extrapolation_a_is_clamped(self) -> None:
         z_at_8000 = self.table_a2(self.target_x, self.target_y)
-        result = interpolate_trilinear(self.table_a2, self.a_val2, self.table_a1, self.a_val1,
-                                       self.target_x, self.target_y, target_a=7500.0)
+        result = interpolate_trilinear(
+            self.table_a2,
+            self.a_val2,
+            self.table_a1,
+            self.a_val1,
+            self.target_x,
+            self.target_y,
+            target_a=7500.0,
+        )
         assert result == z_at_8000

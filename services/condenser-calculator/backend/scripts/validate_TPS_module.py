@@ -1,13 +1,15 @@
+from pprint import pprint
+
 from _common import setup_path
 
 setup_path()
 
-from pprint import pprint
-
 from app.utils.TPS_module import TablePressureStrategy
 
 
-def run_validation_case(strategy: TablePressureStrategy, params: dict, title: str, tolerance_percent: float):
+def run_validation_case(
+    strategy: TablePressureStrategy, params: dict, title: str, tolerance_percent: float
+) -> None:
     """
     Выполняет один тестовый случай: запускает расчет, сравнивает с эталоном и печатает отчет.
     """
@@ -30,8 +32,12 @@ def run_validation_case(strategy: TablePressureStrategy, params: dict, title: st
     status = "УСПЕХ" if is_converged else "ПРОВАЛ"
 
     print("\n--- Отчет по валидации ---")
-    print(f"  Промежуточный P1(NAMET): {calculated_results['pressure_flow_path_1_NAMET']:.4f}")
-    print(f"  Промежуточный P1(NAMED): {calculated_results['pressure_flow_path_1_NAMED']:.4f}")
+    print(
+        f"  Промежуточный P1(NAMET): {calculated_results['pressure_flow_path_1_NAMET']:.4f}"
+    )
+    print(
+        f"  Промежуточный P1(NAMED): {calculated_results['pressure_flow_path_1_NAMED']:.4f}"
+    )
     print("-" * 30)
     print(f"  Ожидаемый результат:   {expected_value:.4f}")
     print(f"  Рассчитанный результат: {calculated_value:.4f}")
@@ -53,7 +59,12 @@ if __name__ == "__main__":
             ],
         ]
     }
-    NAMED_DATA = {"data": [[15.3, 26.8, 38.4, 49.9, 61.5, 73], [0.157, 0.258, 0.469, 0.607, 0.763, 0.919]]}
+    NAMED_DATA = {
+        "data": [
+            [15.3, 26.8, 38.4, 49.9, 61.5, 73],
+            [0.157, 0.258, 0.469, 0.607, 0.763, 0.919],
+        ]
+    }
 
     # Тест 1: ПРОВАЛЬНЫЙ. Сравниваем верный расчет (6.295) с неверным эталоном (7.758).
     params_fail = {
@@ -79,6 +90,15 @@ if __name__ == "__main__":
 
     calculation_strategy = TablePressureStrategy()
 
-    run_validation_case(calculation_strategy, params_fail, "Тест 1: Неверный эталон", tolerance_percent=5.0)
-    run_validation_case(calculation_strategy, params_pass, "Тест 2: Корректный эталон", tolerance_percent=1.0)
-
+    run_validation_case(
+        calculation_strategy,
+        params_fail,
+        "Тест 1: Неверный эталон",
+        tolerance_percent=5.0,
+    )
+    run_validation_case(
+        calculation_strategy,
+        params_pass,
+        "Тест 2: Корректный эталон",
+        tolerance_percent=1.0,
+    )

@@ -1,10 +1,12 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
+
 from sqlalchemy.orm import Session
 
+from app.core.exceptions import EntityNotFoundError
 from app.models import CalculationResultDB
 from app.schemas import MultiCalculationParams, MultiCalculationResult
-from app.core.exceptions import EntityNotFoundError
+
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +28,7 @@ def create_calculation_result(
             user_name="Engineer",
             stock_name=stock_name,
             turbine_name=turbine_name,
-            calc_timestamp=datetime.utcnow(),
+            calc_timestamp=datetime.now(timezone.utc),
             input_data=parameters.model_dump(),
             output_data=results.model_dump(),
         )
@@ -66,11 +68,7 @@ def get_results_by_valve_drawing(db: Session, valve_drawing: str):
 
 
 def get_calculation_result_by_id(db: Session, result_id: int) -> CalculationResultDB:
-    result = (
-        db.query(CalculationResultDB)
-        .filter(CalculationResultDB.id == result_id)
-        .first()
-    )
+    result = db.query(CalculationResultDB).filter(CalculationResultDB.id == result_id).first()
     if not result:
         raise EntityNotFoundError(entity_name="Результат расчёта", entity_id=result_id)
     return result

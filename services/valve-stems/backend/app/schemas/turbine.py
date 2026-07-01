@@ -1,4 +1,3 @@
-
 from pydantic import BaseModel, ConfigDict
 
 from .valve import SimpleValveInfo, ValveInfo
@@ -13,12 +12,14 @@ class TurbineInfo(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+
 class TurbineWithValvesInfo(TurbineInfo):
     valves: list[SimpleValveInfo] = []
     # Полезно знать, нашли ли мы эту турбину через конкретный клапан
     matched_valve_id: int | None = None
 
     model_config = ConfigDict(from_attributes=True)
+
 
 class TurbineValves(BaseModel):
     count: int

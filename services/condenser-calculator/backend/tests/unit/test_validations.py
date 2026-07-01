@@ -1,29 +1,38 @@
+"""
+Юнит-тесты для валидаторов входных данных (расходы воды, температуры, параметры БД)
+"""
+
 import pytest
-from app.core.condenser_validators import validate_condenser_for_method, validate_water_flow_limits
-from app.models import Condenser
+
+from app.core.condenser_validators import (
+    validate_condenser_for_method,
+    validate_temperature_ranges,
+    validate_water_flow_limits,
+)
 from app.core.exceptions import ValidationError
+from app.models import Condenser
 
 
-def test_validate_condenser_br02_berman_missing_aircooler():
+def test_validate_condenser_br02_berman_missing_aircooler() -> None:
     condenser = Condenser(aircooler_count=None)
     with pytest.raises(ValidationError, match=r"Ошибка валидации БД \(BR-02\)"):
         validate_condenser_for_method(condenser, "berman")
 
 
-def test_validate_condenser_br02_metrovickers_missing_aircooler():
+def test_validate_condenser_br02_metrovickers_missing_aircooler() -> None:
     condenser = Condenser(aircooler_count=None)
     with pytest.raises(ValidationError, match=r"Ошибка валидации БД \(BR-02\)"):
         validate_condenser_for_method(condenser, "metro-vickers")
 
 
-def test_validate_condenser_br02_valid():
+def test_validate_condenser_br02_valid() -> None:
     condenser = Condenser(aircooler_count=100)
     # Should not raise
     validate_condenser_for_method(condenser, "berman")
     validate_condenser_for_method(condenser, "metro-vickers")
 
 
-def test_water_flow_limits_br06():
+def test_water_flow_limits_br06() -> None:
     limits = {
         "main_bundle": {"min": 6000.0, "max": 12000.0},
         "builtin_bundle": {"min": 500.0, "max": 1500.0},
@@ -49,7 +58,7 @@ def test_water_flow_limits_br06():
     assert len(warnings) == 2
 
 
-def test_water_flow_limits_br07():
+def test_water_flow_limits_br07() -> None:
     limits = {
         "main_bundle": {"min": 6000.0, "max": 12000.0},
         "builtin_bundle": {"min": 500.0, "max": 1500.0},
@@ -67,22 +76,21 @@ def test_water_flow_limits_br07():
     assert "ВП" in warnings[0]
 
 
-def test_water_flow_limits_zero():
+def test_water_flow_limits_zero() -> None:
     # Both zero
     warnings = validate_water_flow_limits(0.0, 0.0, {"main_bundle": {"min": 100}})
     assert len(warnings) == 1
     assert "Оба расхода воды равны нулю" in warnings[0]
 
 
-def test_water_flow_limits_empty():
+def test_water_flow_limits_empty() -> None:
     warnings = validate_water_flow_limits(8000.0, 1000.0, None)
     assert len(warnings) == 0
     warnings = validate_water_flow_limits(8000.0, 1000.0, {})
     assert len(warnings) == 0
 
 
-def test_temperature_ranges_br10_berman():
-    from app.core.condenser_validators import validate_temperature_ranges
+def test_temperature_ranges_br10_berman() -> None:
     # Normal
     warnings = validate_temperature_ranges("berman", [10.0, 20.0, 30.0])
     assert len(warnings) == 0
@@ -96,8 +104,7 @@ def test_temperature_ranges_br10_berman():
     assert len(warnings) == 1
 
 
-def test_temperature_ranges_br10_metrovickers():
-    from app.core.condenser_validators import validate_temperature_ranges
+def test_temperature_ranges_br10_metrovickers() -> None:
     # Normal
     warnings = validate_temperature_ranges("metro-vickers", [50.0, 100.0])
     assert len(warnings) == 0

@@ -1,8 +1,8 @@
+from pprint import pprint
+
 from _common import setup_path
 
 setup_path()
-
-from pprint import pprint
 
 from app.utils.TPS_module import TablePressureStrategy
 
@@ -58,10 +58,13 @@ if __name__ == "__main__":
 
     print("\n--- Итоговый результат ---")
     final_pressure = results["pressure_flow_path_1"]
-    print(f"Итоговое давление pressure_flow_path_1 = max({p_namet:.4f}, {p_named:.4f}) = {final_pressure:.3f}")
+    print(
+        f"Итоговое давление pressure_flow_path_1 = max({p_namet:.4f}, {p_named:.4f}) = {final_pressure:.3f}"
+    )
 
     print("\n--- Сверка с ожидаемыми значениями ---")
     print(f"Ожидаемый P1(NAMET) при t=27, G=112: ~7.758, полученный: {p_namet:.3f}")
     print(f"Ожидаемый P1(NAMED) при t=30:        ~0.316, полученный: {p_named:.3f}")
-    print(f"Ожидаемый итоговый P1:                7.758, полученный: {final_pressure:.3f}")
-
+    print(
+        f"Ожидаемый итоговый P1:                7.758, полученный: {final_pressure:.3f}"
+    )

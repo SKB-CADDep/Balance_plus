@@ -1,0 +1,239 @@
+{
+  "material_id": "2df4e1f2-f061-4ddc-ae97-091055919533",
+  "metadata": {
+    "name_material_standard": "X10CrMoNb9-1",
+    "name_material_alternative": [],
+    "application_area": [
+      "Зарубежные материалы"
+    ],
+    "comment": "",
+    "classification": {
+      "classification_category": "",
+      "classification_class": "",
+      "classification_subclass": ""
+    }
+  },
+  "physical_properties": {
+    "modulus_elasticity": {
+      "property_name": "Модуль упругости",
+      "property_unit": "МПа",
+      "property_source": "BS-EN-10302-2002",
+      "property_subsource": "14",
+      "comment": "",
+      "temperature_value_pairs": [
+        [
+          20.0,
+          218000.0
+        ],
+        [
+          100.0,
+          213000.0
+        ],
+        [
+          200.0,
+          206000.0
+        ],
+        [
+          300.0,
+          198000.0
+        ],
+        [
+          400.0,
+          190000.0
+        ],
+        [
+          500.0,
+          180000.0
+        ],
+        [
+          550.0,
+          174000.0
+        ],
+        [
+          600.0,
+          167000.0
+        ],
+        [
+          650.0,
+          159000.0
+        ]
+      ],
+      "property_last_updated": "2025-07-10T15:44:26.178748"
+    },
+    "coefficient_linear_expansion": {
+      "property_name": "Коэффициент линейного расширения",
+      "property_unit": "1/°С",
+      "property_source": "BS-EN-10302-2002",
+      "property_subsource": "14",
+      "comment": "",
+      "temperature_value_pairs": [
+        [
+          100.0,
+          10.9
+        ],
+        [
+          200.0,
+          11.3
+        ],
+        [
+          300.0,
+          11.7
+        ],
+        [
+          400.0,
+          12.0
+        ],
+        [
+          500.0,
+          12.3
+        ],
+        [
+          550.0,
+          12.4
+        ],
+        [
+          600.0,
+          12.6
+        ],
+        [
+          650.0,
+          12.7
+        ]
+      ],
+      "property_last_updated": "2025-07-10T15:44:26.178748"
+    },
+    "coefficient_thermal_conductivity": {
+      "property_name": "Коэффициент теплопроводности",
+      "property_unit": "Вт/(м·°С)",
+      "property_source": "BS-EN-10302-2002",
+      "property_subsource": "14",
+      "comment": "",
+      "temperature_value_pairs": [
+        [
+          20.0,
+          26.0
+        ],
+        [
+          500.0,
+          30.0
+        ]
+      ],
+      "property_last_updated": "2025-07-10T15:44:26.178748"
+    },
+    "density": {
+      "property_name": "Плотность",
+      "property_unit": "кг/м³",
+      "property_source": "BS-EN-10302-2002",
+      "property_subsource": "14",
+      "comment": "",
+      "temperature_value_pairs": [
+        [
+          20.0,
+          7700.0
+        ],
+        [
+          100.0,
+          7700.0
+        ]
+      ],
+      "property_last_updated": "2025-07-10T15:44:26.178748"
+    },
+    "specific_heat": {
+      "property_name": "Удельная теплоемкость",
+      "property_unit": "Дж/(кг·°С)",
+      "property_source": "BS-EN-10302-2002",
+      "property_subsource": "14",
+      "comment": "",
+      "temperature_value_pairs": [
+        [
+          20.0,
+          430.0
+        ],
+        [
+          500.0,
+          680.0
+        ]
+      ],
+      "property_last_updated": "2025-07-10T15:44:26.178748"
+    }
+  },
+  "mechanical_properties": {
+    "strength_category": [
+      {
+        "value_strength_category": "-",
+        "hardness": [],
+        "yield_strength": {
+          "property_name": "Предел текучести",
+          "property_unit": "МПа",
+          "property_source": "BS-EN-10302-2002",
+          "property_subsource": "14",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              20.0,
+              450.0
+            ],
+            [
+              100.0,
+              410.0
+            ],
+            [
+              200.0,
+              380.0
+            ],
+            [
+              250.0,
+              370.0
+            ],
+            [
+              300.0,
+              360.0
+            ],
+            [
+              350.0,
+              350.0
+            ],
+            [
+              400.0,
+              340.0
+            ],
+            [
+              450.0,
+              320.0
+            ],
+            [
+              500.0,
+              300.0
+            ],
+            [
+              550.0,
+              270.0
+            ],
+            [
+              600.0,
+              215.0
+            ]
+          ],
+          "property_last_updated": "2025-07-10T15:44:26.178748"
+        },
+        "tensile_strength": {
+          "property_name": "Предел прочности",
+          "property_unit": "МПа",
+          "property_source": "BS-EN-10302-2002",
+          "property_subsource": "14",
+          "comment": "",
+          "temperature_value_pairs": [
+            [
+              20.0,
+              620.0
+            ]
+          ],
+          "property_last_updated": "2025-07-10T15:44:26.178748"
+        }
+      }
+    ]
+  },
+  "chemical_properties": {
+    "composition": []
+  }
+}
