@@ -88,7 +88,7 @@ def calculate_wrapper(payload: dict):
                     )
                 ]
             )
-            calc_res = CalculationAdapter.run_calculation(multi_params, valve_info)
+            calc_res = CalculationAdapter.run_multi_calculation(multi_params, valve_info)
             
             group_total_g = sum(calc_res.Gi) * group["quantity"]
             detail = {
