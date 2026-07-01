@@ -19,4 +19,3 @@ async def list_projects(search: str = Query("", description="Поиск по н�
         raise HTTPException(status_code=502, detail=f"Ошибка GitLab API: {e}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Ошибка получения списка проектов: {e}")
-

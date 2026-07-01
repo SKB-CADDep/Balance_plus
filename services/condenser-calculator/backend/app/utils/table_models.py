@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 import numpy as np
 from scipy.interpolate import RegularGridInterpolator, interp1d
 
-logging.basicConfig(level=logging.INFO, format='%(levelname)s:%(name)s:%(message)s')
+logging.basicConfig(level=logging.INFO, format="%(levelname)s:%(name)s:%(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -20,6 +20,7 @@ class Table1D:
     2. Создается объект для быстрой линейной интерполяции.
     3. Подбирается и сохраняется наилучшая полиномиальная модель для экстраполяции.
     """
+
     x_cords: np.ndarray
     y_cords: np.ndarray
     max_extrap_degree: int = 3
@@ -29,9 +30,11 @@ class Table1D:
     _extrap_model: np.poly1d = field(init=False, repr=False)
     _best_extrap_degree: int = field(init=False, repr=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         # Валидация входных данных
-        if not isinstance(self.x_cords, np.ndarray) or not isinstance(self.y_cords, np.ndarray):
+        if not isinstance(self.x_cords, np.ndarray) or not isinstance(
+            self.y_cords, np.ndarray
+        ):
             raise TypeError("x_cords и y_cords должны быть экземплярами np.ndarray.")
         if self.x_cords.ndim != 1 or self.y_cords.ndim != 1:
             raise ValueError("x_cords и y_cords должны быть 1-мерными массивами.")
@@ -48,35 +51,40 @@ class Table1D:
         # Проверка на строгое возрастание и отсутствие дубликатов X
         if np.any(np.diff(x_sorted) <= 0):
             raise ValueError(
-                "Координаты X должны быть строго возрастающими и не содержать дубликатов после сортировки.")
+                "Координаты X должны быть строго возрастающими и не содержать дубликатов после сортировки."
+            )
 
-        object.__setattr__(self, 'x_cords', x_sorted)
-        object.__setattr__(self, 'y_cords', y_sorted)
+        object.__setattr__(self, "x_cords", x_sorted)
+        object.__setattr__(self, "y_cords", y_sorted)
 
         # Создаем интерполятор один раз
-        interp_func = interp1d(x_sorted, y_sorted, kind="linear", bounds_error=False, fill_value=np.nan)
-        object.__setattr__(self, '_interp', interp_func)
+        interp_func = interp1d(
+            x_sorted, y_sorted, kind="linear", bounds_error=False, fill_value=np.nan
+        )
+        object.__setattr__(self, "_interp", interp_func)
 
         # Шаг 2: Подбор и кэширование лучшей модели для экстраполяции
         self._fit_extrapolation_model()
 
-    def _fit_extrapolation_model(self):
+    def _fit_extrapolation_model(self) -> None:
         """
         Находит лучшую полиномиальную модель и сохраняет ее в self._extrap_model.
         Вызывается один раз из __post_init__.
         """
         best_model = None
-        best_aic = float('inf')
+        best_aic = float("inf")
         best_degree = -1
         n = len(self.x_cords)
 
         logger.info(
-            f"[{self.__class__.__name__}] Поиск лучшей модели для экстраполяции (max_degree={self.max_extrap_degree})")
+            f"[{self.__class__.__name__}] Поиск лучшей модели для экстраполяции (max_degree={self.max_extrap_degree})"
+        )
 
         for degree in range(1, self.max_extrap_degree + 1):
             if degree >= n:
                 logger.warning(
-                    f"[{self.__class__.__name__}] Степень полинома ({degree}) >= кол-ва точек ({n}). Поиск прерван.")
+                    f"[{self.__class__.__name__}] Степень полинома ({degree}) >= кол-ва точек ({n}). Поиск прерван."
+                )
                 break
 
             coeffs = np.polyfit(self.x_cords, self.y_cords, degree)
@@ -87,7 +95,9 @@ class Table1D:
             k = degree + 1
 
             aic = n * np.log(rss / n) + 2 * k if rss > 0 else -np.inf
-            logger.debug(f"[{self.__class__.__name__}] Степень: {degree}, AIC: {aic:.4f}")
+            logger.debug(
+                f"[{self.__class__.__name__}] Степень: {degree}, AIC: {aic:.4f}"
+            )
 
             if aic < best_aic:
                 best_aic = aic
@@ -98,9 +108,10 @@ class Table1D:
             raise RuntimeError("Не удалось построить модель для экстраполяции.")
 
         logger.info(
-            f"-> [{self.__class__.__name__}] Выбрана модель для экстраполяции: полином степени {best_degree} (AIC={best_aic:.4f})")
-        object.__setattr__(self, '_extrap_model', best_model)
-        object.__setattr__(self, '_best_extrap_degree', best_degree)
+            f"-> [{self.__class__.__name__}] Выбрана модель для экстраполяции: полином степени {best_degree} (AIC={best_aic:.4f})"
+        )
+        object.__setattr__(self, "_extrap_model", best_model)
+        object.__setattr__(self, "_best_extrap_degree", best_degree)
 
     def __call__(self, target_x: float | np.ndarray) -> float | np.ndarray:
         """
@@ -115,7 +126,8 @@ class Table1D:
                 return float(interpolated_values)
             else:
                 logger.warning(
-                    f"-> [{self.__class__.__name__}] Точка X={target_x} вне диапазона. Используется экстраполяция (полином ст. {self._best_extrap_degree}).")
+                    f"-> [{self.__class__.__name__}] Точка X={target_x} вне диапазона. Используется экстраполяция (полином ст. {self._best_extrap_degree})."
+                )
                 return float(self._extrap_model(target_x))
 
         output_values = np.copy(interpolated_values)
@@ -123,7 +135,8 @@ class Table1D:
 
         if np.any(extrapolation_indices):
             logger.warning(
-                f"-> [{self.__class__.__name__}] {np.sum(extrapolation_indices)} точка(и) вне диапазона. Используется экстраполяция (полином ст. {self._best_extrap_degree}).")
+                f"-> [{self.__class__.__name__}] {np.sum(extrapolation_indices)} точка(и) вне диапазона. Используется экстраполяция (полином ст. {self._best_extrap_degree})."
+            )
             x_to_extrapolate = np.asarray(target_x)[extrapolation_indices]
             output_values[extrapolation_indices] = self._extrap_model(x_to_extrapolate)
 
@@ -136,30 +149,43 @@ class Table2D:
     Представляет 2D таблицу для билинейной интерполяции.
     Координаты x и y должны быть 1D массивами, строго возрастающими.
     """
+
     x_cords: np.ndarray
     y_cords: np.ndarray
     z_values: np.ndarray
     _rgi: RegularGridInterpolator = field(init=False, repr=False)
 
-    def __post_init__(self):
-        if not all(isinstance(arr, np.ndarray) for arr in [self.x_cords, self.y_cords, self.z_values]):
-            raise TypeError("x_cords, y_cords, и z_values должны быть экземплярами np.ndarray.")
+    def __post_init__(self) -> None:
+        if not all(
+            isinstance(arr, np.ndarray)
+            for arr in [self.x_cords, self.y_cords, self.z_values]
+        ):
+            raise TypeError(
+                "x_cords, y_cords, и z_values должны быть экземплярами np.ndarray."
+            )
         if self.x_cords.ndim != 1 or self.y_cords.ndim != 1 or self.z_values.ndim != 2:
             raise ValueError("Ожидаем 1-D x, 1-D y и 2-D z")
         if self.z_values.shape != (self.x_cords.size, self.y_cords.size):
             raise ValueError(
-                f"Размеры z {self.z_values.shape} не соответствуют ({self.x_cords.size}, {self.y_cords.size})")
+                f"Размеры z {self.z_values.shape} не соответствуют ({self.x_cords.size}, {self.y_cords.size})"
+            )
         if np.any(np.diff(self.x_cords) <= 0):
             raise ValueError("x_cords должен быть строго возрастающим")
         if np.any(np.diff(self.y_cords) <= 0):
             raise ValueError("y_cords должен быть строго возрастающим")
 
-        rgi_func = RegularGridInterpolator((self.x_cords, self.y_cords), self.z_values,
-                                           method="linear", bounds_error=False, fill_value=np.nan)
-        object.__setattr__(self, '_rgi', rgi_func)
+        rgi_func = RegularGridInterpolator(
+            (self.x_cords, self.y_cords),
+            self.z_values,
+            method="linear",
+            bounds_error=False,
+            fill_value=np.nan,
+        )
+        object.__setattr__(self, "_rgi", rgi_func)
 
-    def __call__(self, target_x: float | np.ndarray,
-                 target_y: float | np.ndarray) -> float | np.ndarray:
+    def __call__(
+        self, target_x: float | np.ndarray, target_y: float | np.ndarray
+    ) -> float | np.ndarray:
         points_x = np.ravel(target_x)
         points_y = np.ravel(target_y)
         points_to_interpolate = np.column_stack((points_x, points_y))
@@ -168,9 +194,14 @@ class Table2D:
 
 
 def interpolate_trilinear(
-        table_low_a: Table2D, a_low: float,
-        table_high_a: Table2D, a_high: float,
-        target_x: float, target_y: float, target_a: float) -> float:
+    table_low_a: Table2D,
+    a_low: float,
+    table_high_a: Table2D,
+    a_high: float,
+    target_x: float,
+    target_y: float,
+    target_a: float,
+) -> float:
     """
     Выполняет линейно-билинейную (трилинейную) интерполяцию.
     Сначала выполняется билинейная интерполяция для target_x, target_y
@@ -199,8 +230,10 @@ def interpolate_trilinear(
         z_at_a_high = float(z_at_a_high.item())
 
     if np.isnan(z_at_a_low) or np.isnan(z_at_a_high):
-        logger.warning(f"Один из промежуточных Z является NaN (Z_low={z_at_a_low}, Z_high={z_at_a_high}). "
-                       f"Результат по A также будет NaN.")
+        logger.warning(
+            f"Один из промежуточных Z является NaN (Z_low={z_at_a_low}, Z_high={z_at_a_high}). "
+            f"Результат по A также будет NaN."
+        )
         return np.nan
 
     final_z = np.interp(target_a, [a_low, a_high], [z_at_a_low, z_at_a_high])

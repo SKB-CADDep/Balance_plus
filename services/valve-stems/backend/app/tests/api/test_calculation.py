@@ -2,7 +2,6 @@
 Тесты для calculation check endpoints.
 """
 
-
 from app import schemas
 from app.tests.crud.test_crud import (
     create_test_calculation_result,
@@ -50,7 +49,9 @@ async def test_get_calculation_results(async_client, db_session):
         ),
     )
 
-    create_test_calculation_result(db_session, valve.name, parameters.model_dump(), results.model_dump())
+    create_test_calculation_result(
+        db_session, valve.name, parameters.model_dump(), results.model_dump()
+    )
     response = await async_client.get(f"/api/v1/valves/{valve.name}/results/")
 
     assert response.status_code == 200
@@ -60,12 +61,8 @@ async def test_get_calculation_results(async_client, db_session):
     assert item["stock_name"] == valve.name
     assert item["input_data"]["turbine_id"] == turbine.id
     assert item["input_data"]["globals"]["P_fresh"] == parameters.globals.P_fresh
-    assert (
-        item["output_data"]["summary"]["sk"]["total_g"]
-        == results.summary.sk.total_g
-    )
+    assert item["output_data"]["summary"]["sk"]["total_g"] == results.summary.sk.total_g
     assert item["output_data"]["details"][0]["Gi"] == results.details[0].Gi
-
 
 
 async def test_delete_calculation_result(async_client, db_session):
@@ -114,5 +111,3 @@ async def test_delete_calculation_result(async_client, db_session):
     response = await async_client.delete(f"/api/v1/{result.id}")
     assert response.status_code == 204
     assert response.content == b""
-
-

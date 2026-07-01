@@ -12,9 +12,11 @@ router = APIRouter(prefix="/tasks", tags=["Tasks"])
 
 @router.get("", response_model=list[TaskInfo])
 async def list_tasks(
-    project_id: int = Query(..., description="ID проекта обязателен"), # Делаем обязательным для 422
-    state: str = "opened", 
-    my_only: bool = False
+    project_id: int = Query(
+        ..., description="ID проекта обязателен"
+    ),  # Делаем обязательным для 422
+    state: str = "opened",
+    my_only: bool = False,
 ):
     """
     Получить список задач.
@@ -58,7 +60,7 @@ async def create_task(task: TaskCreate):
             title=task.title,
             description=task.description,
             labels=task.labels,
-            project_id=task.project_id  # Передаем ID проекта
+            project_id=task.project_id,  # Передаем ID проекта
         )
 
         # Возвращаем полную информацию через get_issue
@@ -95,7 +97,7 @@ async def create_task_branch(issue_iid: int, payload: BranchCreateRequest):
 
         branch_name = f"issue/{issue_iid}-{safe_slug}"
 
-        print(f"🛠 Пытаемся создать ветку: {branch_name}") # Лог для отладки
+        print(f"🛠 Пытаемся создать ветку: {branch_name}")  # Лог для отладки
 
         # Создаём ветку
         created = gitlab_client.create_branch(branch_name, project_id=project_id)
@@ -127,12 +129,12 @@ async def submit_task(issue_iid: int, project_id: int = Query(...)):
         branch_name = gitlab_client.find_branch_by_issue_iid(issue_iid, project_id)
 
         if not branch_name:
-             # Фоллбек: если ветки нет, попробуем сгенерировать (вдруг еще не создана?)
-             # Но для сабмита это странно. Лучше вернуть ошибку.
-             raise HTTPException(
-                 status_code=400,
-                 detail=f"Ветка для задачи #{issue_iid} не найдена в GitLab. Сначала нажмите 'Начать работу'."
-             )
+            # Фоллбек: если ветки нет, попробуем сгенерировать (вдруг еще не создана?)
+            # Но для сабмита это странно. Лучше вернуть ошибку.
+            raise HTTPException(
+                status_code=400,
+                detail=f"Ветка для задачи #{issue_iid} не найдена в GitLab. Сначала нажмите 'Начать работу'.",
+            )
 
         print(f"📌 Найдена ветка для сабмита: {branch_name}")
 
@@ -142,10 +144,7 @@ async def submit_task(issue_iid: int, project_id: int = Query(...)):
 
         # 4. Создаем MR
         result = gitlab_client.create_merge_request(
-            source_branch=branch_name,
-            title=mr_title,
-            description=mr_desc,
-            project_id=project_id
+            source_branch=branch_name, title=mr_title, description=mr_desc, project_id=project_id
         )
 
         return {"status": "success", "mr_url": result["web_url"], "mr_iid": result["iid"]}
@@ -164,5 +163,5 @@ async def submit_task(issue_iid: int, project_id: int = Query(...)):
     except Exception as e:
         # Ловим ошибку "MR already exists" и красиво отдаем
         if "already exists" in str(e):
-             raise HTTPException(status_code=400, detail="Merge Request уже создан!")
+            raise HTTPException(status_code=400, detail="Merge Request уже создан!")
         raise HTTPException(status_code=500, detail=f"Ошибка создания MR: {e}")

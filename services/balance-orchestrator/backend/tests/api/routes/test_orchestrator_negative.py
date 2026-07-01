@@ -1,10 +1,11 @@
 import pytest
-from httpx import AsyncClient, ASGITransport
+from httpx import ASGITransport, AsyncClient
+
 from app.main import app
+
 
 @pytest.mark.asyncio
 class TestOrchestratorNegative:
-    
     @pytest.fixture(autouse=True)
     def setup(self):
         self.transport = ASGITransport(app=app)
@@ -13,12 +14,7 @@ class TestOrchestratorNegative:
     async def test_save_missing_task_id(self):
         """QA-5: Сохранение без task_iid -> 422"""
         url = f"{self.base_url}/calculations/save"
-        payload = {
-            "project_id": 41,
-            "app_type": "valves",
-            "input_data": {},
-            "output_data": {}
-        }
+        payload = {"project_id": 41, "app_type": "valves", "input_data": {}, "output_data": {}}
         async with AsyncClient(transport=self.transport, base_url="http://test") as ac:
             response = await ac.post(url, json=payload)
         assert response.status_code == 422
@@ -31,7 +27,7 @@ class TestOrchestratorNegative:
             "project_id": "NOT_A_NUMBER",
             "app_type": "valves",
             "input_data": {},
-            "output_data": {}
+            "output_data": {},
         }
         async with AsyncClient(transport=self.transport, base_url="http://test") as ac:
             response = await ac.post(url, json=payload)
@@ -39,7 +35,7 @@ class TestOrchestratorNegative:
 
     async def test_get_tasks_missing_project_id(self):
         """QA-5: Запрос задач без project_id -> 422"""
-        url = f"{self.base_url}/tasks" # БЕЗ слэша в конце
+        url = f"{self.base_url}/tasks"  # БЕЗ слэша в конце
         async with AsyncClient(transport=self.transport, base_url="http://test") as ac:
             response = await ac.get(url)
         assert response.status_code == 422

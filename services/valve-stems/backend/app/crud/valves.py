@@ -1,7 +1,10 @@
 import logging
+
 from sqlalchemy.orm import Session
-from app.models import Valve
+
 from app.core.exceptions import EntityNotFoundError
+from app.models import Valve
+
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +27,5 @@ def get_valve_by_drawing(db: Session, valve_drawing: str) -> Valve:
     """
     valve = db.query(Valve).filter(Valve.name == valve_drawing).first()
     if not valve:
-        raise EntityNotFoundError(
-            entity_name="Клапан (шток) по чертежу", entity_id=valve_drawing
-        )
+        raise EntityNotFoundError(entity_name="Клапан (шток) по чертежу", entity_id=valve_drawing)
     return valve

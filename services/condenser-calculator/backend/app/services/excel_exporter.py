@@ -1,5 +1,6 @@
 import io
 from typing import Any
+
 import openpyxl
 from openpyxl.styles import Font, PatternFill
 
@@ -34,7 +35,9 @@ class ExcelExporter:
 
         header_font = Font(bold=True)
         meta_font = Font(italic=True, color="404040")
-        table_header_fill = PatternFill(start_color="DCE6F1", end_color="DCE6F1", fill_type="solid")
+        table_header_fill = PatternFill(
+            start_color="DCE6F1", end_color="DCE6F1", fill_type="solid"
+        )
         warning_font = Font(color="FF0000", italic=True)
 
         current_row = 1
@@ -42,10 +45,12 @@ class ExcelExporter:
         # =================================================================
         # 1. ТАБЛИЦЫ РЕЖИМОВ (МАТРИЦЫ УЧАСТКОВ)
         # =================================================================
-        tables = getattr(calc_output, "tables",[])
+        tables = getattr(calc_output, "tables", [])
         if tables:
             for idx, table in enumerate(tables, 1):
-                ws.cell(row=current_row, column=1, value=f"Таблица {idx} (Участок)").font = header_font
+                ws.cell(
+                    row=current_row, column=1, value=f"Таблица {idx} (Участок)"
+                ).font = header_font
                 current_row += 1
 
                 meta = getattr(table, "meta", {})
@@ -53,39 +58,55 @@ class ExcelExporter:
                     ws.cell(row=current_row, column=1, value="Режим:").font = meta_font
                     current_row += 1
                     for m_key, m_val in meta.items():
-                        ws.cell(row=current_row, column=1, value=str(m_key)).font = meta_font
-                        ws.cell(row=current_row, column=2, value=cls._format_value(m_val)).font = meta_font
+                        ws.cell(
+                            row=current_row, column=1, value=str(m_key)
+                        ).font = meta_font
+                        ws.cell(
+                            row=current_row, column=2, value=cls._format_value(m_val)
+                        ).font = meta_font
                         current_row += 1
 
                 cols = getattr(table, "columns", [])
-                rows = getattr(table, "rows",[])
-                values = getattr(table, "values",[])
-                warnings = getattr(table, "warnings",[])
+                rows = getattr(table, "rows", [])
+                values = getattr(table, "values", [])
+                warnings = getattr(table, "warnings", [])
 
                 ws.cell(row=current_row, column=1, value="t1 \\ G").font = header_font
                 ws.cell(row=current_row, column=1).fill = table_header_fill
-                
+
                 for c_idx, col_val in enumerate(cols, 2):
-                    cell = ws.cell(row=current_row, column=c_idx, value=cls._format_value(col_val))
+                    cell = ws.cell(
+                        row=current_row, column=c_idx, value=cls._format_value(col_val)
+                    )
                     cell.font = header_font
                     cell.fill = table_header_fill
                 current_row += 1
 
                 for r_idx, row_val in enumerate(rows):
-                    cell = ws.cell(row=current_row, column=1, value=cls._format_value(row_val))
+                    cell = ws.cell(
+                        row=current_row, column=1, value=cls._format_value(row_val)
+                    )
                     cell.font = header_font
                     cell.fill = table_header_fill
-                    
+
                     if r_idx < len(values):
                         for c_idx, val in enumerate(values[r_idx], 2):
-                            ws.cell(row=current_row, column=c_idx, value=cls._format_value(val))
+                            ws.cell(
+                                row=current_row,
+                                column=c_idx,
+                                value=cls._format_value(val),
+                            )
                     current_row += 1
-                
+
                 if warnings:
-                    ws.cell(row=current_row, column=1, value="Предупреждения:").font = warning_font
+                    ws.cell(
+                        row=current_row, column=1, value="Предупреждения:"
+                    ).font = warning_font
                     current_row += 1
                     for w in warnings:
-                        ws.cell(row=current_row, column=1, value=str(w)).font = warning_font
+                        ws.cell(
+                            row=current_row, column=1, value=str(w)
+                        ).font = warning_font
                         current_row += 1
 
                 current_row += 2
@@ -93,17 +114,24 @@ class ExcelExporter:
         # =================================================================
         # 2. ТАБЛИЦА ОТСОСОВ
         # =================================================================
-        ejector_results = getattr(calc_output, "ejector_results",[])
+        ejector_results = getattr(calc_output, "ejector_results", [])
         if ejector_results:
-            ws.cell(row=current_row, column=1, value="Таблица по отсосам").font = header_font
+            ws.cell(
+                row=current_row, column=1, value="Таблица по отсосам"
+            ).font = header_font
             current_row += 1
 
             first_ejector = ejector_results[0]
             first_dict = (
-                first_ejector.model_dump() if hasattr(first_ejector, "model_dump") 
-                else (first_ejector if isinstance(first_ejector, dict) else vars(first_ejector))
+                first_ejector.model_dump()
+                if hasattr(first_ejector, "model_dump")
+                else (
+                    first_ejector
+                    if isinstance(first_ejector, dict)
+                    else vars(first_ejector)
+                )
             )
-            
+
             headers = list(first_dict.keys())
 
             ws.cell(row=current_row, column=1, value="Отсос №").font = header_font
@@ -116,12 +144,17 @@ class ExcelExporter:
 
             for e_idx, ejector in enumerate(ejector_results, 1):
                 e_dict = (
-                    ejector.model_dump() if hasattr(ejector, "model_dump") 
+                    ejector.model_dump()
+                    if hasattr(ejector, "model_dump")
                     else (ejector if isinstance(ejector, dict) else vars(ejector))
                 )
                 ws.cell(row=current_row, column=1, value=e_idx)
                 for c_idx, h in enumerate(headers, 2):
-                    ws.cell(row=current_row, column=c_idx, value=cls._format_value(e_dict.get(h)))
+                    ws.cell(
+                        row=current_row,
+                        column=c_idx,
+                        value=cls._format_value(e_dict.get(h)),
+                    )
                 current_row += 1
 
             current_row += 2

@@ -19,11 +19,12 @@ async def get_bureaus():
             {"id": module_code, "label": module_name}
             for module_code, module_name in bureau_data["modules"].items()
         ]
-        bureaus.append({
-            "id": bureau_code,
-            "label": bureau_data["name"],
-            "color": bureau_data["color"],
-            "modules": modules
-        })
+        bureaus.append(
+            {
+                "id": bureau_code,
+                "label": bureau_data["name"],
+                "color": bureau_data["color"],
+                "modules": modules,
+            }
+        )
     return bureaus
-

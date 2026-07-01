@@ -1,3 +1,5 @@
+from typing import Any
+
 from _common import setup_path
 
 setup_path()
@@ -5,7 +7,7 @@ setup_path()
 from compare_selection_methods import run_comparison
 
 
-def create_markdown_table(results):
+def create_markdown_table(results: list[dict[str, Any]]) -> str:
     """Создает строку с таблицей в формате Markdown из списка результатов."""
     # Заголовок таблицы
     header = "| Метод              | Найденный X        | Итераций | Время (μs/запуск) | Итоговый A3_delt |"
@@ -26,14 +28,21 @@ def create_markdown_table(results):
         time_str = f"{time_val:.4f}" if isinstance(time_val, float) else str(time_val)
 
         delta_val = res["Итоговый A3_delt"]
-        delta_str = f"{delta_val:.10f}" if isinstance(delta_val, float) else str(delta_val)
+        delta_str = (
+            f"{delta_val:.10f}" if isinstance(delta_val, float) else str(delta_val)
+        )
 
         # Собираем строку
-        rows.append(f"| {method:<18} | {x_str:<18} | {iters_str:<8} | {time_str:<17} | {delta_str:<16} |")
+        rows.append(
+            f"| {method:<18} | {x_str:<18} | {iters_str:<8} | {time_str:<17} | {delta_str:<16} |"
+        )
 
     return "\n".join([header, separator, *rows])
 
-def generate_report_file(results, filename="report.md"):
+
+def generate_report_file(
+    results: list[dict[str, Any]], filename: str = "report.md"
+) -> None:
     """Генерирует полный файл отчета в формате Markdown."""
     table_md = create_markdown_table(results)
 
@@ -85,4 +94,3 @@ def generate_report_file(results, filename="report.md"):
 if __name__ == "__main__":
     simulation_results = run_comparison()
     generate_report_file(simulation_results)
-

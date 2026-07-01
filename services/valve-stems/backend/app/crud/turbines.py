@@ -1,10 +1,12 @@
 import logging
+
 from sqlalchemy import and_
 from sqlalchemy.orm import Session, joinedload
 
+from app.core.exceptions import EntityNotFoundError
 from app.models import Turbine, Valve
 from app.schemas import TurbineValves, ValveInfo
-from app.core.exceptions import EntityNotFoundError
+
 
 logger = logging.getLogger(__name__)
 
@@ -61,9 +63,7 @@ def get_valves_by_turbine_id(db: Session, turbine_id: int) -> TurbineValves:
 def get_valves_by_turbine(db: Session, turbine_name: str) -> TurbineValves:
     turbine = db.query(Turbine).filter(Turbine.name == turbine_name).first()
     if not turbine:
-        raise EntityNotFoundError(
-            entity_name="Турбина по имени", entity_id=turbine_name
-        )
+        raise EntityNotFoundError(entity_name="Турбина по имени", entity_id=turbine_name)
 
     valves = turbine.valves
     valve_info_list = [ValveInfo.model_validate(v) for v in valves]

@@ -37,9 +37,11 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
                         "path": request.url.path,
                         "status_code": response.status_code,
                         "duration_ms": round(process_time, 2),
-                        "client_ip": request.client.host if request.client else "unknown"
+                        "client_ip": request.client.host
+                        if request.client
+                        else "unknown",
                     }
-                }
+                },
             )
 
             # 5. Добавляем ID в заголовок ответа

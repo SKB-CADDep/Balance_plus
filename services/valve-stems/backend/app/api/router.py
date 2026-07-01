@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.routes import calculations, drawio, turbines, utils, valves, async_calculations
+from app.api.routes import async_calculations, calculations, drawio, turbines, utils, valves
 
 
 api_router = APIRouter()

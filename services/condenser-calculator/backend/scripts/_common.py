@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 
 
-def setup_path():
+def setup_path() -> None:
     """Добавляет путь к app в PYTHONPATH."""
     backend_path = Path(__file__).parent.parent
     if str(backend_path) not in sys.path:

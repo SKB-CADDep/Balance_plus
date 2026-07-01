@@ -1,12 +1,13 @@
 import pytest
+import pytest_asyncio
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
-import pytest_asyncio
-from httpx import AsyncClient, ASGITransport
-from app.main import app
-from app.dependencies import get_db
+
 from app.core.database import Base
+from app.dependencies import get_db
+from app.main import app
 
 
 @pytest.fixture(scope="session")
@@ -54,11 +55,13 @@ def db_session(engine):
 @pytest.fixture(scope="function")
 def override_get_db(db_session):
     """Переопределяет get_db для тестов."""
+
     def _get_db():
         try:
             yield db_session
         finally:
             pass
+
     return _get_db
 
 
@@ -72,6 +75,3 @@ async def async_client(override_get_db):
             yield client
     finally:
         app.dependency_overrides.clear()
-
-
-

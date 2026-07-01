@@ -17,8 +17,7 @@ async def list_geometries():
     try:
         project = gitlab_client.get_project()
         file = project.files.get(
-            file_path="geometries/geometries_manifest.json",
-            ref=gitlab_client.default_branch
+            file_path="geometries/geometries_manifest.json", ref=gitlab_client.default_branch
         )
         content = file.decode().decode("utf-8")
         manifest = GeometriesManifest.model_validate_json(content)
@@ -40,25 +39,18 @@ async def get_geometry(geometry_id: str):
         # Сначала находим файл в манифесте
         project = gitlab_client.get_project()
         manifest_file = project.files.get(
-            file_path="geometries/geometries_manifest.json",
-            ref=gitlab_client.default_branch
+            file_path="geometries/geometries_manifest.json", ref=gitlab_client.default_branch
         )
-        manifest = GeometriesManifest.model_validate_json(
-            manifest_file.decode().decode("utf-8")
-        )
+        manifest = GeometriesManifest.model_validate_json(manifest_file.decode().decode("utf-8"))
 
         # Ищем геометрию по ID
-        geometry_info = next(
-            (g for g in manifest.geometries if g.id == geometry_id),
-            None
-        )
+        geometry_info = next((g for g in manifest.geometries if g.id == geometry_id), None)
         if not geometry_info:
             raise HTTPException(status_code=404, detail=f"Геометрия {geometry_id} не найдена")
 
         # Читаем файл геометрии
         geometry_file = project.files.get(
-            file_path=geometry_info.file,
-            ref=gitlab_client.default_branch
+            file_path=geometry_info.file, ref=gitlab_client.default_branch
         )
         geometry_data = json.loads(geometry_file.decode().decode("utf-8"))
 
