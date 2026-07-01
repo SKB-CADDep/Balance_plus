@@ -16,11 +16,7 @@ print(f"Путь к шаблону: {TEMPLATE_PATH}")
 print(f"Путь для сохранения результата: {OUTPUT_PATH}")
 
 sample_valve = ValveInfo(
-    count_parts=2,
-    diameter=65.0,
-    clearance=0.35,
-    len_part1=210.0,
-    len_part2=125.0
+    count_parts=2, diameter=65.0, clearance=0.35, len_part1=210.0, len_part2=125.0
 )
 
 

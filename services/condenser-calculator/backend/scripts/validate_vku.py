@@ -1,13 +1,12 @@
+import pandas as pd
 from _common import setup_path
 
 setup_path()
 
-import pandas as pd
-
 from app.utils.VKU_strategy import VKUStrategy
 
 
-def run_validation():
+def run_validation() -> None:
     """
     Скрипт для валидации класса VKUStrategy на предоставленном наборе данных.
     """
@@ -16,14 +15,48 @@ def run_validation():
     mass_flow_nom = 1250.0
     dryness_nom = 0.92
     temperature_air = 20.0
-    print(f"Используются номинальные параметры: Gном = {mass_flow_nom} т/ч, Xном = {dryness_nom}")
+    print(
+        f"Используются номинальные параметры: Gном = {mass_flow_nom} т/ч, Xном = {dryness_nom}"
+    )
     print(f"Используется температура наружного воздуха (tвозд): {temperature_air}°С\n")
 
-    strategy = VKUStrategy(mass_flow_steam_nom=mass_flow_nom, degree_dryness_steam_nom=dryness_nom)
+    strategy = VKUStrategy(
+        mass_flow_steam_nom=mass_flow_nom, degree_dryness_steam_nom=dryness_nom
+    )
 
     validation_data = {
-        "G": [301.2, 296.8, 291.4, 247.8, 245.1, 241.5, 186.5, 186.1, 185.3, 282.72, 277.9, 311.5, 305.9, 307.8],
-        "X": [0.903, 0.907, 0.914, 0.908, 0.914, 0.921, 0.907, 0.915, 0.924, 0.91, 0.914, 0.904, 0.91, 0.909],
+        "G": [
+            301.2,
+            296.8,
+            291.4,
+            247.8,
+            245.1,
+            241.5,
+            186.5,
+            186.1,
+            185.3,
+            282.72,
+            277.9,
+            311.5,
+            305.9,
+            307.8,
+        ],
+        "X": [
+            0.903,
+            0.907,
+            0.914,
+            0.908,
+            0.914,
+            0.921,
+            0.907,
+            0.915,
+            0.924,
+            0.91,
+            0.914,
+            0.904,
+            0.91,
+            0.909,
+        ],
         "P_expected": [
             0.091366573,
             0.13082959,
@@ -41,7 +74,10 @@ def run_validation():
             0.156322495,
         ],
     }
-    df = pd.DataFrame(validation_data, index=[f"Режим {i + 1}" for i in range(len(validation_data["G"]))])
+    df = pd.DataFrame(
+        validation_data,
+        index=[f"Режим {i + 1}" for i in range(len(validation_data["G"]))],
+    )
 
     results_list = []
     for _, row in df.iterrows():
@@ -80,4 +116,3 @@ def run_validation():
 
 if __name__ == "__main__":
     run_validation()
-

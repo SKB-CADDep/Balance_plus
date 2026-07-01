@@ -19,14 +19,13 @@ async def save_calculation_result(req: CalculationSaveRequest):
             branch_name = gitlab_client.find_branch_by_issue_iid(req.task_iid, req.project_id)
         except (gitlab.exceptions.GitlabError, Exception) as e:
             raise HTTPException(
-                status_code=400,
-                detail=f"Ошибка доступа к GitLab или проекту: {str(e)}"
+                status_code=400, detail=f"Ошибка доступа к GitLab или проекту: {e!s}"
             )
 
         if not branch_name:
             raise HTTPException(
                 status_code=400,
-                detail=f"Ветка для задачи #{req.task_iid} не найдена в GitLab. Убедитесь, что работа над задачей начата."
+                detail=f"Ветка для задачи #{req.task_iid} не найдена в GitLab. Убедитесь, что работа над задачей начата.",
             )
 
         # 2. Подготовка данных (используем .get() для commit_message)
@@ -36,7 +35,7 @@ async def save_calculation_result(req: CalculationSaveRequest):
 
         files_to_commit = {
             f"{base_path}/input.json": json.dumps(req.input_data, indent=2, ensure_ascii=False),
-            f"{base_path}/result.json": json.dumps(req.output_data, indent=2, ensure_ascii=False)
+            f"{base_path}/result.json": json.dumps(req.output_data, indent=2, ensure_ascii=False),
         }
 
         # 3. Коммит
@@ -44,14 +43,14 @@ async def save_calculation_result(req: CalculationSaveRequest):
             files=files_to_commit,
             commit_message=f"Calc Result: {msg}",
             branch=branch_name,
-            project_id=req.project_id
+            project_id=req.project_id,
         )
 
         return {
             "status": "saved",
             "commit_id": commit.id,
-            "path": base_path, 
-            "web_url": commit.web_url
+            "path": base_path,
+            "web_url": commit.web_url,
         }
 
     except gitlab.exceptions.GitlabAuthenticationError:
@@ -63,19 +62,20 @@ async def save_calculation_result(req: CalculationSaveRequest):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Internal Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal Error: {e!s}")
 
 
 @router.get("/latest")
-async def get_latest_calculation(task_iid: int = Query(...), app_type: str = Query(...), project_id: int = Query(...)):
+async def get_latest_calculation(
+    task_iid: int = Query(...), app_type: str = Query(...), project_id: int = Query(...)
+):
     """
     Возвращает данные последнего расчёта для гидрации формы.
     Читает из фиксированного пути calculations/{app_type}/current/
     """
     try:
         # 1. Ищем РЕАЛЬНУЮ ветку задачи (Умный поиск)
-        branch_name = gitlab_client.find_branch_by_issue_iid(
-            task_iid, project_id)
+        branch_name = gitlab_client.find_branch_by_issue_iid(task_iid, project_id)
 
         if not branch_name:
             return {"found": False, "reason": "Branch not found"}
@@ -83,9 +83,11 @@ async def get_latest_calculation(task_iid: int = Query(...), app_type: str = Que
         # 2. Читаем файлы напрямую из фиксированного пути
         base_path = f"calculations/{app_type}/current"
         input_content = gitlab_client.get_file_content_decoded(
-            f"{base_path}/input.json", ref=branch_name, project_id=project_id)
+            f"{base_path}/input.json", ref=branch_name, project_id=project_id
+        )
         result_content = gitlab_client.get_file_content_decoded(
-            f"{base_path}/result.json", ref=branch_name, project_id=project_id)
+            f"{base_path}/result.json", ref=branch_name, project_id=project_id
+        )
 
         if not input_content:
             return {"found": False, "reason": "Files missing"}
@@ -93,7 +95,7 @@ async def get_latest_calculation(task_iid: int = Query(...), app_type: str = Que
         return {
             "found": True,
             "input_data": json.loads(input_content),
-            "output_data": json.loads(result_content) if result_content else None
+            "output_data": json.loads(result_content) if result_content else None,
         }
 
     except gitlab.exceptions.GitlabAuthenticationError:

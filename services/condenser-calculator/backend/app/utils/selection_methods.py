@@ -1,4 +1,5 @@
 import math
+from typing import Any
 
 from .base_for_selection import ProblemDefinition
 
@@ -6,29 +7,35 @@ from .base_for_selection import ProblemDefinition
 class AnalyticalSolver:  # Аналитически!
     """Решает задачу аналитически. Максимальная скорость, но не универсален."""
 
-    def __init__(self, problem: ProblemDefinition):
+    def __init__(self, problem: ProblemDefinition) -> None:
         self.problem = problem
         self.iterations = 0
         self._inv_power = 1.0 / problem.power_minus_1
 
-    def solve(self, target_delta, **kwargs):
+    def solve(self, target_delta: float, **kwargs: Any) -> float:
         self.iterations = 1  # Считается за одну операцию
         base = (1.0 - target_delta) / self.problem.c
         if base < 0:
-            raise ValueError("Невозможно найти вещественное решение: основание степени отрицательное.")
+            raise ValueError(
+                "Невозможно найти вещественное решение: основание степени отрицательное."
+            )
         return math.pow(base, self._inv_power)
 
 
 class BisectionSolver:  # Дихотомии!
     """Решает задачу методом дихотомии. Надежен, но медленнее сходится."""
 
-    def __init__(self, problem: ProblemDefinition, max_iter=100, tol=1e-7):
+    def __init__(
+        self, problem: ProblemDefinition, max_iter: int = 100, tol: float = 1e-7
+    ) -> None:
         self.problem = problem
         self.max_iter = max_iter
         self.tol = tol
         self.iterations = 0
 
-    def solve(self, target_delta, a=1.0, b=10.0):  # Начальный отрезок [1, 10]
+    def solve(
+        self, target_delta: float, a: float = 1.0, b: float = 10.0
+    ) -> float:  # Начальный отрезок [1, 10]
         self.iterations = 0
         fa = self.problem.f(a, target_delta)
         fb = self.problem.f(b, target_delta)
@@ -56,13 +63,15 @@ class BisectionSolver:  # Дихотомии!
 class NewtonSolver:  # Ньютоном!
     """Решает задачу методом Ньютона. Быстрая сходимость, но требует производную."""
 
-    def __init__(self, problem: ProblemDefinition, max_iter=20, tol=1e-9):
+    def __init__(
+        self, problem: ProblemDefinition, max_iter: int = 20, tol: float = 1e-9
+    ) -> None:
         self.problem = problem
         self.max_iter = max_iter
         self.tol = tol
         self.iterations = 0
 
-    def solve(self, target_delta, initial_guess=2.0):
+    def solve(self, target_delta: float, initial_guess: float = 2.0) -> None:
         self.iterations = 0
         x = float(initial_guess)
 

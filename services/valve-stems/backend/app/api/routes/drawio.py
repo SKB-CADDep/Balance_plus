@@ -11,9 +11,7 @@ from app.schemas import ValveInfo
 
 
 # Настройка логирования
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -41,9 +39,7 @@ class DiagramModifier:
             logger.info(f"Шаблон XML успешно загружен из {self.template_path}")
         except ET.ParseError as e:
             logger.error(f"Ошибка парсинга XML-файла: {e}")
-            raise HTTPException(
-                status_code=500, detail=f"Ошибка парсинга XML-файла: {e}"
-            )
+            raise HTTPException(status_code=500, detail=f"Ошибка парсинга XML-файла: {e}")
         except FileNotFoundError:
             logger.error(f"Файл шаблона {self.template_path} не найден")
             raise HTTPException(
@@ -86,9 +82,7 @@ class DiagramModifier:
             logger.info(f"Изменённый XML-файл сохранён по пути: {output_path}")
         except Exception as e:
             logger.error(f"Ошибка сохранения XML-файла: {e}")
-            raise HTTPException(
-                status_code=500, detail=f"Ошибка сохранения XML-файла: {e}"
-            )
+            raise HTTPException(status_code=500, detail=f"Ошибка сохранения XML-файла: {e}")
 
 
 # Класс для сопоставления параметров ValveInfo с элементами XML
@@ -206,14 +200,10 @@ class DiagramGenerator:
         """
         if count_parts is None:
             logger.error("Параметр count_parts не указан")
-            raise HTTPException(
-                status_code=400, detail="Параметр count_parts обязателен"
-            )
+            raise HTTPException(status_code=400, detail="Параметр count_parts обязателен")
         if count_parts == 1:
             logger.error("Количество частей не может быть равно 1")
-            raise HTTPException(
-                status_code=400, detail="Количество частей не может быть равно 1"
-            )
+            raise HTTPException(status_code=400, detail="Количество частей не может быть равно 1")
         if count_parts not in self.template_mapping:
             logger.error(
                 f"Недопустимое количество частей: {count_parts}. Допустимые значения: 2, 3, 4, 5"
@@ -320,9 +310,7 @@ async def generate_scheme(valve_info: ValveInfo):
         HTTPException: Если произошла ошибка при генерации файла.
     """
     if diagram_generator is None:
-        raise HTTPException(
-            status_code=500, detail="Генератор диаграмм не инициализирован"
-        )
+        raise HTTPException(status_code=500, detail="Генератор диаграмм не инициализирован")
 
     try:
         # Генерируем XML-файл с обновлёнными параметрами
@@ -331,9 +319,7 @@ async def generate_scheme(valve_info: ValveInfo):
         # Проверяем, что файл был создан
         if not os.path.exists(output_path):
             logger.error(f"Файл {output_path} не был создан")
-            raise HTTPException(
-                status_code=500, detail="Ошибка: сгенерированный файл не найден"
-            )
+            raise HTTPException(status_code=500, detail="Ошибка: сгенерированный файл не найден")
 
         # Возвращаем файл для скачивания
         return FileResponse(

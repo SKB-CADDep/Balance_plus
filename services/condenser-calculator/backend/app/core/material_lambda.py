@@ -1,24 +1,29 @@
 import logging
-import numpy as np
 from dataclasses import dataclass
-from app.utils.table_models import Table1D
+from typing import Any
+
+import numpy as np
+
 from app.core.exceptions import MaterialPropertyError
+from app.utils.table_models import Table1D
 
 logger = logging.getLogger(__name__)
+
 
 @dataclass
 class MaterialLambdaInterpolator:
     """
-    Контейнер, хранящий инициализированный объект Table1D и метаданные 
+    Контейнер, хранящий инициализированный объект Table1D и метаданные
     материала для предотвращения повторных аллокаций памяти и быстрых проверок.
     """
+
     table: Table1D
     min_t: float
     max_t: float
     material_name: str
 
 
-def build_lambda_interpolator(material) -> MaterialLambdaInterpolator:
+def build_lambda_interpolator(material: Any) -> MaterialLambdaInterpolator:
     """
     Создает и кэширует интерполятор Table1D для зависимости теплопроводности.
     Должен вызываться один раз перед циклом расчетов.
@@ -54,7 +59,7 @@ def build_lambda_interpolator(material) -> MaterialLambdaInterpolator:
         table=Table1D(x, y),
         min_t=float(np.min(x)),
         max_t=float(np.max(x)),
-        material_name=material_name
+        material_name=material_name,
     )
 
 
@@ -69,24 +74,26 @@ def get_lambda(interp: MaterialLambdaInterpolator, t_avg: float) -> float:
             f"для материала '{interp.material_name}': [{interp.min_t}; {interp.max_t}]"
         )
         logger.error(
-            msg, 
+            msg,
             extra={
                 "material_name": interp.material_name,
                 "t_avg": t_avg,
                 "min_t": interp.min_t,
-                "max_t": interp.max_t
-            }
+                "max_t": interp.max_t,
+            },
         )
         raise MaterialPropertyError(msg)
 
     try:
         result = interp.table(t_avg)
     except TypeError:
-        if hasattr(interp.table, 'evaluate'):
+        if hasattr(interp.table, "evaluate"):
             result = interp.table.evaluate(t_avg)
-        elif hasattr(interp.table, 'get_value'):
+        elif hasattr(interp.table, "get_value"):
             result = interp.table.get_value(t_avg)
         else:
-            raise NotImplementedError("Класс Table1D не поддерживает стандартный вызов.")
+            raise NotImplementedError(
+                "Класс Table1D не поддерживает стандартный вызов."
+            )
 
     return float(result)

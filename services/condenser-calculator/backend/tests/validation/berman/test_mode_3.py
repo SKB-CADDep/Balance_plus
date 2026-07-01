@@ -5,6 +5,8 @@
 
 import pytest
 
+from app.utils.berman_strategy import BermanStrategy
+
 from .conftest import (
     assert_pressure_approx,
     build_calculation_params,
@@ -23,12 +25,13 @@ _results = load_results(3)
 _test_cases = generate_test_cases_from_results(_results, _mode)
 _ejector_cases = generate_ejector_test_cases(_results)
 
+
 @pytest.mark.skip(reason="Ожидаем эталонные данные от аналитиков (задача QA-2)")
 class TestPressureMatrixMode3:
     """Полная проверка матрицы давлений для режима 'только ОП'."""
 
     @pytest.mark.parametrize("case", _test_cases, ids=[c["id"] for c in _test_cases])
-    def test_pressure_calculation(self, strategy, case):
+    def test_pressure_calculation(self, strategy: BermanStrategy, case: dict) -> None:
         assert case["W_builtin"] == 0.0, "Mode 3 должен иметь W_builtin = 0"
 
         params = build_calculation_params(
@@ -48,17 +51,24 @@ class TestPressureMatrixMode3:
 
         calculated = result["main_results"][0]["P_steam_formula_atm"]
 
-        assert_pressure_approx(calculated=calculated, expected=case["expected_pressure"], context=f"Тест: {case['id']}")
+        assert_pressure_approx(
+            calculated=calculated,
+            expected=case["expected_pressure"],
+            context=f"Тест: {case['id']}",
+        )
+
 
 @pytest.mark.skip(reason="Ожидаем эталонные данные от аналитиков (задача QA-2)")
 class TestMainBundleOnlyVsBothBundles:
-    """Сравнение режима 'только ОП' с режимом 'ОП+ВП'."""
+    """Сравнение режима 'только ОП' c режимом 'ОП+ВП'."""
 
     @pytest.fixture
-    def results_1(self):
+    def results_1(self) -> dict:
         return load_results(1)
 
-    def test_pressure_higher_without_builtin(self, strategy, results_1):
+    def test_pressure_higher_without_builtin(
+        self, strategy: BermanStrategy, results_1: dict
+    ) -> None:
         params_main_only = build_calculation_params(
             geometry=_geometry,
             mode=_mode,
@@ -93,18 +103,24 @@ class TestMainBundleOnlyVsBothBundles:
         )
 
         increase = (P_main_only - P_both) / P_both * 100
-        print(f"\nУвеличение давления при отключении ВП: {increase:.1f}%")
+        print(f"\nУвeличeниe давления при отключении ВП: {increase:.1f}%")
 
     @pytest.mark.parametrize("W_main", [8000.0, 12000.0, 15000.0])
-    def test_pressure_comparison_multiple_flows(self, strategy, results_1, W_main):
-        mode_3_data = find_mode_in_results(_results, W_main=W_main, W_builtin=0.0, coefficient_b=1.0)
+    def test_pressure_comparison_multiple_flows(
+        self, strategy: BermanStrategy, results_1: dict, W_main: float
+    ) -> None:
+        mode_3_data = find_mode_in_results(
+            _results, W_main=W_main, W_builtin=0.0, coefficient_b=1.0
+        )
         P_mode_3 = get_expected_pressure(mode_3_data, t1_idx=3, G_steam_idx=4)
 
         W_builtin_map = {8000.0: 1500.0, 12000.0: 3500.0, 15000.0: 5000.0}
         W_builtin = W_builtin_map.get(W_main)
 
         if W_builtin:
-            mode_1_data = find_mode_in_results(results_1, W_main=W_main, W_builtin=W_builtin, coefficient_b=1.0)
+            mode_1_data = find_mode_in_results(
+                results_1, W_main=W_main, W_builtin=W_builtin, coefficient_b=1.0
+            )
             if mode_1_data:
                 P_mode_1 = get_expected_pressure(mode_1_data, t1_idx=3, G_steam_idx=4)
 
@@ -112,11 +128,12 @@ class TestMainBundleOnlyVsBothBundles:
                     f"W_main={W_main}: P(mode_3)={P_mode_3:.6f} должно быть > P(mode_1)={P_mode_1:.6f}"
                 )
 
+
 @pytest.mark.skip(reason="Ожидаем эталонные данные от аналитиков (задача QA-2)")
 class TestVerificationScenario1:
     """Контрольный пример: сценарий 1 (только ОП)."""
 
-    def test_saturation_temperature(self, strategy):
+    def test_saturation_temperature(self, strategy: BermanStrategy) -> None:
         params = build_calculation_params(
             geometry=_geometry,
             mode=_mode,
@@ -134,4 +151,3 @@ class TestVerificationScenario1:
         assert calculated_t_sat == pytest.approx(30.898, abs=0.01), (
             f"Ожидаемое t_sat = 30.898°C, рассчитанное = {calculated_t_sat:.3f}°C"
         )
-

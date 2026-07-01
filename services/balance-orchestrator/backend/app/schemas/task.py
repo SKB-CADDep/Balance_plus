@@ -19,8 +19,8 @@ BUREAU_CONFIG = {
             "btr-aux-calcs": "Вспомогательные",
             "btr-wsprop": "WSProp",
             "btr-gasdynamics-ansys": "Газодинамика (Ansys)",
-            "btr-thermal-expansions": "Тепловые перемещения"
-        }
+            "btr-thermal-expansions": "Тепловые перемещения",
+        },
     },
     "bpr": {
         "name": "БПР",
@@ -30,8 +30,8 @@ BUREAU_CONFIG = {
             "bpr-cylinders": "Цилиндры",
             "bpr-heat-exchangers": "Теплообменники",
             "bpr-materials": "Материалы",
-            "bpr-acts": "Акты"
-        }
+            "bpr-acts": "Акты",
+        },
     },
     "bvp": {
         "name": "БВП",
@@ -41,9 +41,9 @@ BUREAU_CONFIG = {
             "bvp-static-alignment": "Центровка",
             "bvp-dynamic-bending-vibration": "Изгибные колебания",
             "bvp-dynamic-torsional-vibration": "Крутильные колебания",
-            "bvp-working-blades": "Рабочие лопатки"
-        }
-    }
+            "bvp-working-blades": "Рабочие лопатки",
+        },
+    },
 }
 
 # Обратный маппинг (module::code -> code)
@@ -60,22 +60,20 @@ for _b_code, b_data in BUREAU_CONFIG.items():
         LABEL_TO_MODULE[m_name] = m_code
 
 # LEGACY_MAPPING для старых английских названий
-LEGACY_MAPPING = {
-    "valves": "btr-valve-stems"
-}
+LEGACY_MAPPING = {"valves": "btr-valve-stems"}
 LABEL_TO_MODULE.update(LEGACY_MAPPING)
 
 
 # Маппинг статусов (Текст лейбла -> Цвет)
 STATUS_CONFIG = {
     "Статус::Без исполнителя": {"color": "#9E9E9E", "key": "unassigned"},
-    "Статус::Сделать":         {"color": "#B0BEC5", "key": "todo"},
-    "Статус::В работе":        {"color": "#1976D2", "key": "in-progress"},
-    "Статус::Ожидает данных":  {"color": "#FFA000", "key": "waiting-input"},
-    "Статус::На паузе":        {"color": "#7E57C2", "key": "on-hold"},
-    "Статус::На проверке":     {"color": "#29B6F6", "key": "in-review"},
+    "Статус::Сделать": {"color": "#B0BEC5", "key": "todo"},
+    "Статус::В работе": {"color": "#1976D2", "key": "in-progress"},
+    "Статус::Ожидает данных": {"color": "#FFA000", "key": "waiting-input"},
+    "Статус::На паузе": {"color": "#7E57C2", "key": "on-hold"},
+    "Статус::На проверке": {"color": "#29B6F6", "key": "in-review"},
     "Статус::На согласовании": {"color": "#26A69A", "key": "in-approval"},
-    "Статус::Выполнена":       {"color": "#2E7D32", "key": "done"},
+    "Статус::Выполнена": {"color": "#2E7D32", "key": "done"},
 }
 
 
@@ -106,7 +104,11 @@ class TaskInfo(BaseModel):
             if label.startswith("bureau::"):
                 code = label.replace("bureau::", "")
                 if code in BUREAU_CONFIG:
-                    return {"code": code, "name": BUREAU_CONFIG[code]["name"], "color": BUREAU_CONFIG[code]["color"]}
+                    return {
+                        "code": code,
+                        "name": BUREAU_CONFIG[code]["name"],
+                        "color": BUREAU_CONFIG[code]["color"],
+                    }
 
             # Русский: Бюро::БТР
             if label.startswith("Бюро::"):
@@ -161,14 +163,10 @@ class TaskInfo(BaseModel):
                 config = STATUS_CONFIG.get(label)
                 if config:
                     clean_text = label.replace("Статус::", "")
-                    return {
-                        "text": clean_text,
-                        "color": config["color"],
-                        "key": config["key"]
-                    }
+                    return {"text": clean_text, "color": config["color"], "key": config["key"]}
                 return {"text": label.replace("Статус::", ""), "color": "#999", "key": "unknown"}
 
-        if self.state == 'closed':
+        if self.state == "closed":
             return {"text": "Закрыто (GitLab)", "color": "#2E7D32", "key": "closed"}
 
         return {"text": "Новая", "color": "#9E9E9E", "key": "new"}
@@ -190,6 +188,7 @@ class BranchInfo(BaseModel):
     branch_name: str
     issue_iid: int
     created: bool
+
 
 class BranchCreateRequest(BaseModel):
     project_id: int

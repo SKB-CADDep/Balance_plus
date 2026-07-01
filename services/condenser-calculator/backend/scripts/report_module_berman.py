@@ -2,11 +2,12 @@ from _common import setup_path
 
 setup_path()
 
-# generate_berman_report.py
 from app.utils.berman_strategy import BermanStrategy
 
+# generate_berman_report.py
 
-def create_markdown_table(headers, data_rows):
+
+def create_markdown_table(headers: list[str], data_rows: list[list[str]]) -> str:
     """
     Создает строку таблицы в формате Markdown.
 
@@ -21,13 +22,21 @@ def create_markdown_table(headers, data_rows):
     row_lines = []
     for row in data_rows:
         # Форматируем только числовые значения (пропуская первый элемент, если это текст)
-        formatted_row = [row[0]] + [f"{val:.3f}" if isinstance(val, (int, float)) else val for val in row[1:]]
+        formatted_row = [row[0]] + [
+            f"{val:.3f}" if isinstance(val, (int, float)) else val for val in row[1:]
+        ]
         row_lines.append("| " + " | ".join(map(str, formatted_row)) + " |")
 
     return "\n".join([header_line, separator_line, *row_lines])
 
 
-def run_berman_simulation(main_water_flow, built_in_water_flow, num_bundles_label, fouling_factor_raw, include_ejector_data):
+def run_berman_simulation(
+    main_water_flow: int,
+    built_in_water_flow: int,
+    num_bundles_label: int,
+    fouling_factor_raw: float,
+    include_ejector_data: bool,
+) -> None:
     """
     Настраивает параметры, запускает симуляцию по методу Бермана и форматирует результаты.
 
@@ -54,20 +63,17 @@ def run_berman_simulation(main_water_flow, built_in_water_flow, num_bundles_labe
         "diameter_inside_of_pipes": 22.0,  # в мм
         "thickness_pipe_wall": 1.0,  # в мм
         "BAP": float(num_bundles_label),  # Количество активных пучков
-
         # Списки итеративных параметров
         "coefficient_R_list": [fouling_factor_si],
         "temperature_cooling_water_1_list": [4, 5, 10, 15, 20, 25, 30, 35],
         "mass_flow_steam_list": [16, 20, 30, 40, 50, 60, 70, 80, 90, 100],
         "mass_flow_cooling_water_list": [main_water_flow],
-
         # Параметры для встроенного пучка (могут быть пустыми)
         "mass_flow_cooling_water_built_in_beam_list": [built_in_water_flow],
         "length_cooling_tubes_of_the_built_in_bundle": 0.0,
         "number_cooling_water_passes_of_the_built_in_bundle": 0,
         "number_cooling_tubes_of_the_built_in_bundle": 0,
         "temperature_cooling_water_built_in_beam_1_list": [0] * 8,  # Заглушка
-
         # Параметры для расчета эжекторов
         "mass_flow_air": 16.5 if include_ejector_data else 0.0,
     }
@@ -82,8 +88,7 @@ def run_berman_simulation(main_water_flow, built_in_water_flow, num_bundles_labe
         ejector_results = results["ejector_results"]
         # Собираем уникальные температуры и сортируем по убыванию
         _unique_temps = sorted(
-            {r["inlet_water_temperature_C"] for r in ejector_results},
-            reverse=True
+            {r["inlet_water_temperature_C"] for r in ejector_results}, reverse=True
         )
 
 
@@ -103,4 +108,3 @@ if __name__ == "__main__":
         f.write(final_report_content)
 
     print(f"Файл '{report_filename}' успешно создан.")
-
