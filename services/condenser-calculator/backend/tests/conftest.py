@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from httpx import AsyncClient, ASGITransport
 import yaml
 from pydantic import BaseModel
 from sqlalchemy import create_engine, text
@@ -215,3 +216,9 @@ def pytest_runtest_makereport(item, call):
             f.write(f"УПАВШИЙ ТЕСТ: {item.nodeid}\n")
             f.write("="*60 + "\n")
             f.write(report.longreprtext)
+# --- ASYNC CLIENT FIXTURE ДЛЯ ИНТЕГРАЦИОННЫХ ТЕСТОВ ---
+@pytest.fixture
+def async_client():
+    """Fixture для интеграционных тестов через httpx"""
+    transport = ASGITransport(app=app)
+    return AsyncClient(transport=transport, base_url="http://test")
