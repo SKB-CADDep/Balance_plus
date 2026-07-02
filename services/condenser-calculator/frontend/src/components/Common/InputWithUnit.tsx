@@ -13,6 +13,9 @@ interface InputWithUnitProps extends Omit<InputProps, 'value' | 'onChange'> {
     availableUnits: string[];
     onValueChange: (val: string) => void;
     onUnitChange: (unit: string) => void;
+    isDisabled?: boolean;
+    name?: string;
+    onBlur?: () => void;
 }
 
 export const InputWithUnit: React.FC<InputWithUnitProps> = ({
@@ -21,6 +24,9 @@ export const InputWithUnit: React.FC<InputWithUnitProps> = ({
     availableUnits,
     onValueChange,
     onUnitChange,
+    isDisabled,
+    name,
+    onBlur,
     ...props
 }) => {
     // Явно задаем цвета для светлой и темной тем
@@ -33,8 +39,12 @@ export const InputWithUnit: React.FC<InputWithUnitProps> = ({
     return (
         <Flex w="100%">
             <Input
+                flex={1}
+                name={name}
+                onBlur={onBlur}
                 value={value ?? ''}
                 onChange={(e) => onValueChange(e.target.value)}
+                isDisabled={isDisabled}
                 borderRightRadius={0}
                 bg={inputBg}
                 borderColor={borderColor}
@@ -45,6 +55,7 @@ export const InputWithUnit: React.FC<InputWithUnitProps> = ({
             <Select
                 value={unit}
                 onChange={(e) => onUnitChange(e.target.value)}
+                isDisabled={isDisabled}
                 borderLeftRadius={0}
                 w="fit-content"
                 minW="110px"

@@ -15,4 +15,3 @@ Base = sqlalchemy.orm.declarative_base()
 def init_db() -> None:
     # Tables are created with Alembic migrations
     pass
-

@@ -32,7 +32,7 @@ class TestSaveCalculationResult:
             app_type="valves",
             input_data={"param1": "value1"},
             output_data={"result": "success"},
-            commit_message="Test commit"
+            commit_message="Test commit",
         )
 
         # Execute
@@ -67,7 +67,7 @@ class TestSaveCalculationResult:
             project_id=123,
             app_type="valves",
             input_data={"param1": "value1"},
-            output_data={"result": "success"}
+            output_data={"result": "success"},
         )
 
         with pytest.raises(HTTPException) as exc_info:
@@ -83,14 +83,16 @@ class TestSaveCalculationResult:
     async def test_raises_401_on_authentication_error(self, mock_gitlab: MagicMock):
         """Should raise HTTPException 401 on GitLab authentication error."""
         mock_gitlab.find_branch_by_issue_iid.return_value = "issue/42-test"
-        mock_gitlab.create_commit_multiple.side_effect = gitlab.exceptions.GitlabAuthenticationError("Auth failed")
+        mock_gitlab.create_commit_multiple.side_effect = (
+            gitlab.exceptions.GitlabAuthenticationError("Auth failed")
+        )
 
         request = CalculationSaveRequest(
             task_iid=42,
             project_id=123,
             app_type="valves",
             input_data={"param1": "value1"},
-            output_data={"result": "success"}
+            output_data={"result": "success"},
         )
 
         with pytest.raises(HTTPException) as exc_info:
@@ -104,14 +106,16 @@ class TestSaveCalculationResult:
     async def test_raises_404_on_get_error(self, mock_gitlab: MagicMock):
         """Should raise HTTPException 404 on GitLabGetError."""
         mock_gitlab.find_branch_by_issue_iid.return_value = "issue/42-test"
-        mock_gitlab.create_commit_multiple.side_effect = gitlab.exceptions.GitlabGetError("Not found")
+        mock_gitlab.create_commit_multiple.side_effect = gitlab.exceptions.GitlabGetError(
+            "Not found"
+        )
 
         request = CalculationSaveRequest(
             task_iid=42,
             project_id=123,
             app_type="valves",
             input_data={"param1": "value1"},
-            output_data={"result": "success"}
+            output_data={"result": "success"},
         )
 
         with pytest.raises(HTTPException) as exc_info:
@@ -132,7 +136,7 @@ class TestSaveCalculationResult:
             project_id=123,
             app_type="valves",
             input_data={"param1": "value1"},
-            output_data={"result": "success"}
+            output_data={"result": "success"},
         )
 
         with pytest.raises(HTTPException) as exc_info:
@@ -153,7 +157,7 @@ class TestSaveCalculationResult:
             project_id=123,
             app_type="valves",
             input_data={"param1": "value1"},
-            output_data={"result": "success"}
+            output_data={"result": "success"},
         )
 
         with pytest.raises(HTTPException) as exc_info:
@@ -176,7 +180,7 @@ class TestGetLatestCalculation:
         mock_gitlab.find_branch_by_issue_iid.return_value = branch_name
         mock_gitlab.get_file_content_decoded.side_effect = [
             json.dumps(input_data),
-            json.dumps(output_data)
+            json.dumps(output_data),
         ]
 
         result = await get_latest_calculation(task_iid=42, app_type="valves", project_id=123)
@@ -189,14 +193,10 @@ class TestGetLatestCalculation:
         mock_gitlab.find_branch_by_issue_iid.assert_called_once_with(42, 123)
         assert mock_gitlab.get_file_content_decoded.call_count == 2
         mock_gitlab.get_file_content_decoded.assert_any_call(
-            "calculations/valves/current/input.json",
-            ref=branch_name,
-            project_id=123
+            "calculations/valves/current/input.json", ref=branch_name, project_id=123
         )
         mock_gitlab.get_file_content_decoded.assert_any_call(
-            "calculations/valves/current/result.json",
-            ref=branch_name,
-            project_id=123
+            "calculations/valves/current/result.json", ref=branch_name, project_id=123
         )
 
     @pytest.mark.asyncio
@@ -235,7 +235,7 @@ class TestGetLatestCalculation:
         mock_gitlab.find_branch_by_issue_iid.return_value = branch_name
         mock_gitlab.get_file_content_decoded.side_effect = [
             json.dumps(input_data),
-            None  # output file missing
+            None,  # output file missing
         ]
 
         result = await get_latest_calculation(task_iid=42, app_type="valves", project_id=123)
@@ -248,7 +248,9 @@ class TestGetLatestCalculation:
     @patch("app.api.routes.calculations.gitlab_client")
     async def test_returns_found_false_on_authentication_error(self, mock_gitlab: MagicMock):
         """Should return found=False on GitLab authentication error."""
-        mock_gitlab.find_branch_by_issue_iid.side_effect = gitlab.exceptions.GitlabAuthenticationError("Auth failed")
+        mock_gitlab.find_branch_by_issue_iid.side_effect = (
+            gitlab.exceptions.GitlabAuthenticationError("Auth failed")
+        )
 
         result = await get_latest_calculation(task_iid=42, app_type="valves", project_id=123)
 
@@ -259,7 +261,9 @@ class TestGetLatestCalculation:
     @patch("app.api.routes.calculations.gitlab_client")
     async def test_returns_found_false_on_get_error(self, mock_gitlab: MagicMock):
         """Should return found=False on GitLabGetError."""
-        mock_gitlab.find_branch_by_issue_iid.side_effect = gitlab.exceptions.GitlabGetError("Not found")
+        mock_gitlab.find_branch_by_issue_iid.side_effect = gitlab.exceptions.GitlabGetError(
+            "Not found"
+        )
 
         result = await get_latest_calculation(task_iid=42, app_type="valves", project_id=123)
 
@@ -270,7 +274,9 @@ class TestGetLatestCalculation:
     @patch("app.api.routes.calculations.gitlab_client")
     async def test_returns_found_false_on_gitlab_error(self, mock_gitlab: MagicMock):
         """Should return found=False on GitLab API error."""
-        mock_gitlab.find_branch_by_issue_iid.side_effect = gitlab.exceptions.GitlabError("API error")
+        mock_gitlab.find_branch_by_issue_iid.side_effect = gitlab.exceptions.GitlabError(
+            "API error"
+        )
 
         result = await get_latest_calculation(task_iid=42, app_type="valves", project_id=123)
 
@@ -288,4 +294,3 @@ class TestGetLatestCalculation:
         assert result["found"] is False
         assert "error" in result
         assert "Unexpected error" in result["error"]
-

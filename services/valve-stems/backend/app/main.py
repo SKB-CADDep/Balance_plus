@@ -1,5 +1,5 @@
-import os
 import logging
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -8,8 +8,8 @@ from fastapi.routing import APIRoute
 
 from app.api.router import api_router
 from app.core.config import settings
-from app.core.logging_config import setup_logging
 from app.core.error_handlers import setup_exception_handlers
+from app.core.logging_config import setup_logging
 from app.middleware.logging_middleware import RequestLoggingMiddleware
 from app.api.routes import health
 
@@ -18,6 +18,7 @@ from app.api.routes import health
 async def lifespan(app: FastAPI):
     logger.info("Application starting up", extra={"log_level": log_level})
     yield
+
 
 log_level = os.getenv("LOG_LEVEL", "INFO")
 setup_logging(log_level)

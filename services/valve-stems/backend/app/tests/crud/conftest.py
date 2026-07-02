@@ -52,9 +52,11 @@ def db_session(engine):
 @pytest.fixture(scope="function")
 def override_get_db(db_session):
     """Переопределяет get_db для тестов."""
+
     def _get_db():
         try:
             yield db_session
         finally:
             pass
+
     return _get_db

@@ -7,7 +7,7 @@ class ProblemDefinition:
     Это позволяет менять формулы в одном месте, не затрагивая алгоритмы решения.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Вычисляет и кэширует константы один раз для производительности."""
         pi = 3.1415
         e_approx = 2.71
@@ -20,7 +20,9 @@ class ProblemDefinition:
     def calculate_delta(self, x: float) -> float:
         """Рассчитывает A3_delt для заданного X."""
         if x <= 0:
-            return float('nan')  # Возведение отрицательного числа в дробную степень не определено в R
+            return float(
+                "nan"
+            )  # Возведение отрицательного числа в дробную степень не определено в R
         return 1.0 - self.c * math.pow(x, self.power_minus_1)
 
     def f(self, x: float, target_delta: float) -> float:
@@ -32,5 +34,5 @@ class ProblemDefinition:
         # d/dx (1 - C*x^p - T) = -C * p * x^(p-1)
         # где p = self._power_minus_1
         if x <= 0:
-            return float('nan')
+            return float("nan")
         return -self.c * self.power_minus_1 * math.pow(x, self.power_minus_1 - 1.0)

@@ -1,8 +1,6 @@
 """
 Тесты для health check endpoints.
 """
-import pytest
-
 
 
 async def test_health_check(async_client):
@@ -11,7 +9,6 @@ async def test_health_check(async_client):
     data = response.json()
     assert response.status_code == 200
     assert data["status"] == "ok"
-
 
 
 async def test_health_check_db(async_client, db_session):

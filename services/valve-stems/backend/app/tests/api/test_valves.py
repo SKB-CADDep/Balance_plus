@@ -2,13 +2,13 @@
 Тесты для valves check endpoints.
 """
 
-import pytest
-
 from app.tests.crud.test_crud import create_test_turbine, create_test_valve
+
 
 """
 Позитивные сценарии.
 """
+
 
 async def test_create_valve(async_client, db_session):
     """Тест проверки создания сущностей(POST)."""
@@ -52,6 +52,7 @@ async def test_get_turbine_by_valve_name(async_client, db_session):
     assert response.status_code == 200
     assert data["id"] == turbine.id
     assert data["name"] == turbine.name
+
 
 async def test_create_valve_duplicate_name(async_client, db_session):
     """Тест проверки создания клапана с дублирующимся именем (POST)."""

@@ -1,14 +1,15 @@
 import logging
+
 from sqlalchemy.orm import Session
 
 from app.core.database import SessionLocal
-from app.models.material import Material
 from app.models.condenser import Condenser
+from app.models.material import Material
 
 logger = logging.getLogger(__name__)
 
 
-def seed_data(db: Session):
+def seed_data(db: Session) -> None:
     # 1. Добавляем материалы
     materials = [
         {
@@ -106,7 +107,9 @@ def seed_data(db: Session):
         db.merge(Condenser(**cond_data))
 
     db.commit()
-    print("✅ Тестовые данные (Материалы и 3 Конденсатора) успешно загружены (merge) в БД.")
+    print(
+        "✅ Тестовые данные (Материалы и 3 Конденсатора) успешно загружены (merge) в БД."
+    )
 
 
 if __name__ == "__main__":

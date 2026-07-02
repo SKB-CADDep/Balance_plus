@@ -5,7 +5,9 @@ from scipy import interpolate
 
 
 class TablePressureStrategy:
-    def _create_namet_interpolator(self, namet_data: list) -> interpolate.RectBivariateSpline:
+    def _create_namet_interpolator(
+        self, namet_data: list
+    ) -> interpolate.RectBivariateSpline:
         t_axis_raw = np.array(namet_data[0])
         g_axis = np.array(namet_data[1])
         values_raw = np.array(namet_data[2])
@@ -23,26 +25,28 @@ class TablePressureStrategy:
         t_axis = np.array(named_data[0])
         p_axis = np.array(named_data[1])
 
-        return interpolate.interp1d(t_axis, p_axis, bounds_error=False, fill_value="extrapolate")
+        return interpolate.interp1d(
+            t_axis, p_axis, bounds_error=False, fill_value="extrapolate"
+        )
 
     def calculate(self, params: dict[str, Any]) -> dict[str, Any]:
-        namet_block = params['NAMET']
-        namet_data = namet_block['data']
-        namet_inputs = params['inputs']
+        namet_block = params["NAMET"]
+        namet_data = namet_block["data"]
+        namet_inputs = params["inputs"]
 
-        named_block = params['NAMED']
-        named_data = named_block['data']
-        named_inputs = params['inputs']
+        named_block = params["NAMED"]
+        named_data = named_block["data"]
+        named_inputs = params["inputs"]
 
         named_interpolator = self._create_named_interpolator(named_data)
         pressure_flow_path_1_NAMED = named_interpolator(
-            named_inputs['temperature_cooling_water_1']
+            named_inputs["temperature_cooling_water_1"]
         )
 
         namet_interpolator = self._create_namet_interpolator(namet_data)
         pressure_flow_path_1_NAMET = namet_interpolator(
-            namet_inputs['temperature_cooling_water_1'],
-            namet_inputs['mass_flow_flow_path_1']
+            namet_inputs["temperature_cooling_water_1"],
+            namet_inputs["mass_flow_flow_path_1"],
         )[0][0]
 
         if pressure_flow_path_1_NAMET >= pressure_flow_path_1_NAMED:
@@ -51,7 +55,7 @@ class TablePressureStrategy:
             pressure_flow_path_1 = float(pressure_flow_path_1_NAMED)
 
         return {
-            'pressure_flow_path_1_NAMET': pressure_flow_path_1_NAMET,
-            'pressure_flow_path_1_NAMED': float(pressure_flow_path_1_NAMED),
-            'pressure_flow_path_1': pressure_flow_path_1
+            "pressure_flow_path_1_NAMET": pressure_flow_path_1_NAMET,
+            "pressure_flow_path_1_NAMED": float(pressure_flow_path_1_NAMED),
+            "pressure_flow_path_1": pressure_flow_path_1,
         }

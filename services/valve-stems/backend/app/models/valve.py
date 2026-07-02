@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 from sqlalchemy import Column, Float, Integer, String
 from sqlalchemy.orm import relationship
 
@@ -6,7 +8,7 @@ from app.core.database import Base
 
 class Valve(Base):
     __tablename__ = "stocks"
-    __table_args__ = {"schema": "autocalc"}
+    __table_args__: ClassVar = {"schema": "autocalc"}
 
     id = Column(Integer, primary_key=True)
     # Имя чертежа теперь СТРОГО УНИКАЛЬНО! Никаких дублей.
@@ -24,8 +26,9 @@ class Valve(Base):
     round_radius = Column(Float, nullable=True)
 
     # Связь обратно к турбинам
-    turbines = relationship("Turbine", secondary="autocalc.turbine_valve_link", back_populates="valves")
-
+    turbines = relationship(
+        "Turbine", secondary="autocalc.turbine_valve_link", back_populates="valves"
+    )
 
     def __repr__(self):
         return f"<Valve(name='{self.name}', type='{self.type}')>"

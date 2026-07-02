@@ -3,12 +3,9 @@ import {
   Alert,
   AlertIcon,
   Box,
-  Heading,
-  Tab,
-  TabList,
-  TabPanel,
-  TabPanels,
-  Tabs,
+  Select,
+  Flex,
+  Text,
   Table,
   Tbody,
   Td,
@@ -38,9 +35,9 @@ export type ResultMatrixViewerProps = {
 };
 
 export function ResultMatrixViewer({ results }: ResultMatrixViewerProps) {
-  const cardBg = useColorModeValue('white', 'gray.800');
   const cardBorder = useColorModeValue('gray.200', 'gray.700');
   const warningBg = useColorModeValue('yellow.50', 'yellow.900');
+  const headerBg = useColorModeValue('gray.50', 'gray.800');
 
   const cases = useMemo(() => {
     return results
@@ -53,86 +50,91 @@ export function ResultMatrixViewer({ results }: ResultMatrixViewerProps) {
       .filter((c) => c.matrix);
   }, [results]);
 
-  const [tabIdx, setTabIdx] = useState(0);
+  const [selectedIdx, setSelectedIdx] = useState(0);
 
   if (!results.length) {
     return (
-      <Box p={5} borderWidth={1} borderColor={cardBorder} borderRadius="lg" bg={cardBg} shadow="sm">
-        <Heading size="sm">Результаты</Heading>
-        <Box mt={2} color="gray.500">
-          Нет данных. Нажмите «Рассчитать».
-        </Box>
+      <Box color="gray.500">
+        Нет данных для отображения.
       </Box>
     );
   }
 
   if (!cases.length) {
     return (
-      <Box p={5} borderWidth={1} borderColor={cardBorder} borderRadius="lg" bg={cardBg} shadow="sm">
-        <Heading size="sm">Результаты</Heading>
-        <Alert status="warning" mt={4}>
-          <AlertIcon />
-          Ответ сервера не содержит матрицу в ожидаемом формате.
-        </Alert>
-      </Box>
+      <Alert status="warning">
+        <AlertIcon />
+        Ответ сервера не содержит матрицу в ожидаемом формате.
+      </Alert>
     );
   }
 
+  const currentCase = cases[Math.min(selectedIdx, cases.length - 1)];
+  const m = currentCase?.matrix;
+
   return (
-    <Box p={5} borderWidth={1} borderColor={cardBorder} borderRadius="lg" bg={cardBg} shadow="sm">
-      <Heading size="sm" mb={4}>
-        Результаты ({cases.length} кейсов)
-      </Heading>
+    <Box>
+      {cases.length > 1 && (
+        <Flex mb={6} align="center" gap={4} wrap="wrap">
+          <Text fontWeight="medium" whiteSpace="nowrap">Выберите кейс:</Text>
+          <Select 
+            w="auto" 
+            minW="300px"
+            value={selectedIdx} 
+            onChange={(e) => setSelectedIdx(Number(e.target.value))}
+            bg={useColorModeValue('white', 'gray.700')}
+          >
+            {cases.map((cs, i) => (
+              <option key={cs.id} value={i}>
+                {cs.label} {cs.warnings.length > 0 ? ' (⚠️)' : ''}
+              </option>
+            ))}
+          </Select>
+        </Flex>
+      )}
 
-      <Tabs index={Math.min(tabIdx, cases.length - 1)} onChange={setTabIdx} colorScheme="teal" variant="enclosed">
-        <TabList overflowX="auto" overflowY="hidden">
-          {cases.map((c) => (
-            <Tab key={c.id} whiteSpace="nowrap">
-              {c.label}
-            </Tab>
-          ))}
-        </TabList>
-        <TabPanels>
-          {cases.map((c) => {
-            const m = c.matrix!;
-            return (
-              <TabPanel key={c.id} px={0}>
-                {c.warnings.length > 0 && (
-                  <Alert status="warning" mb={4}>
-                    <AlertIcon />
-                    {c.warnings.join('; ')}
-                  </Alert>
-                )}
+      {currentCase && m && (
+        <Box>
+          {currentCase.warnings.length > 0 && (
+            <Alert status="warning" mb={4} borderRadius="md">
+              <AlertIcon />
+              {currentCase.warnings.join('; ')}
+            </Alert>
+          )}
 
-                <Box overflowX="auto">
-                  <Table variant="striped" size="sm">
-                    <Thead>
-                      <Tr>
-                        <Th>t1 \ G_steam</Th>
-                        {m.columns.map((col, colIdx) => (
-                          <Th key={colIdx}>{String(col)}</Th>
-                        ))}
-                      </Tr>
-                    </Thead>
-                    <Tbody>
-                      {m.rows.map((row, rIdx) => (
-                        <Tr key={rIdx}>
-                          <Td fontWeight="bold">{String(row)}</Td>
-                          {m.values[rIdx]?.map((v, cIdx) => (
-                            <Td key={cIdx} bg={c.warnings.length ? warningBg : undefined}>
-                              {v === null || v === undefined ? '-' : typeof v === 'number' ? v.toFixed(4) : String(v)}
-                            </Td>
-                          ))}
-                        </Tr>
-                      ))}
-                    </Tbody>
-                  </Table>
-                </Box>
-              </TabPanel>
-            );
-          })}
-        </TabPanels>
-      </Tabs>
+          <Box overflowX="auto" borderWidth={1} borderColor={cardBorder} borderRadius="md">
+            <Table variant="simple" size="sm">
+              <Thead bg={headerBg}>
+                <Tr>
+                  <Th borderRightWidth={1} borderColor={cardBorder} minW="180px" p={2}>
+                    <Flex direction="column" justify="space-between" h="full" gap={2}>
+                      <Text textAlign="right" fontSize="xs" color="gray.500" textTransform="none">Расход пара →</Text>
+                      <Text textAlign="left" fontSize="xs" color="gray.500" textTransform="none">↓ Темп. воды</Text>
+                    </Flex>
+                  </Th>
+                  {m.columns.map((col, colIdx) => (
+                    <Th key={colIdx} textAlign="center">{String(col)}</Th>
+                  ))}
+                </Tr>
+              </Thead>
+              <Tbody>
+                {m.rows.map((row, rIdx) => (
+                  <Tr key={rIdx}>
+                    <Td borderRightWidth={1} borderColor={cardBorder} fontWeight="bold" bg={headerBg}>
+                      {String(row)}
+                    </Td>
+                    {m.values[rIdx]?.map((v, cIdx) => (
+                      <Td key={cIdx} bg={currentCase.warnings.length ? warningBg : undefined} textAlign="center">
+                        {v === null || v === undefined ? '-' : typeof v === 'number' ? v.toFixed(4) : String(v)}
+                      </Td>
+                    ))}
+                  </Tr>
+                ))}
+              </Tbody>
+            </Table>
+          </Box>
+        </Box>
+      )}
     </Box>
   );
 }

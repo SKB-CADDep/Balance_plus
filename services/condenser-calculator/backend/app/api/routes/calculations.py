@@ -1,17 +1,22 @@
-import logging
 import datetime
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.adapters.calculation_adapter import CondenserCalculationAdapter
-from app.core.exceptions import EntityNotFoundError, ValidationError, UnitConversionError, CalculationEngineError
+from app.core.condenser_validators import validate_condenser_for_method
+from app.core.exceptions import (
+    CalculationEngineError,
+    EntityNotFoundError,
+    UnitConversionError,
+    ValidationError,
+)
 from app.crud.condensers import get_condenser_by_id
 from app.crud.materials import get_material_by_id
 from app.dependencies import get_db
 from app.schemas.calculation import CalculationInput, CalculationOutput
-from app.core.condenser_validators import validate_condenser_for_method
-
 from app.services.excel_exporter import ExcelExporter
 
 logger = logging.getLogger(__name__)
@@ -36,7 +41,7 @@ adapter = CondenserCalculationAdapter()
 async def calculate(
     input_data: CalculationInput,
     db: Session = Depends(get_db),
-):
+) -> CalculationOutput:
     """
     Основной эндпоинт расчёта конденсатора.
     """
@@ -45,9 +50,8 @@ async def calculate(
         extra={
             "condenser_id": input_data.condenser_id,
             "method": input_data.method,
-            "tables_expected": len(input_data.coefficient_b) * max(
-                len(input_data.W_main), len(input_data.W_builtin or [])
-            ),
+            "tables_expected": len(input_data.coefficient_b)
+            * max(len(input_data.W_main), len(input_data.W_builtin or [])),
         },
     )
 
@@ -84,7 +88,7 @@ async def calculate(
         logger.error("Calculation engine error", extra={"error": str(e)})
         raise HTTPException(status_code=400, detail=str(e))
 
-    except Exception as e:
+    except Exception:
         logger.exception("Unexpected error during calculation")
         raise HTTPException(
             status_code=500,
@@ -106,14 +110,13 @@ async def calculate(
 async def calculate_excel(
     input_data: CalculationInput,
     db: Session = Depends(get_db),
-):
+) -> StreamingResponse:
     """
     Эндпоинт расчёта конденсатора с прямым экспортом в Excel.
     """
     logger.info(
         "Received calculation EXCEL export request",
-        extra={"condenser_id": input_data.condenser_id,
-               "method": input_data.method},
+        extra={"condenser_id": input_data.condenser_id, "method": input_data.method},
     )
 
     try:
@@ -138,7 +141,7 @@ async def calculate_excel(
         return StreamingResponse(
             file_stream,
             media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            headers={"Content-Disposition": f"attachment; filename={filename}"}
+            headers={"Content-Disposition": f"attachment; filename={filename}"},
         )
 
     except EntityNotFoundError as e:
@@ -150,7 +153,7 @@ async def calculate_excel(
     except CalculationEngineError as e:
         logger.error("Calculation engine error", extra={"error": str(e)})
         raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
+    except Exception:
         logger.exception("Unexpected error during calculation excel export")
         raise HTTPException(
             status_code=500,

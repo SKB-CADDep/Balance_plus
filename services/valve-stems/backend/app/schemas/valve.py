@@ -1,4 +1,3 @@
-
 from pydantic import BaseModel, ConfigDict, computed_field
 
 
@@ -7,6 +6,7 @@ class SimpleValveInfo(BaseModel):
     name: str
 
     model_config = ConfigDict(from_attributes=True)
+
 
 class ValveCreate(BaseModel):
     name: str
@@ -22,21 +22,17 @@ class ValveCreate(BaseModel):
     round_radius: float | None = None
     turbine_id: int | None = None
 
+
 class ValveInfo(ValveCreate):
     """
     Наследуемся от ValveCreate, добавляя ID и вычисляемое поле.
     """
+
     id: int | None = None
 
     @computed_field
     @property
     def section_lengths(self) -> list[float | None]:
-        return [
-            self.len_part1,
-            self.len_part2,
-            self.len_part3,
-            self.len_part4,
-            self.len_part5
-        ]
+        return [self.len_part1, self.len_part2, self.len_part3, self.len_part4, self.len_part5]
 
     model_config = ConfigDict(from_attributes=True)

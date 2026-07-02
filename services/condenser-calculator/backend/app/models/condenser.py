@@ -1,14 +1,26 @@
 from sqlalchemy import Column, Integer, String, Float, ForeignKey, JSON, Table
 from sqlalchemy.orm import relationship
+
 from app.models.base import Base
 
 # 1. Создаем промежуточную таблицу для связи Многие-ко-Многим
 condenser_material_association = Table(
     "condenser_material_association",
     Base.metadata,
-    Column("condenser_id", Integer, ForeignKey("condensers.id", ondelete="CASCADE"), primary_key=True),
-    Column("material_id", Integer, ForeignKey("materials.id", ondelete="CASCADE"), primary_key=True)
+    Column(
+        "condenser_id",
+        Integer,
+        ForeignKey("condensers.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+    Column(
+        "material_id",
+        Integer,
+        ForeignKey("materials.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
 )
+
 
 class Condenser(Base):
     __tablename__ = "condensers"
@@ -40,9 +52,11 @@ class Condenser(Base):
 
     # 2. Обновляем связь на Many-to-Many с использованием secondary
     materials = relationship(
-        "Material", 
-        secondary=condenser_material_association, 
-        back_populates="condensers"
+        "Material",
+        secondary=condenser_material_association,
+        back_populates="condensers",
     )
 
-    calculations = relationship("CalculationResult", back_populates="condenser", cascade="all, delete-orphan")
+    calculations = relationship(
+        "CalculationResult", back_populates="condenser", cascade="all, delete-orphan"
+    )

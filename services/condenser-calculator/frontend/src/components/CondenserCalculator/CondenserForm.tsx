@@ -65,24 +65,27 @@ export function CondenserForm({ onSubmit, isSubmitting }: CondenserFormProps) {
 
   const method = watch('method');
   const t1Main = watch('t1_main');
+  const t1MainUnit = watch('t1_main_unit');
 
   // BR-04: синхронизация t1_main -> t1_builtin, пока пользователь не изменил t1_builtin вручную
   const t1BuiltinLockedRef = useRef(false);
   useEffect(() => {
-    if (dirtyFields.t1_builtin) t1BuiltinLockedRef.current = true;
-  }, [dirtyFields.t1_builtin]);
+    if (dirtyFields.t1_builtin || dirtyFields.t1_builtin_unit) t1BuiltinLockedRef.current = true;
+  }, [dirtyFields.t1_builtin, dirtyFields.t1_builtin_unit]);
 
   useEffect(() => {
     if (!t1BuiltinLockedRef.current) {
       const current = getValues('t1_builtin');
+      const currentUnit = getValues('t1_builtin_unit');
       if (current !== t1Main) setValue('t1_builtin', t1Main, { shouldDirty: false });
+      if (currentUnit !== t1MainUnit) setValue('t1_builtin_unit', t1MainUnit, { shouldDirty: false });
     }
-  }, [t1Main, getValues, setValue]);
+  }, [t1Main, t1MainUnit, getValues, setValue]);
 
   const isMetroVickers = method === 'metro-vickers';
   const isBerman = method === 'berman';
 
-  const isDisabledT1 = isMetroVickers;
+  const isDisabledT1 = false;
   const isDisabledBuiltin = isMetroVickers;
   const isDisabledXSteam = isBerman;
 
@@ -123,6 +126,8 @@ export function CondenserForm({ onSubmit, isSubmitting }: CondenserFormProps) {
                     availableUnits={['-']}
                     onValueChange={field.onChange}
                     onUnitChange={() => {}}
+                    name={field.name}
+                    onBlur={field.onBlur}
                     placeholder="Напр: 0.8 1.0 или 0.75-1-0.05"
                   />
                 )}
@@ -154,6 +159,8 @@ export function CondenserForm({ onSubmit, isSubmitting }: CondenserFormProps) {
                         availableUnits={['т/ч', 'кг/с']}
                         onValueChange={field.onChange}
                         onUnitChange={unitField.onChange}
+                        name={field.name}
+                        onBlur={field.onBlur}
                         placeholder="Напр: 10-50-5 или 10 20 30"
                       />
                     )}
@@ -174,6 +181,9 @@ export function CondenserForm({ onSubmit, isSubmitting }: CondenserFormProps) {
                     availableUnits={['-']}
                     onValueChange={field.onChange}
                     onUnitChange={() => {}}
+                    name={field.name}
+                    onBlur={field.onBlur}
+                    isDisabled={isDisabledXSteam}
                     placeholder="0.950"
                   />
                 )}
@@ -196,6 +206,9 @@ export function CondenserForm({ onSubmit, isSubmitting }: CondenserFormProps) {
                         availableUnits={['ккал/кг', 'кДж/кг']}
                         onValueChange={field.onChange}
                         onUnitChange={unitField.onChange}
+                        name={field.name}
+                        onBlur={field.onBlur}
+                        isDisabled={isMetroVickers}
                         placeholder="Напр: 560"
                       />
                     )}
@@ -216,6 +229,8 @@ export function CondenserForm({ onSubmit, isSubmitting }: CondenserFormProps) {
                     availableUnits={['шт']}
                     onValueChange={field.onChange}
                     onUnitChange={() => {}}
+                    name={field.name}
+                    onBlur={field.onBlur}
                     placeholder="1"
                   />
                 )}
@@ -229,16 +244,11 @@ export function CondenserForm({ onSubmit, isSubmitting }: CondenserFormProps) {
             Вода
           </Heading>
 
-          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={5} mb={5}>
-            <Heading as="h3" size="xs" color="gray.500">
-              Основной пучок
-            </Heading>
-            <Heading as="h3" size="xs" color="gray.500">
-              Встроенный пучок
-            </Heading>
-          </SimpleGrid>
-
-          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={5}>
+          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={8}>
+            <Stack spacing={5}>
+              <Heading as="h3" size="xs" color="gray.500">
+                Основной пучок
+              </Heading>
             <FormControl isRequired>
               <FormLabel>Расход воды (W_main)</FormLabel>
               <Controller
@@ -256,31 +266,9 @@ export function CondenserForm({ onSubmit, isSubmitting }: CondenserFormProps) {
                         availableUnits={['т/ч', 'кг/с', 'м3/ч', 'т/с']}
                         onValueChange={field.onChange}
                         onUnitChange={unitField.onChange}
+                        name={field.name}
+                        onBlur={field.onBlur}
                         placeholder="Напр: 4000 8000"
-                      />
-                    )}
-                  />
-                )}
-              />
-            </FormControl>
-
-            <FormControl isDisabled={isDisabledBuiltin} {...(isDisabledBuiltin ? disabledStyle : undefined)}>
-              <FormLabel>Расход воды (W_builtin)</FormLabel>
-              <Controller
-                control={control}
-                name="W_builtin"
-                render={({ field }) => (
-                  <Controller
-                    control={control}
-                    name="W_builtin_unit"
-                    render={({ field: unitField }) => (
-                      <InputWithUnit
-                        value={field.value}
-                        unit={unitField.value}
-                        availableUnits={['т/ч', 'кг/с', 'м3/ч', 'т/с']}
-                        onValueChange={field.onChange}
-                        onUnitChange={unitField.onChange}
-                        placeholder="Напр: 500 750"
                       />
                     )}
                   />
@@ -305,31 +293,10 @@ export function CondenserForm({ onSubmit, isSubmitting }: CondenserFormProps) {
                         availableUnits={['°C', 'K']}
                         onValueChange={field.onChange}
                         onUnitChange={unitField.onChange}
+                        name={field.name}
+                        onBlur={field.onBlur}
+                        isDisabled={isDisabledT1}
                         placeholder="Напр: 10 20"
-                      />
-                    )}
-                  />
-                )}
-              />
-            </FormControl>
-
-            <FormControl isDisabled={isDisabledBuiltin} {...(isDisabledBuiltin ? disabledStyle : undefined)}>
-              <FormLabel>Темп. воды вход (t1_builtin)</FormLabel>
-              <Controller
-                control={control}
-                name="t1_builtin"
-                render={({ field }) => (
-                  <Controller
-                    control={control}
-                    name="t1_builtin_unit"
-                    render={({ field: unitField }) => (
-                      <InputWithUnit
-                        value={field.value}
-                        unit={unitField.value}
-                        availableUnits={['°C', 'K']}
-                        onValueChange={(val) => field.onChange(val)}
-                        onUnitChange={unitField.onChange}
-                        placeholder="По умолчанию синхр. с t1_main"
                       />
                     )}
                   />
@@ -349,29 +316,95 @@ export function CondenserForm({ onSubmit, isSubmitting }: CondenserFormProps) {
                     availableUnits={['шт']}
                     onValueChange={field.onChange}
                     onUnitChange={() => {}}
+                    name={field.name}
+                    onBlur={field.onBlur}
                     placeholder="Напр: 2"
                   />
                 )}
               />
             </FormControl>
+            </Stack>
 
-            <FormControl isDisabled={isDisabledBuiltin} {...(isDisabledBuiltin ? disabledStyle : undefined)}>
-              <FormLabel>Ходы воды (Z_builtin)</FormLabel>
-              <Controller
-                control={control}
-                name="Z_builtin"
-                render={({ field }) => (
-                  <InputWithUnit
-                    value={field.value}
-                    unit="шт"
-                    availableUnits={['шт']}
-                    onValueChange={field.onChange}
-                    onUnitChange={() => {}}
-                    placeholder=""
-                  />
-                )}
-              />
-            </FormControl>
+            <Stack spacing={5}>
+              <Heading as="h3" size="xs" color="gray.500">
+                Встроенный пучок
+              </Heading>
+
+              <FormControl isDisabled={isDisabledBuiltin} {...(isDisabledBuiltin ? disabledStyle : undefined)}>
+                <FormLabel>Расход воды (W_builtin)</FormLabel>
+                <Controller
+                  control={control}
+                  name="W_builtin"
+                  render={({ field }) => (
+                    <Controller
+                      control={control}
+                      name="W_builtin_unit"
+                      render={({ field: unitField }) => (
+                        <InputWithUnit
+                          value={field.value}
+                          unit={unitField.value}
+                          availableUnits={['т/ч', 'кг/с', 'м3/ч', 'т/с']}
+                          onValueChange={field.onChange}
+                          onUnitChange={unitField.onChange}
+                          name={field.name}
+                          onBlur={field.onBlur}
+                          isDisabled={isDisabledBuiltin}
+                          placeholder="Напр: 500 750"
+                        />
+                      )}
+                    />
+                  )}
+                />
+              </FormControl>
+
+              <FormControl isDisabled={isDisabledBuiltin} {...(isDisabledBuiltin ? disabledStyle : undefined)}>
+                <FormLabel>Темп. воды вход (t1_builtin)</FormLabel>
+                <Controller
+                  control={control}
+                  name="t1_builtin"
+                  render={({ field }) => (
+                    <Controller
+                      control={control}
+                      name="t1_builtin_unit"
+                      render={({ field: unitField }) => (
+                        <InputWithUnit
+                          value={field.value}
+                          unit={unitField.value}
+                          availableUnits={['°C', 'K']}
+                          onValueChange={field.onChange}
+                          onUnitChange={unitField.onChange}
+                          name={field.name}
+                          onBlur={field.onBlur}
+                          isDisabled={isDisabledBuiltin}
+                          placeholder="По умолчанию синхр. с t1_main"
+                        />
+                      )}
+                    />
+                  )}
+                />
+              </FormControl>
+
+              <FormControl isDisabled={isDisabledBuiltin} {...(isDisabledBuiltin ? disabledStyle : undefined)}>
+                <FormLabel>Ходы воды (Z_builtin)</FormLabel>
+                <Controller
+                  control={control}
+                  name="Z_builtin"
+                  render={({ field }) => (
+                    <InputWithUnit
+                      value={field.value}
+                      unit="шт"
+                      availableUnits={['шт']}
+                      onValueChange={field.onChange}
+                      onUnitChange={() => {}}
+                      name={field.name}
+                      onBlur={field.onBlur}
+                      isDisabled={isDisabledBuiltin}
+                      placeholder=""
+                    />
+                  )}
+                />
+              </FormControl>
+            </Stack>
           </SimpleGrid>
         </Box>
 
