@@ -33,6 +33,7 @@ class CalculationAdapter:
         t_start_c: float,
         h_start_kj: float,
         t_air_c: float,
+        p_air_mpa: float,
         p_lst_mpa: float,
     ) -> tuple[GroupCalculationDetails, float, float]:
 
@@ -98,7 +99,7 @@ class CalculationAdapter:
         )
 
         # 2. Строим массив P_in для Ядра (Свежий пар + Промежуточные + Вакуум)
-        p_in_mpa = [p_fresh_mpa, *user_inputs_mpa, p_lst_mpa]
+        p_in_mpa = [p_fresh_mpa, *user_inputs_mpa, p_air_mpa]
 
         # 3. Строим массив Отсосов для Ядра
         p_suctions_mpa = [*user_inputs_mpa[1:], p_lst_mpa]
@@ -211,6 +212,12 @@ class CalculationAdapter:
                 to_unit="°C",
                 parameter_type="temperature",
             )
+            p_air_mpa = converter.convert(
+                globals_obj.P_air,
+                from_unit=globals_obj.P_air_unit,
+                to_unit="МПа",
+                parameter_type="pressure",
+            )
             p_lst_mpa = converter.convert(
                 globals_obj.P_lst_leak_off,
                 from_unit=globals_obj.P_lst_leak_off_unit,
@@ -268,6 +275,7 @@ class CalculationAdapter:
                 t_start_c,
                 h_start_kj,
                 t_air_c,
+                p_air_mpa,
                 p_lst_mpa,
             )
             details_list.append(details)
