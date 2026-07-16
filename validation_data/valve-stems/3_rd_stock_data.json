@@ -13,22 +13,15 @@
     "P_lst_leak_off_unit": "кгс/см²"
   },
   "groups": [
-    {
-      "valve_id": 11,
-      "type": "СК",
-      "valve_names": [
-        "БТ-267171-1",
-        "БТ-267171-1"
-      ],
-      "quantity": 2,
-      "p_values": [
-        130,
-        8.35,
-        1.03
-      ],
-      "p_values_unit": "кгс/см²",
-      "p_leak_offs": [],
-      "p_leak_offs_unit": "кгс/см²"
-    }
-  ]
+  {
+    "valve_id": 11,
+    "type": "СК",
+    "valve_names": ["БТ-267171-1", "БТ-267171-1"],
+    "quantity": 2,
+    "p_values": [130, 8.35, 1.03],
+    "p_values_unit": "кгс/см²",
+    "p_leak_offs": [8.35],
+    "p_leak_offs_unit": "кгс/см²"
+  }
+]
 }
