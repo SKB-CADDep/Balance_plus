@@ -11,6 +11,7 @@ import {
   SimpleGrid,
   Stack,
   useColorModeValue,
+  FormErrorMessage,
 } from '@chakra-ui/react';
 import { Controller, useForm } from 'react-hook-form';
 import { InputWithUnit } from '../Common/InputWithUnit';
@@ -19,6 +20,7 @@ import type { CondenserFormValues, CondenserMethod } from './types';
 export type CondenserFormProps = {
   onSubmit: (values: CondenserFormValues) => void;
   isSubmitting?: boolean;
+  serverErrors?: Record<string, string> | null;
 };
 
 const DEFAULT_VALUES: CondenserFormValues = {
@@ -44,7 +46,7 @@ const DEFAULT_VALUES: CondenserFormValues = {
   H_steam_unit: 'ккал/кг',
 };
 
-export function CondenserForm({ onSubmit, isSubmitting }: CondenserFormProps) {
+export function CondenserForm({ onSubmit, isSubmitting, serverErrors }: CondenserFormProps) {
   const cardBg = useColorModeValue('white', 'gray.800');
   const cardBorder = useColorModeValue('gray.200', 'gray.700');
   const sectionTitle = useColorModeValue('teal.700', 'teal.300');
@@ -57,11 +59,20 @@ export function CondenserForm({ onSubmit, isSubmitting }: CondenserFormProps) {
     watch,
     setValue,
     getValues,
-    formState: { dirtyFields },
+    setError,
+    formState: { dirtyFields, errors },
   } = useForm<CondenserFormValues>({
     defaultValues: DEFAULT_VALUES,
     mode: 'onChange',
   });
+
+  useEffect(() => {
+    if (serverErrors) {
+      Object.entries(serverErrors).forEach(([field, msg]) => {
+        setError(field as keyof CondenserFormValues, { type: 'server', message: msg });
+      });
+    }
+  }, [serverErrors, setError]);
 
   const method = watch('method');
   const t1Main = watch('t1_main');
@@ -112,9 +123,10 @@ export function CondenserForm({ onSubmit, isSubmitting }: CondenserFormProps) {
                   </RadioGroup>
                 )}
               />
+              <FormErrorMessage>{errors.method?.message}</FormErrorMessage>
             </FormControl>
 
-            <FormControl>
+            <FormControl isInvalid={!!errors.coefficient_b}>
               <FormLabel>Коэфф. загрязнения (coefficient_b)</FormLabel>
               <Controller
                 control={control}
@@ -142,7 +154,7 @@ export function CondenserForm({ onSubmit, isSubmitting }: CondenserFormProps) {
           </Heading>
 
           <SimpleGrid columns={{ base: 1, md: 2 }} spacing={5}>
-            <FormControl isRequired>
+            <FormControl isRequired isInvalid={!!errors.G_steam}>
               <FormLabel>Расход пара (G_steam)</FormLabel>
               <Controller
                 control={control}
@@ -167,9 +179,10 @@ export function CondenserForm({ onSubmit, isSubmitting }: CondenserFormProps) {
                   />
                 )}
               />
+              <FormErrorMessage>{errors.G_steam?.message}</FormErrorMessage>
             </FormControl>
 
-            <FormControl isDisabled={isDisabledXSteam} {...(isDisabledXSteam ? disabledStyle : undefined)}>
+            <FormControl isDisabled={isDisabledXSteam} isInvalid={!!errors.X_steam} {...(isDisabledXSteam ? disabledStyle : undefined)}>
               <FormLabel>Степень сухости (X_steam)</FormLabel>
               <Controller
                 control={control}
@@ -188,9 +201,10 @@ export function CondenserForm({ onSubmit, isSubmitting }: CondenserFormProps) {
                   />
                 )}
               />
+              <FormErrorMessage>{errors.X_steam?.message}</FormErrorMessage>
             </FormControl>
 
-            <FormControl isDisabled={isMetroVickers} {...(isMetroVickers ? disabledStyle : undefined)}>
+            <FormControl isDisabled={isMetroVickers} isInvalid={!!errors.H_steam} {...(isMetroVickers ? disabledStyle : undefined)}>
               <FormLabel>Энтальпия пара (H_steam)</FormLabel>
               <Controller
                 control={control}
@@ -215,9 +229,10 @@ export function CondenserForm({ onSubmit, isSubmitting }: CondenserFormProps) {
                   />
                 )}
               />
+              <FormErrorMessage>{errors.H_steam?.message}</FormErrorMessage>
             </FormControl>
 
-            <FormControl>
+            <FormControl isInvalid={!!errors.Z_ejectors}>
               <FormLabel>Кол-во эжекторов (Z_ejectors)</FormLabel>
               <Controller
                 control={control}
@@ -249,7 +264,7 @@ export function CondenserForm({ onSubmit, isSubmitting }: CondenserFormProps) {
               <Heading as="h3" size="xs" color="gray.500">
                 Основной пучок
               </Heading>
-            <FormControl isRequired>
+            <FormControl isRequired isInvalid={!!errors.W_main}>
               <FormLabel>Расход воды (W_main)</FormLabel>
               <Controller
                 control={control}
@@ -274,9 +289,10 @@ export function CondenserForm({ onSubmit, isSubmitting }: CondenserFormProps) {
                   />
                 )}
               />
+              <FormErrorMessage>{errors.W_main?.message}</FormErrorMessage>
             </FormControl>
 
-            <FormControl isRequired isDisabled={isDisabledT1} {...(isDisabledT1 ? disabledStyle : undefined)}>
+            <FormControl isRequired isDisabled={isDisabledT1} isInvalid={!!errors.t1_main} {...(isDisabledT1 ? disabledStyle : undefined)}>
               <FormLabel>Темп. воды вход (t1_main)</FormLabel>
               <Controller
                 control={control}
@@ -302,9 +318,10 @@ export function CondenserForm({ onSubmit, isSubmitting }: CondenserFormProps) {
                   />
                 )}
               />
+              <FormErrorMessage>{errors.t1_main?.message}</FormErrorMessage>
             </FormControl>
 
-            <FormControl>
+            <FormControl isInvalid={!!errors.Z_main}>
               <FormLabel>Ходы воды (Z_main)</FormLabel>
               <Controller
                 control={control}
@@ -322,6 +339,7 @@ export function CondenserForm({ onSubmit, isSubmitting }: CondenserFormProps) {
                   />
                 )}
               />
+              <FormErrorMessage>{errors.Z_main?.message}</FormErrorMessage>
             </FormControl>
             </Stack>
 
@@ -330,7 +348,7 @@ export function CondenserForm({ onSubmit, isSubmitting }: CondenserFormProps) {
                 Встроенный пучок
               </Heading>
 
-              <FormControl isDisabled={isDisabledBuiltin} {...(isDisabledBuiltin ? disabledStyle : undefined)}>
+              <FormControl isDisabled={isDisabledBuiltin} isInvalid={!!errors.W_builtin} {...(isDisabledBuiltin ? disabledStyle : undefined)}>
                 <FormLabel>Расход воды (W_builtin)</FormLabel>
                 <Controller
                   control={control}
@@ -355,9 +373,10 @@ export function CondenserForm({ onSubmit, isSubmitting }: CondenserFormProps) {
                     />
                   )}
                 />
+                <FormErrorMessage>{errors.W_builtin?.message}</FormErrorMessage>
               </FormControl>
 
-              <FormControl isDisabled={isDisabledBuiltin} {...(isDisabledBuiltin ? disabledStyle : undefined)}>
+              <FormControl isDisabled={isDisabledBuiltin} isInvalid={!!errors.t1_builtin} {...(isDisabledBuiltin ? disabledStyle : undefined)}>
                 <FormLabel>Темп. воды вход (t1_builtin)</FormLabel>
                 <Controller
                   control={control}
@@ -382,9 +401,10 @@ export function CondenserForm({ onSubmit, isSubmitting }: CondenserFormProps) {
                     />
                   )}
                 />
+                <FormErrorMessage>{errors.t1_builtin?.message}</FormErrorMessage>
               </FormControl>
 
-              <FormControl isDisabled={isDisabledBuiltin} {...(isDisabledBuiltin ? disabledStyle : undefined)}>
+              <FormControl isDisabled={isDisabledBuiltin} isInvalid={!!errors.Z_builtin} {...(isDisabledBuiltin ? disabledStyle : undefined)}>
                 <FormLabel>Ходы воды (Z_builtin)</FormLabel>
                 <Controller
                   control={control}
@@ -403,6 +423,7 @@ export function CondenserForm({ onSubmit, isSubmitting }: CondenserFormProps) {
                     />
                   )}
                 />
+                <FormErrorMessage>{errors.Z_builtin?.message}</FormErrorMessage>
               </FormControl>
             </Stack>
           </SimpleGrid>

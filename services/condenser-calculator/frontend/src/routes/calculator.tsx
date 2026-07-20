@@ -7,6 +7,7 @@ import {
     Box,
     Button,
     Container,
+    Divider,
     Flex,
     FormControl,
     FormLabel,
@@ -16,10 +17,11 @@ import {
     Spinner,
     Text,
     VStack,
+    Badge,
     useColorModeValue,
     useToast
 } from '@chakra-ui/react';
-import { CondensersService, MaterialsService, type CalculationInput, type MatrixResult } from '../client';
+import { CondensersService, type CalculationInput } from '../client';
 import {
   CondenserForm,
   type CondenserFormValues,
@@ -49,19 +51,17 @@ function CalculatorPage() {
         enabled: !!condenserId,
     });
 
-    const { data: materials, isLoading: isMaterialsLoading } = useQuery({
-        queryKey: ['materials'],
-        queryFn: () => MaterialsService.listMaterialsApiV1MaterialsGet(),
-    });
+    const materials = condenser?.materials || [];
 
     const [materialId, setMaterialId] = useState<number | null>(null);
+    const [serverErrors, setServerErrors] = useState<Record<string, string> | null>(null);
 
     // Default material when loaded
     useEffect(() => {
-        if (materials && materials.length > 0 && materialId === null) {
+        if (materials.length > 0 && materialId === null) {
             setMaterialId(materials[0].id);
         }
-    }, [materials]);
+    }, [materials, materialId]);
 
     const mutation = useCondenserCalculation();
 
@@ -103,32 +103,51 @@ function CalculatorPage() {
 
         mutation.mutate(payload, {
           onSuccess: (data) => {
+            setServerErrors(null);
             sessionStorage.setItem('lastCalculationResult', JSON.stringify(data));
             toast({ title: "Расчет выполнен успешно!", status: "success" });
             navigate({ to: '/results' });
           },
           onError: (err: any) => {
+            setServerErrors(null);
             const detail = err?.response?.data?.detail ?? err?.body?.detail;
-            let description: string;
+            
+            // Если это 422 Unprocessable Entity (ошибки валидации)
             if (Array.isArray(detail)) {
-              description = detail
-                .map((e: any) => {
-                  const field = Array.isArray(e.loc) ? e.loc.join(' → ') : String(e.loc ?? '');
-                  return field ? `[${field}]: ${e.msg}` : e.msg;
-                })
-                .join('\n');
-            } else if (typeof detail === 'string') {
-              description = detail;
-            } else if (err?.body) {
-              if (typeof err.body === 'string') {
-                description = err.body;
-              } else {
-                description = err.body.message || err.body.error || JSON.stringify(err.body);
+              const fieldErrors: Record<string, string> = {};
+              const generalErrors: string[] = [];
+              
+              detail.forEach((e: any) => {
+                // Пытаемся привязать ошибку к полю
+                // loc обычно имеет вид ["body", "G_steam"]
+                if (Array.isArray(e.loc) && e.loc.length > 1 && e.loc[0] === 'body') {
+                    const fieldName = e.loc.slice(1).join('.');
+                    fieldErrors[fieldName] = e.msg;
+                } else {
+                    const field = Array.isArray(e.loc) ? e.loc.join(' → ') : String(e.loc ?? '');
+                    generalErrors.push(field ? `[${field}]: ${e.msg}` : e.msg);
+                }
+              });
+              
+              if (Object.keys(fieldErrors).length > 0) {
+                  setServerErrors(fieldErrors);
+                  toast({ title: "Ошибка валидации", description: "Пожалуйста, проверьте подсвеченные поля формы.", status: "error", isClosable: true });
+              }
+              if (generalErrors.length > 0) {
+                  toast({ title: "Ошибка входных данных", description: generalErrors.join('\n'), status: "error", isClosable: true, duration: 8000 });
               }
             } else {
-              description = err?.message ?? 'Неизвестная ошибка на сервере';
+                // Общая ошибка (например, 400 CalculationEngineError)
+                let description = 'Неизвестная ошибка на сервере';
+                if (typeof detail === 'string') {
+                    description = detail;
+                } else if (err?.body) {
+                    description = typeof err.body === 'string' ? err.body : (err.body.message || err.body.error || JSON.stringify(err.body));
+                } else if (err?.message) {
+                    description = err.message;
+                }
+                toast({ title: "Ошибка расчета", description, status: "error", isClosable: true, duration: 8000 });
             }
-            toast({ title: "Ошибка расчета", description, status: "error", isClosable: true, duration: 8000 });
           },
         });
     };
@@ -145,7 +164,7 @@ function CalculatorPage() {
         );
     }
 
-    if (isCondenserLoading || isMaterialsLoading) {
+    if (isCondenserLoading) {
         return <Flex justify="center" p={8}><Spinner size="xl" /></Flex>;
     }
 
@@ -157,12 +176,46 @@ function CalculatorPage() {
         <Container maxW="container.xl" py={8}>
             <VStack spacing={8} align="stretch">
                 <Box p={6} borderWidth={1} borderColor={cardBorder} borderRadius="lg" bg={cardBg} shadow="sm">
-                    <Heading size="lg" mb={2}>Характеристики: {condenser.name_condenser}</Heading>
-                    {condenser.project_name && <Text color="gray.600">Проект: {condenser.project_name}</Text>}
-                    <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4} mt={4}>
-                        <Box>Ходы (осн): {condenser.passes_main}</Box>
-                        <Box>Эжекторы: {condenser.ejectors_count}</Box>
-                        <Box>Ном. пар: {condenser.mass_flow_steam_nom} т/ч</Box>
+                    <Flex justify="space-between" align="center" mb={2}>
+                        <Heading size="lg">Характеристики: {condenser.name_condenser}</Heading>
+                        <Badge colorScheme="blue" fontSize="0.9em" p={1} borderRadius="md">Read-only</Badge>
+                    </Flex>
+                    {condenser.project_name && <Text color="gray.600" mb={4}>Проект: {condenser.project_name}</Text>}
+                    
+                    <Divider mb={4} />
+
+                    <SimpleGrid columns={{ base: 1, md: 3, lg: 4 }} spacing={4}>
+                        <Box><Text color="gray.500" fontSize="sm">Внутренний диаметр труб</Text><Text fontWeight="medium">{condenser.diameter_internal} мм</Text></Box>
+                        <Box><Text color="gray.500" fontSize="sm">Толщина стенки труб</Text><Text fontWeight="medium">{condenser.wall_thickness} мм</Text></Box>
+                        <Box><Text color="gray.500" fontSize="sm">Эжекторы</Text><Text fontWeight="medium">{condenser.ejectors_count} шт</Text></Box>
+                        <Box><Text color="gray.500" fontSize="sm">Воздухоохладители</Text><Text fontWeight="medium">{condenser.aircooler_count ?? 0} шт</Text></Box>
+                        
+                        <Box><Text color="gray.500" fontSize="sm">Расход пара (ном)</Text><Text fontWeight="medium">{condenser.mass_flow_steam_nom} т/ч</Text></Box>
+                        <Box><Text color="gray.500" fontSize="sm">Присосы воздуха</Text><Text fontWeight="medium">{condenser.mass_flow_air} кг/ч</Text></Box>
+                    </SimpleGrid>
+
+                    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6} mt={6}>
+                        <Box p={4} bg={useColorModeValue('gray.50', 'gray.700')} borderRadius="md">
+                            <Heading size="sm" mb={3} color="teal.500">Основной пучок</Heading>
+                            <SimpleGrid columns={2} spacing={3}>
+                                <Box><Text color="gray.500" fontSize="xs">Длина труб</Text><Text fontSize="sm">{condenser.main_length} мм</Text></Box>
+                                <Box><Text color="gray.500" fontSize="xs">Количество труб</Text><Text fontSize="sm">{condenser.main_count} шт</Text></Box>
+                                <Box><Text color="gray.500" fontSize="xs">Число ходов</Text><Text fontSize="sm">{condenser.passes_main}</Text></Box>
+                            </SimpleGrid>
+                        </Box>
+                        
+                        <Box p={4} bg={useColorModeValue('gray.50', 'gray.700')} borderRadius="md">
+                            <Heading size="sm" mb={3} color="teal.500">Встроенный пучок</Heading>
+                            {condenser.builtin_count ? (
+                                <SimpleGrid columns={2} spacing={3}>
+                                    <Box><Text color="gray.500" fontSize="xs">Длина труб</Text><Text fontSize="sm">{condenser.builtin_length} мм</Text></Box>
+                                    <Box><Text color="gray.500" fontSize="xs">Количество труб</Text><Text fontSize="sm">{condenser.builtin_count} шт</Text></Box>
+                                    <Box><Text color="gray.500" fontSize="xs">Число ходов</Text><Text fontSize="sm">{condenser.passes_builtin ?? '-'}</Text></Box>
+                                </SimpleGrid>
+                            ) : (
+                                <Text color="gray.500" fontSize="sm">Отсутствует</Text>
+                            )}
+                        </Box>
                     </SimpleGrid>
                 </Box>
 
@@ -186,7 +239,7 @@ function CalculatorPage() {
 
                   <Flex direction="column" gap={6}>
                     <Box w="full">
-                      <CondenserForm onSubmit={handleCalculate} isSubmitting={mutation.isPending} />
+                      <CondenserForm onSubmit={handleCalculate} isSubmitting={mutation.isPending} serverErrors={serverErrors} />
                     </Box>
                   </Flex>
                 </Box>
