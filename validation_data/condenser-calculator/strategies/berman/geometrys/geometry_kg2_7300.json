@@ -1,0 +1,27 @@
+{
+  "condenser_id": "kg2-7300-im-brass",
+  "main_info": {
+    "name_condenser": "КГ2-7300-Iм",
+    "project_id": "Vladivostok-T-120/130-12.8",
+    "doc_num_thermo_calc": "XLS-KONDT1-24-10-23",
+    "doc_num_assembly": null,
+    "doc_num_passport": null
+  },
+  "geometry": {
+    "diameter_internal": 22.0,
+    "wall_thickness": 1.0,
+    "material_id": "brass-LO70-1",
+    "main_length": 7430.0,
+    "main_count": 13212.0,
+    "builtin_length": 7430.0,
+    "builtin_count": 0.0,
+    "aircooler_count": null,
+    "passes_main": 2.0,
+    "passes_builtin": 2.0,
+    "ejectors_count": 1
+  },
+  "limits": {
+    "mass_flow_steam_nom": 330.0,
+    "mass_flow_air": 16.5
+  }
+}
