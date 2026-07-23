@@ -281,13 +281,14 @@ class CalculationAdapter:
             details_list.append(details)
 
             # Агрегация (Сводные таблицы)
-            if "СРК" in group_in.type or "Стопорно-регулирующий" in group_in.type:
+            g_type = group_in.type.upper() if group_in.type else ""
+            if "СРК" in g_type or "СТОПОРНО-РЕГУЛИРУЮЩИЙ" in g_type:
                 srk_g += total_g
                 srk_gh += total_g * h_part
-            elif "СК" in group_in.type or "Стопорный" in group_in.type:
+            elif "СК" in g_type or "СТОПОРНЫЙ" in g_type:
                 sk_g += total_g
                 sk_gh += total_g * h_part
-            elif "РК" in group_in.type or "Регулирующий" in group_in.type:
+            elif "РК" in g_type or "РЕГУЛИРУЮЩИЙ" in g_type:
                 rk_g += total_g
                 rk_gh += total_g * h_part
 
