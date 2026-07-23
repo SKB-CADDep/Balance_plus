@@ -212,6 +212,9 @@ cython_debug/
 .cursorignore
 .cursorindexingignore
 
+playwright-report/
+test-results/
+
 # Marimo
 marimo/_static/
 marimo/_lsp/
