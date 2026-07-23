@@ -104,7 +104,16 @@ def seed_data(db: Session) -> None:
     ]
 
     for cond_data in condensers:
-        db.merge(Condenser(**cond_data))
+        # Извлекаем material_id и удаляем его из словаря
+        mat_id = cond_data.pop("material_id")
+        condenser = Condenser(**cond_data)
+        
+        # Находим материал и добавляем в связь Many-to-Many
+        mat = db.query(Material).filter(Material.id == mat_id).first()
+        if mat:
+            condenser.materials.append(mat)
+            
+        db.merge(condenser)
 
     db.commit()
     print(

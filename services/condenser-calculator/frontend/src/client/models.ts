@@ -122,6 +122,7 @@ export type CondenserDetail = {
 	mass_flow_steam_nom: number;
 	mass_flow_air: number;
 	water_flow_limits: Record<string, unknown> | null;
+	materials?: Array<MaterialListItem>;
 };
 
 

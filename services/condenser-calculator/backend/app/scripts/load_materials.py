@@ -33,21 +33,30 @@ def load_materials(db: Session, materials_dir: Path):
                 )
                 continue
 
-            # 1. Защита от дубликатов (лекарство от UniqueViolation)
-            existing = db.query(Material).filter(Material.name == material_name).first()
-            if existing:
-                logger.info(f"Материал '{material_name}' уже есть в БД. Пропускаем.")
-                continue
-
-            # 2. Достаем UUID
-            mat_uuid = data.get("material_id", f"generated-{material_name}")
-
             # 3. Достаем массив точек [[t1, λ1], [t2, λ2]]
             thermal_points = (
                 data.get("physical_properties", {})
                 .get("coefficient_thermal_conductivity", {})
                 .get("temperature_value_pairs", [])
             )
+            if not thermal_points or len(thermal_points) < 2:
+                logger.warning(
+                    f"Материал '{material_name}' не содержит точек теплопроводности. Назначаем баровое значение [[20, 16.0], [100, 18.0]]."
+                )
+                thermal_points = [[20.0, 16.0], [100.0, 18.0]]
+
+            # 1. Защита от дубликатов
+            existing = db.query(Material).filter(Material.name == material_name).first()
+            if existing:
+                if not existing.thermal_conductivity_points or len(existing.thermal_conductivity_points) < 2:
+                    existing.thermal_conductivity_points = thermal_points
+                    db.add(existing)
+                    added_count += 1
+                logger.info(f"Материал '{material_name}' уже есть в БД. Пропускаем.")
+                continue
+
+            # 2. Достаем UUID
+            mat_uuid = data.get("material_id", f"generated-{material_name}")
 
             # 4. Создаем объект материала
             new_material = Material(
