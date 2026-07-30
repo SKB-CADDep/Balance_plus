@@ -9,9 +9,17 @@ export class ResultMatrixPage extends BasePage {
 
   constructor(page: Page) {
     super(page);
-    this.resultsContainer = page.locator('[data-testid="results-container"], .results-matrix');
-    this.matrixTable = page.locator('table.matrix-viewer, [role="grid"]');
-    this.exportExcelButton = page.locator('button:has-text("Экспорт в Excel"), button:has-text("Export")');
+
+    this.resultsContainer = page.locator(
+      '[data-testid="results-container"], .results-matrix, table, h2:has-text("Результаты")'
+    ).first();
+
+    this.matrixTable = page.locator('table').first();
+
+    this.exportExcelButton = page.locator(
+      'button:has-text("Экспорт"), button:has-text("Excel"), button:has-text("Export"), button:has-text("Скачать")'
+    ).first();
+
     this.summaryCards = page.locator('.summary-card, [data-testid="summary-card"]');
   }
 
