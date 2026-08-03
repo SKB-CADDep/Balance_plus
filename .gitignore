@@ -214,6 +214,7 @@ cython_debug/
 
 playwright-report/
 test-results/
+node_modules/
 
 # Marimo
 marimo/_static/
