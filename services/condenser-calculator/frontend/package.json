@@ -36,12 +36,17 @@
     "@playwright/test": "^1.45.2",
     "@tanstack/router-devtools": "1.19.1",
     "@tanstack/router-vite-plugin": "1.19.0",
-    "@types/node": "^20.10.5",
+    "@types/node": "^20.19.43",
     "@types/react": "^18.3.28",
     "@types/react-dom": "^18.2.15",
     "@vitejs/plugin-react-swc": "^3.5.0",
     "dotenv": "^16.4.5",
     "typescript": "^5.2.2",
     "vite": "^6.3.5"
+  },
+  "allowScripts": {
+    "esbuild@0.25.12": true,
+    "@biomejs/biome@1.6.1": true,
+    "@swc/core@1.15.33": true
   }
 }
