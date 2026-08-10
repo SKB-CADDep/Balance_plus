@@ -128,6 +128,12 @@ class MetroVickersStrategy:
             temperature_cooling_water_1
         )  # p.9
 
+        if mass_flow_cooling_water <= 0:
+            return {
+                "pressure_flow_path_1": 0.0,
+                "is_extrapolated": False
+            }
+
         delta_t_water = (
             mass_flow_flow_path_1 * heat_of_vaporization * degree_dryness_flow_path_1
         ) / mass_flow_cooling_water

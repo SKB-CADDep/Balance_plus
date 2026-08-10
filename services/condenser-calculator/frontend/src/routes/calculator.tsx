@@ -88,17 +88,23 @@ function CalculatorPage() {
           H_steam_unit: values.H_steam_unit as any,
         };
 
+        const parseNumber = (val: string) => {
+            if (!val.trim()) return undefined;
+            const parsed = Number(val.replace(',', '.'));
+            return isNaN(parsed) ? undefined : parsed;
+        };
+
         if (values.coefficient_b.trim()) payload.coefficient_b = values.coefficient_b;
-        if (values.Z_main.trim()) payload.Z_main = Number(values.Z_main);
+        if (values.Z_main.trim()) payload.Z_main = parseNumber(values.Z_main);
 
         if (values.method === 'berman') {
             if (values.W_builtin.trim()) payload.W_builtin = values.W_builtin;
             if (values.t1_builtin.trim()) payload.t1_builtin = values.t1_builtin;
-            if (values.Z_builtin.trim()) payload.Z_builtin = Number(values.Z_builtin);
-            if (values.H_steam.trim()) payload.H_steam = Number(values.H_steam);
-            if (values.Z_ejectors.trim()) payload.Z_ejectors = Number(values.Z_ejectors);
+            if (values.Z_builtin.trim()) payload.Z_builtin = parseNumber(values.Z_builtin);
+            if (values.H_steam.trim()) payload.H_steam = parseNumber(values.H_steam) ?? null;
+            if (values.Z_ejectors.trim()) payload.Z_ejectors = parseNumber(values.Z_ejectors);
         } else if (values.method === 'metro-vickers') {
-            if (values.X_steam.trim()) payload.X_steam = Number(values.X_steam);
+            if (values.X_steam.trim()) payload.X_steam = parseNumber(values.X_steam);
         }
 
         mutation.mutate(payload, {
