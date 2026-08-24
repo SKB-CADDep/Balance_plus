@@ -33,6 +33,7 @@ function ResultsPage() {
 
   const cardBg = useColorModeValue('white', 'gray.800');
   const cardBorder = useColorModeValue('gray.200', 'gray.700');
+  const preBg = useColorModeValue('gray.50', 'gray.900');
 
   useEffect(() => {
     const saved = sessionStorage.getItem('lastCalculationResult');
@@ -119,7 +120,7 @@ function ResultsPage() {
                   <Box
                     as="pre"
                     p={4}
-                    bg={useColorModeValue('gray.50', 'gray.900')}
+                    bg={preBg}
                     borderRadius="md"
                     borderWidth={1}
                     borderColor={cardBorder}
