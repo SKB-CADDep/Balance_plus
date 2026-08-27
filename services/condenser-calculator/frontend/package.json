@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "test": "vitest run",
     "lint": "biome check --apply-unsafe --no-errors-on-unmatched --files-ignore-unknown=true ./",
     "preview": "vite preview",
     "generate-client": "openapi-ts --input ./openapi.json --output ./src/client --client axios --exportSchemas true"
@@ -42,7 +43,8 @@
     "@vitejs/plugin-react-swc": "^3.5.0",
     "dotenv": "^16.4.5",
     "typescript": "^5.2.2",
-    "vite": "^6.3.5"
+    "vite": "^6.3.5",
+    "vitest": "^4.0.0"
   },
   "allowScripts": {
     "esbuild@0.25.12": true,

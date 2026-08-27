@@ -19,7 +19,7 @@ import {
     useColorModeValue,
     useToast
 } from '@chakra-ui/react';
-import { CondensersService, MaterialsService, type CalculationInput, type MatrixResult } from '../client';
+import { CondensersService, MaterialsService, type CalculationInput } from '../client';
 import {
   CondenserForm,
   type CondenserFormValues,
