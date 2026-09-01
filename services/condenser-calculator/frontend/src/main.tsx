@@ -6,19 +6,10 @@ import { routeTree } from "./routeTree.gen";
 
 import { StrictMode } from "react";
 import { OpenAPI } from "./client";
+import { resolveApiBaseUrl } from "./config/api";
 import theme from "./theme";
 
-const getApiBaseUrl = (): string => {
-    if (import.meta.env.VITE_API_URL) {
-        return import.meta.env.VITE_API_URL;
-    }
-    if (typeof window !== "undefined") {
-        return `${window.location.protocol}//${window.location.hostname}:8010`;
-    }
-    return "http://localhost:8010";
-};
-
-OpenAPI.BASE = getApiBaseUrl();
+OpenAPI.BASE = resolveApiBaseUrl(import.meta.env.VITE_API_URL);
 
 const queryClient = new QueryClient();
 
