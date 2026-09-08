@@ -3,6 +3,7 @@ from unittest.mock import patch
 import pytest
 from httpx import ASGITransport, AsyncClient
 
+from app.core.security import CurrentUser, get_current_user
 from app.main import app
 
 
@@ -10,8 +11,11 @@ from app.main import app
 class TestOrchestratorNegative:
     @pytest.fixture(autouse=True)
     def setup(self):
+        app.dependency_overrides[get_current_user] = lambda: CurrentUser(username="engineer")
         self.transport = ASGITransport(app=app)
         self.base_url = "http://test/api/v1"
+        yield
+        app.dependency_overrides.clear()
 
     async def test_save_missing_task_id(self):
         """QA-5: Сохранение без task_iid -> 422"""

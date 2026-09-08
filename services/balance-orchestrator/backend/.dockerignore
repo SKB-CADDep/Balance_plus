@@ -1,0 +1,15 @@
+.env
+.env.*
+!.env.example
+.git/
+.gitignore
+.venv/
+.poetry-cache/
+.pytest_cache/
+.ruff_cache/
+__pycache__/
+*.py[cod]
+.coverage
+htmlcov/
+tests/
+*.log

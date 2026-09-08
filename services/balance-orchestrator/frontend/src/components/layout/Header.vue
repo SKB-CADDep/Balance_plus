@@ -8,12 +8,14 @@
       <div class="profile-section">
         <span class="profile-name">{{ user.name }}</span>
         <div class="avatar" :style="{ backgroundImage: `url(${user.avatar_url})` }"></div>
+        <button class="logout-button" type="button" @click="$emit('logout')">Выйти</button>
       </div>
     </header>
   </template>
   
   <script setup lang="ts">
   defineProps<{ user: { name: string, avatar_url: string } }>()
+  defineEmits<{ logout: [] }>()
   </script>
   
   <style scoped>
@@ -26,4 +28,9 @@
   .logo-text { font-weight: 600; font-size: 16px; }
   .profile-name { font-size: 16px; }
   .avatar { width: 24px; height: 24px; background: #D9D9D9; border-radius: 12px; background-size: cover; }
+  .logout-button {
+    padding: 6px 10px; border: 1px solid #d9d9d9; border-radius: 4px;
+    background: #fff; color: #333; font: inherit; cursor: pointer;
+  }
+  .logout-button:hover { background: #f2f2f2; }
   </style>

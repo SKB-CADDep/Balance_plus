@@ -17,7 +17,7 @@
 
 <script setup lang="ts">
 import {ref, computed, onMounted, onUnmounted} from 'vue'
-import axios from 'axios'
+import apiClient from '../../api/axios'
 
 const props = defineProps<{ taskIid: number | string, projectId: number | string }>()
 const emit = defineEmits(['back'])
@@ -26,6 +26,7 @@ const saving = ref(false)
 const iframeRef = ref<HTMLIFrameElement | null>(null)
 
 const EXTERNAL_APP_URL = 'http://10.202.220.143:5252/calculator'
+const EXTERNAL_APP_ORIGIN = new URL(EXTERNAL_APP_URL).origin
 
 const iframeSrc = computed(() => {
   return `${EXTERNAL_APP_URL}?taskId=${props.taskIid}&projectId=${props.projectId}&embedded=true`
@@ -33,7 +34,7 @@ const iframeSrc = computed(() => {
 
 const restoreState = async () => {
   try {
-    const res = await axios.get('/api/v1/calculations/latest', {
+    const res = await apiClient.get('/api/v1/calculations/latest', {
       params: {
         task_iid: props.taskIid, 
         project_id: props.projectId, 
@@ -52,7 +53,7 @@ const restoreState = async () => {
         }
       }
 
-      iframeRef.value?.contentWindow?.postMessage(message, '*')
+      iframeRef.value?.contentWindow?.postMessage(message, EXTERNAL_APP_ORIGIN)
     } else {
       console.log("ℹ️ Сохраненных данных нет, начинаем с чистого листа.")
     }
@@ -62,6 +63,13 @@ const restoreState = async () => {
 }
 
 const handleMessage = async (event: MessageEvent) => {
+  if (
+    event.origin !== EXTERNAL_APP_ORIGIN ||
+    event.source !== iframeRef.value?.contentWindow
+  ) {
+    return
+  }
+
   const {type, payload} = event.data
 
   if (type === 'WSA_READY') {
@@ -102,7 +110,7 @@ const saveResult = async (data: any) => {
 
     console.log("📤 Отправляем на бэкенд:", requestPayload)
 
-    await axios.post('/api/v1/calculations/save', requestPayload)
+    await apiClient.post('/api/v1/calculations/save', requestPayload)
     
     console.log(`✅ Результаты сохранены в задачу #${tId}!`)
   } catch (e: any) {

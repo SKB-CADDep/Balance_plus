@@ -12,13 +12,11 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
-      // 2. Запросы к удаленному калькулятору штоков
-      '/wsa-api': {
-        target: 'http://10.202.220.143:5253', // <-- Ваш удаленный сервер
+      // Auth Service. Production uses the equivalent Nginx same-origin proxy.
+      '/auth': {
+        target: 'http://127.0.0.1:8001',
         changeOrigin: true,
         secure: false,
-        // Переписываем путь: /wsa-api/turbines -> /api/v1/turbines
-        rewrite: (path) => path.replace(/^\/wsa-api/, '/api/v1') 
       }
     }
   }

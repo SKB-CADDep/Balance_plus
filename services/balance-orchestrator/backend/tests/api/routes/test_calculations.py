@@ -6,7 +6,11 @@ import pytest
 from fastapi import HTTPException
 
 from app.api.routes.calculations import get_latest_calculation, save_calculation_result
+from app.core.security import CurrentUser
 from app.schemas.calculation import CalculationSaveRequest
+
+
+CURRENT_USER = CurrentUser(username="engineer", full_name="Test Engineer")
 
 
 class TestSaveCalculationResult:
@@ -36,7 +40,7 @@ class TestSaveCalculationResult:
         )
 
         # Execute
-        result = await save_calculation_result(request)
+        result = await save_calculation_result(request, CURRENT_USER)
 
         # Assertions
         assert result["status"] == "saved"
@@ -53,6 +57,7 @@ class TestSaveCalculationResult:
         assert call_args.kwargs["branch"] == branch_name
         assert call_args.kwargs["project_id"] == 123
         assert "Calc Result: Test commit" in call_args.kwargs["commit_message"]
+        assert "Balance-User: engineer" in call_args.kwargs["commit_message"]
         assert "calculations/valves/current/input.json" in call_args.kwargs["files"]
         assert "calculations/valves/current/result.json" in call_args.kwargs["files"]
 
@@ -71,7 +76,7 @@ class TestSaveCalculationResult:
         )
 
         with pytest.raises(HTTPException) as exc_info:
-            await save_calculation_result(request)
+            await save_calculation_result(request, CURRENT_USER)
 
         assert exc_info.value.status_code == 400
         assert "Ветка для задачи #999 не найдена" in exc_info.value.detail
@@ -96,7 +101,7 @@ class TestSaveCalculationResult:
         )
 
         with pytest.raises(HTTPException) as exc_info:
-            await save_calculation_result(request)
+            await save_calculation_result(request, CURRENT_USER)
 
         assert exc_info.value.status_code == 401
         assert exc_info.value.detail == "Ошибка авторизации в GitLab"
@@ -119,7 +124,7 @@ class TestSaveCalculationResult:
         )
 
         with pytest.raises(HTTPException) as exc_info:
-            await save_calculation_result(request)
+            await save_calculation_result(request, CURRENT_USER)
 
         assert exc_info.value.status_code == 404
         assert exc_info.value.detail == "Объект не найден в GitLab"
@@ -140,7 +145,7 @@ class TestSaveCalculationResult:
         )
 
         with pytest.raises(HTTPException) as exc_info:
-            await save_calculation_result(request)
+            await save_calculation_result(request, CURRENT_USER)
 
         assert exc_info.value.status_code == 502
         assert exc_info.value.detail == "Ошибка GitLab API: API error"
@@ -161,7 +166,7 @@ class TestSaveCalculationResult:
         )
 
         with pytest.raises(HTTPException) as exc_info:
-            await save_calculation_result(request)
+            await save_calculation_result(request, CURRENT_USER)
 
         assert exc_info.value.status_code == 500
 

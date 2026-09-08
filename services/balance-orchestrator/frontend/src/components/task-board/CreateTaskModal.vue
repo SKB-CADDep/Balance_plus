@@ -69,7 +69,7 @@
   
   <script setup lang="ts">
   import { reactive, ref, onMounted, computed } from 'vue'
-  import axios from 'axios'
+  import apiClient from '../../api/axios'
   
   interface Bureau {
     id: string
@@ -100,7 +100,7 @@
   const fetchProjects = async () => {
     loadingProjects.value = true
     try {
-      const res = await axios.get('/api/v1/projects', { params: { search: projectSearch.value } })
+      const res = await apiClient.get('/api/v1/projects', { params: { search: projectSearch.value } })
       projects.value = res.data
     } catch (e) {
       console.error(e)

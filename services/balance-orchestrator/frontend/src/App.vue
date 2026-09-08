@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
-import axios from 'axios'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 
+import apiClient, { ensureAuthenticated, logout } from './api/axios'
+import LoginForm from './components/auth/LoginForm.vue'
 import Header from './components/layout/Header.vue'
 import TaskCard from './components/task-board/TaskCard.vue'
 import NewTaskCard from './components/task-board/NewTaskCard.vue'
@@ -43,6 +44,8 @@ const showCreateModal = ref(false)
 const searchQuery = ref('')
 const loading = ref(true)
 const sortOrder = ref<'desc' | 'asc'>('desc')
+const authReady = ref(false)
+const isAuthenticated = ref(false)
 
 const activeView = ref<'dashboard' | 'app-valves'>('dashboard')
 const currentTaskIid = ref(0)
@@ -52,9 +55,9 @@ const currentProjectId = ref(0)
 const fetchData = async () => {
   try {
     const [userRes, tasksRes, bureausRes] = await Promise.all([
-      axios.get('/api/v1/user/me'),
-      axios.get('/api/v1/tasks?state=opened'),
-      axios.get('/api/v1/config/bureaus')
+      apiClient.get('/api/v1/user/me'),
+      apiClient.get('/api/v1/tasks?state=opened'),
+      apiClient.get('/api/v1/config/bureaus')
     ])
     currentUser.value = userRes.data
     tasks.value = tasksRes.data
@@ -65,7 +68,7 @@ const fetchData = async () => {
 
 const createTask = async (data: any) => {
   try {
-    const res = await axios.post('/api/v1/tasks', {
+    const res = await apiClient.post('/api/v1/tasks', {
       title: data.title,
       description: data.description,
       labels: data.labels,
@@ -76,7 +79,7 @@ const createTask = async (data: any) => {
     const newProjectId = data.project_id
 
     // Автоматически создаём ветку после создания задачи
-    await axios.post(`/api/v1/tasks/${newTaskId}/branch`, {
+    await apiClient.post(`/api/v1/tasks/${newTaskId}/branch`, {
       project_id: newProjectId
     })
 
@@ -105,7 +108,7 @@ const handleSubmitTask = async (task: Task) => {
   
   try {
     loading.value = true
-    const res = await axios.post(`/api/v1/tasks/${task.iid}/submit`, null, { params: { project_id: task.project_id } })
+    const res = await apiClient.post(`/api/v1/tasks/${task.iid}/submit`, null, { params: { project_id: task.project_id } })
     alert(`✅ Merge Request создан!\nСсылка: ${res.data.mr_url}`)
     // Можно открыть ссылку в новой вкладке
     window.open(res.data.mr_url, '_blank')
@@ -163,17 +166,46 @@ const toggleSort = () => {
   sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
 }
 
-onMounted(fetchData)
+const handleSignedOut = () => {
+  isAuthenticated.value = false
+  currentUser.value = { name: '', avatar_url: '' }
+  tasks.value = []
+}
+
+const initialize = async () => {
+  isAuthenticated.value = await ensureAuthenticated()
+  authReady.value = true
+  if (isAuthenticated.value) await fetchData()
+}
+
+const handleAuthenticated = async () => {
+  isAuthenticated.value = true
+  loading.value = true
+  await fetchData()
+}
+
+const handleLogout = async () => {
+  await logout()
+}
+
+onMounted(() => {
+  window.addEventListener('auth:signed-out', handleSignedOut)
+  void initialize()
+})
+onUnmounted(() => window.removeEventListener('auth:signed-out', handleSignedOut))
 </script>
 
 <template>
+  <div v-if="!authReady" class="auth-loading">Проверяем авторизацию…</div>
+  <LoginForm v-else-if="!isAuthenticated" @authenticated="handleAuthenticated" />
+
   <!-- Обертка layout должна быть всегда -->
-  <div class="layout">
+  <div v-else class="layout">
     
     <!-- БЛОК 1: ДАШБОРД -->
     <!-- v-show лучше чем v-if здесь, чтобы не терять скролл при возврате, но v-if надежнее для изоляции -->
     <div v-if="activeView === 'dashboard'" class="dashboard-wrapper">
-      <Header :user="currentUser" />
+      <Header :user="currentUser" @logout="handleLogout" />
       
       <main class="main-container">
         <!-- УРОВЕНЬ 1: БЮРО -->
@@ -277,6 +309,14 @@ body {
   /* Возвращаем нормальный скролл для страницы */
   overflow-y: auto; 
   overflow-x: hidden;
+}
+
+.auth-loading {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  color: #666;
+  background: #f4f5f7;
 }
 
 input, select, textarea {

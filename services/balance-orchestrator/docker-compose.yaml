@@ -8,6 +8,9 @@ services:
         required: false
     ports:
       - "8005:8000"
+    networks:
+      - default
+      - shared_services
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       start_period: 10s
@@ -23,3 +26,11 @@ services:
       - "3000:80"
     depends_on:
       - backend
+    networks:
+      - default
+      - shared_services
+
+networks:
+  shared_services:
+    external: true
+    name: ${SHARED_NETWORK_NAME:-utz_shared_services}

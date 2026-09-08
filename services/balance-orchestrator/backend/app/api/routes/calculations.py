@@ -1,18 +1,24 @@
 import json
+import logging
 
 import gitlab
 import gitlab.exceptions
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.core.gitlab_adapter import GitLabConfigurationError, gitlab_client
+from app.core.security import CurrentUser, get_current_user
 from app.schemas.calculation import CalculationSaveRequest
 
 
 router = APIRouter(prefix="/calculations", tags=["Calculations"])
+audit_logger = logging.getLogger("balance_orchestrator.audit")
 
 
 @router.post("/save")
-async def save_calculation_result(req: CalculationSaveRequest):
+async def save_calculation_result(
+    req: CalculationSaveRequest,
+    current_user: CurrentUser = Depends(get_current_user),
+):
     try:
         # 1. Поиск ветки.
         branch_name = gitlab_client.find_branch_by_issue_iid(req.task_iid, req.project_id)
@@ -36,9 +42,18 @@ async def save_calculation_result(req: CalculationSaveRequest):
         # 3. Коммит
         commit = gitlab_client.create_commit_multiple(
             files=files_to_commit,
-            commit_message=f"Calc Result: {msg}",
+            commit_message=f"Calc Result: {msg}\n\nBalance-User: {current_user.username}",
             branch=branch_name,
             project_id=req.project_id,
+        )
+
+        audit_logger.info(
+            "Calculation saved username=%s project_id=%s task_iid=%s app_type=%s commit_id=%s",
+            current_user.username,
+            req.project_id,
+            req.task_iid,
+            req.app_type,
+            commit.id,
         )
 
         return {
