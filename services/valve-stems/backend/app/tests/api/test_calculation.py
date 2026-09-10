@@ -111,3 +111,49 @@ async def test_delete_calculation_result(async_client, db_session):
     response = await async_client.delete(f"/api/v1/{result.id}")
     assert response.status_code == 204
     assert response.content == b""
+
+
+async def test_calculate_with_full_valve_types(async_client, db_session):
+    """Тест выполнения расчета с полными наименованиями типов клапанов ('Стопорный', 'Регулирующий')."""
+    turbine = create_test_turbine(db_session)
+    valve1 = create_test_valve(db_session, valve_name="VD-006")
+    valve2 = create_test_valve(db_session, valve_name="VD-007")
+
+    payload = {
+        "turbine_id": turbine.id,
+        "globals": {
+            "P_fresh": 130.0,
+            "T_fresh": 540.0,
+            "P_air": 1.033,
+            "T_air": 27.0,
+            "P_lst_leak_off": 0.97,
+        },
+        "groups": [
+            {
+                "valve_id": valve1.id,
+                "type": "Стопорный",
+                "valve_names": ["VD-006"],
+                "quantity": 1,
+                "p_leak_offs": [30.0, 10.0, 2.0],
+            },
+            {
+                "valve_id": valve2.id,
+                "type": "Регулирующий",
+                "valve_names": ["VD-007"],
+                "quantity": 1,
+                "p_leak_offs": [30.0, 10.0, 2.0],
+            },
+        ],
+    }
+
+    response = await async_client.post("/api/v1/calculate", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert "details" in data
+    assert len(data["details"]) == 2
+    assert data["details"][0]["type"] == "Стопорный"
+    assert data["details"][1]["type"] == "Регулирующий"
+    assert "summary" in data
+    assert data["summary"]["sk"]["total_g"] > 0
+    assert data["summary"]["rk"]["total_g"] > 0
+

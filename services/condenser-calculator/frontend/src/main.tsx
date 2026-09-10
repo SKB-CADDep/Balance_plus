@@ -6,9 +6,10 @@ import { routeTree } from "./routeTree.gen";
 
 import { StrictMode } from "react";
 import { OpenAPI } from "./client";
+import { resolveApiBaseUrl } from "./config/api";
 import theme from "./theme";
 
-OpenAPI.BASE = import.meta.env.VITE_API_URL || "";
+OpenAPI.BASE = resolveApiBaseUrl(import.meta.env.VITE_API_URL);
 
 const queryClient = new QueryClient();
 
