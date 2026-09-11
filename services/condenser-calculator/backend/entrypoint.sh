@@ -25,8 +25,10 @@ done
 
 >&2 echo "PostgreSQL is up - proceeding."
 
-echo "Applying Alembic migrations..."
-alembic upgrade head
+if [ "${RUN_MIGRATIONS:-true}" = "true" ]; then
+  echo "Applying Alembic migrations..."
+  alembic upgrade head
+fi
 
 if [ "${SEED_DATABASE:-true}" = "true" ]; then
   echo "Loading reference data (idempotent)..."
