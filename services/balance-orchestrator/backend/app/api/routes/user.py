@@ -13,5 +13,7 @@ async def get_user_profile(current_user: CurrentUser = Depends(get_current_user)
         "username": current_user.username,
         "email": current_user.email,
         "groups": current_user.groups,
+        "gitlab_user_id": current_user.gitlab_user_id,
+        "gitlab_username": current_user.gitlab_username,
         "avatar_url": "",
     }

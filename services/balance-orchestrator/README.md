@@ -3,23 +3,27 @@
 Сервис управляет задачами, ветками, результатами расчётов и Merge Request в
 заводском GitLab.
 
-## Настройка GitLab
+## Вход через GitLab
 
-1. Скопируйте `backend/.env.example` в `backend/.env`.
-2. Создайте в GitLab новый Personal Access Token со scope `api`.
-3. Запишите токен только в `backend/.env`.
-4. Укажите URL и ID проекта:
+Оркестратор работает с GitLab от имени вошедшего пользователя. Authentication
+Service получает персональный OAuth token, хранит его зашифрованно и передаёт
+оркестратору только по внутреннему API. Общий Personal Access Token не нужен.
+
+В `backend/.env` укажите:
 
 ```dotenv
-GITLAB_URL=http://git.utz.local
-GITLAB_PRIVATE_TOKEN=<new-token>
+GITLAB_URL=https://git.utz.local
+GITLAB_AUTH_MODE=oauth
 GITLAB_PROJECT_ID=41
-GITLAB_SSL_VERIFY=false
+GITLAB_SSL_VERIFY=true
 GITLAB_TIMEOUT=10
+AUTH_SERVICE_CLIENT_SECRET=<same-value-as-auth-service>
 ```
 
-`GITLAB_SSL_VERIFY=false` предназначен только для внутреннего сервера с
-self-signed сертификатом. При наличии доверенного сертификата установите `true`.
+`GITLAB_PRIVATE_TOKEN` допускается только при временном
+`GITLAB_AUTH_MODE=legacy`. После перехода на OAuth старый токен следует отозвать.
+Для внутреннего CA добавьте его сертификат в trust store контейнера, не отключая
+TLS-проверку.
 
 ## Настройка Authentication Service
 
@@ -42,6 +46,7 @@ docker network create utz_shared_services
 ```dotenv
 AUTH_SERVICE_URL=http://authentication-service:8000
 AUTH_SERVICE_TIMEOUT=5
+AUTH_SERVICE_CLIENT_SECRET=<same-value-as-auth-service>
 ALLOWED_ORIGINS=http://localhost:3000
 ```
 
@@ -51,19 +56,24 @@ ALLOWED_ORIGINS=http://localhost:3000
 SHARED_NETWORK_NAME=utz_shared_services
 ```
 
-Frontend проксирует `/auth/*` в Authentication Service через Nginx. LDAP-пароль
-не попадает в backend оркестратора. После входа Axios добавляет access-токен ко
-всем запросам `/api/v1/*` и выполняет одноразовую ротацию refresh-токена.
+Frontend проксирует `/auth/*` в Authentication Service через Nginx. Вход
+начинается на `/auth/gitlab/login`: пользователь вводит заводские LDAP-данные на
+стороне GitLab. Callback возвращает во frontend одноразовый код, а не OAuth token.
+После его обмена Axios добавляет Balance+ access token ко всем запросам
+`/api/v1/*` и выполняет одноразовую ротацию refresh token.
 
 ## Запуск и диагностика
+
+Полный локальный OAuth smoke-стенд с GitLab/LDAP-симулятором
+описан в [`docs/LOCAL_GITLAB_OAUTH_TEST.md`](../../docs/LOCAL_GITLAB_OAUTH_TEST.md).
 
 ```bash
 docker compose up --build -d
 ```
 
 - `GET http://localhost:8005/health` — проверка самого API без обращения к GitLab.
-- `GET http://localhost:8005/health/gitlab` — проверка URL, токена и доступа к
-  проекту по умолчанию. Токен в ответ никогда не включается.
+- `GET http://localhost:8005/health/gitlab` — проверка конфигурации режима GitLab.
+  Пользовательский token и доступ проверяются на защищённых запросах.
 - `GET http://localhost:8005/api/v1/config/bureaus` без Bearer-токена должен
   возвращать `401 Unauthorized`.
 

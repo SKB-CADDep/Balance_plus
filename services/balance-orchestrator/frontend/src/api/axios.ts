@@ -51,12 +51,58 @@ export const ensureAuthenticated = async () => {
   return Boolean(await refreshAccessToken())
 }
 
-export const login = async (username: string, password: string) => {
-  const form = new URLSearchParams({ username, password })
-  const response = await authClient.post<TokenPair>('/auth/login', form, {
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-  })
-  storeTokens(response.data)
+const oauthErrors: Record<string, string> = {
+  gitlab_authorization_denied: 'Авторизация в GitLab была отменена',
+  invalid_oauth_state: 'Сессия входа устарела. Попробуйте войти ещё раз',
+  gitlab_access_denied: 'У вашей учётной записи GitLab нет доступа к Balance+',
+  gitlab_oauth_failed: 'GitLab не смог завершить авторизацию',
+  user_store_unavailable: 'Сервис пользователей временно недоступен',
+}
+
+export interface OAuthCallbackResult {
+  handled: boolean
+  authenticated: boolean
+  error?: string
+}
+
+const clearOAuthParameters = () => {
+  const url = new URL(window.location.href)
+  url.searchParams.delete('auth_code')
+  url.searchParams.delete('auth_error')
+  window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`)
+}
+
+export const completeGitLabLogin = async (): Promise<OAuthCallbackResult> => {
+  const params = new URLSearchParams(window.location.search)
+  const error = params.get('auth_error')
+  const code = params.get('auth_code')
+  if (!error && !code) return { handled: false, authenticated: false }
+
+  clearOAuthParameters()
+  if (error) {
+    return {
+      handled: true,
+      authenticated: false,
+      error: oauthErrors[error] || 'Не удалось войти через GitLab',
+    }
+  }
+
+  try {
+    const response = await authClient.post<TokenPair>('/auth/gitlab/exchange', { code })
+    storeTokens(response.data)
+    return { handled: true, authenticated: true }
+  } catch {
+    clearSession()
+    return {
+      handled: true,
+      authenticated: false,
+      error: 'Код входа недействителен или уже использован',
+    }
+  }
+}
+
+export const login = () => {
+  window.location.assign('/auth/gitlab/login')
 }
 
 export const logout = async () => {

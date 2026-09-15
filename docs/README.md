@@ -3,6 +3,11 @@
 **Версия:** 1.0  
 **Статус:** Утверждено
 
+## Эксплуатационные инструкции
+
+- [Развёртывание Balance+ с GitLab OAuth](operations/GITLAB_OAUTH_DEPLOYMENT.md)
+- [Локальная проверка GitLab OAuth](LOCAL_GITLAB_OAUTH_TEST.md)
+
 ## 1. Введение: Бизнес-контекст и Цели
 
 ### 1.1. Проблема

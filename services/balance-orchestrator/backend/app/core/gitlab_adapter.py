@@ -1,8 +1,9 @@
 import logging
 import os
 import time
+from contextvars import ContextVar, Token
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import gitlab
 from dotenv import load_dotenv
@@ -44,6 +45,7 @@ class GitLabAdapter:
         project_id: int | str | None = None,
         ssl_verify: bool | None = None,
         timeout: float | None = None,
+        auth_type: Literal["private", "oauth"] = "private",
     ) -> None:
         self.url = (url if url is not None else os.getenv("GITLAB_URL", "")).strip().rstrip("/")
         self.token = (
@@ -58,6 +60,7 @@ class GitLabAdapter:
             ssl_verify if ssl_verify is not None else _env_bool("GITLAB_SSL_VERIFY", False)
         )
         self.timeout = timeout if timeout is not None else _env_float("GITLAB_TIMEOUT", 10.0)
+        self.auth_type = auth_type
 
         # Клиент создаётся лениво. Благодаря этому API и /health запускаются даже
         # без .env, а причина ошибки видна через /health/gitlab.
@@ -78,18 +81,23 @@ class GitLabAdapter:
             if not self.url:
                 missing.append("GITLAB_URL")
             if not self.token:
-                missing.append("GITLAB_PRIVATE_TOKEN")
+                missing.append("GitLab access token")
             raise GitLabConfigurationError(
                 f"Не заданы обязательные настройки GitLab: {', '.join(missing)}"
             )
 
         if self._gl is None:
+            token_argument = (
+                {"oauth_token": self.token}
+                if self.auth_type == "oauth"
+                else {"private_token": self.token}
+            )
             self._gl = gitlab.Gitlab(
                 self.url,
-                private_token=self.token,
                 ssl_verify=self.ssl_verify,
                 timeout=self.timeout,
                 retry_transient_errors=True,
+                **token_argument,
             )
         return self._gl
 
@@ -101,6 +109,7 @@ class GitLabAdapter:
             "project_id": self.project_id,
             "ssl_verify": self.ssl_verify,
             "timeout_seconds": self.timeout,
+            "auth_type": self.auth_type,
         }
 
     def check_connection(self, check_project: bool = False) -> dict[str, Any]:
@@ -481,5 +490,51 @@ class GitLabAdapter:
             raise e
 
 
-# Глобальный экземпляр
-gitlab_client = GitLabAdapter()
+_request_gitlab_client: ContextVar[GitLabAdapter | None] = ContextVar(
+    "request_gitlab_client", default=None
+)
+_legacy_gitlab_client = GitLabAdapter()
+
+
+def set_request_gitlab_client(client: GitLabAdapter) -> Token:
+    return _request_gitlab_client.set(client)
+
+
+def reset_request_gitlab_client(token: Token) -> None:
+    _request_gitlab_client.reset(token)
+
+
+def get_legacy_gitlab_client() -> GitLabAdapter:
+    return _legacy_gitlab_client
+
+
+def gitlab_connection_summary() -> dict[str, Any]:
+    summary = _legacy_gitlab_client.connection_summary()
+    summary["auth_mode"] = os.getenv("GITLAB_AUTH_MODE", "oauth").lower()
+    if summary["auth_mode"] == "oauth":
+        summary["configured"] = bool(summary["url"])
+        summary["auth_type"] = "oauth"
+    return summary
+
+
+class GitLabClientProxy:
+    """Resolve GitLab calls to the OAuth client bound to the current request."""
+
+    def _client(self) -> GitLabAdapter:
+        client = _request_gitlab_client.get()
+        if client is not None:
+            return client
+        if os.getenv("GITLAB_AUTH_MODE", "oauth").lower() == "legacy":
+            return _legacy_gitlab_client
+        raise GitLabConfigurationError("GitLab user is not bound to the current request")
+
+    def connection_summary(self) -> dict[str, Any]:
+        client = _request_gitlab_client.get()
+        return client.connection_summary() if client else gitlab_connection_summary()
+
+    def __getattr__(self, name: str):
+        return getattr(self._client(), name)
+
+
+# Routes retain a stable facade, while the underlying client is request-scoped.
+gitlab_client = GitLabClientProxy()

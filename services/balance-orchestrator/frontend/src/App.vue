@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 
-import apiClient, { ensureAuthenticated, logout } from './api/axios'
+import apiClient, { completeGitLabLogin, ensureAuthenticated, logout } from './api/axios'
 import LoginForm from './components/auth/LoginForm.vue'
 import Header from './components/layout/Header.vue'
 import TaskCard from './components/task-board/TaskCard.vue'
@@ -46,6 +46,7 @@ const loading = ref(true)
 const sortOrder = ref<'desc' | 'asc'>('desc')
 const authReady = ref(false)
 const isAuthenticated = ref(false)
+const authError = ref('')
 
 const activeView = ref<'dashboard' | 'app-valves'>('dashboard')
 const currentTaskIid = ref(0)
@@ -173,15 +174,13 @@ const handleSignedOut = () => {
 }
 
 const initialize = async () => {
-  isAuthenticated.value = await ensureAuthenticated()
+  const oauthResult = await completeGitLabLogin()
+  authError.value = oauthResult.error || ''
+  isAuthenticated.value = oauthResult.handled
+    ? oauthResult.authenticated
+    : await ensureAuthenticated()
   authReady.value = true
   if (isAuthenticated.value) await fetchData()
-}
-
-const handleAuthenticated = async () => {
-  isAuthenticated.value = true
-  loading.value = true
-  await fetchData()
 }
 
 const handleLogout = async () => {
@@ -197,7 +196,10 @@ onUnmounted(() => window.removeEventListener('auth:signed-out', handleSignedOut)
 
 <template>
   <div v-if="!authReady" class="auth-loading">Проверяем авторизацию…</div>
-  <LoginForm v-else-if="!isAuthenticated" @authenticated="handleAuthenticated" />
+  <LoginForm
+    v-else-if="!isAuthenticated"
+    :error="authError"
+  />
 
   <!-- Обертка layout должна быть всегда -->
   <div v-else class="layout">

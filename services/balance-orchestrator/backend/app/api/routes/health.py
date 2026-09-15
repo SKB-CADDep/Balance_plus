@@ -1,7 +1,10 @@
 import gitlab.exceptions
 from fastapi import APIRouter, HTTPException, status
 
-from app.core.gitlab_adapter import GitLabConfigurationError, gitlab_client
+from app.core.gitlab_adapter import (
+    GitLabConfigurationError,
+    gitlab_client,
+)
 
 
 router = APIRouter(tags=["Health"])
@@ -10,16 +13,25 @@ router = APIRouter(tags=["Health"])
 @router.get("/health")
 async def health_check():
     """Быстрая проверка API без сетевого обращения к GitLab."""
+    summary = gitlab_client.connection_summary()
     return {
         "status": "ok",
         "service": "balance-orchestrator",
-        "gitlab": gitlab_client.connection_summary(),
+        "gitlab": summary,
     }
 
 
 @router.get("/health/gitlab")
 async def gitlab_health_check():
-    """Проверяет конфигурацию, токен и доступ к проекту GitLab."""
+    """Проверяет legacy token или сообщает готовность user-OAuth configuration."""
+    summary = gitlab_client.connection_summary()
+    if summary.get("auth_mode") == "oauth":
+        return {
+            "status": "ok",
+            "check": "per-user GitLab authorization is validated on protected requests",
+            "gitlab": summary,
+        }
+
     try:
         return gitlab_client.check_connection(check_project=True)
     except GitLabConfigurationError as exc:

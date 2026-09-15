@@ -21,6 +21,8 @@ class CurrentUser(BaseModel):
     email: str | None = None
     full_name: str | None = None
     groups: list[str] = Field(default_factory=list)
+    gitlab_user_id: int | None = None
+    gitlab_username: str | None = None
 
 
 class TokenValidationResponse(BaseModel):
@@ -29,6 +31,8 @@ class TokenValidationResponse(BaseModel):
     email: str | None = None
     full_name: str | None = None
     groups: list[str] = Field(default_factory=list)
+    gitlab_user_id: int | None = None
+    gitlab_username: str | None = None
     message: str | None = None
 
 
@@ -96,4 +100,6 @@ async def get_current_user(
         email=validation.email,
         full_name=validation.full_name,
         groups=validation.groups,
+        gitlab_user_id=validation.gitlab_user_id,
+        gitlab_username=validation.gitlab_username,
     )

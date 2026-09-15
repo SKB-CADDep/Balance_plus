@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import calculations, config, geometries, health, projects, tasks, user
-from app.core.security import get_current_user
+from app.core.gitlab_dependency import bind_gitlab_client
 
 
 logging.basicConfig(
@@ -35,8 +35,8 @@ app.add_middleware(
 # Публичные маршруты
 app.include_router(health.router)
 
-# Все маршруты /api/v1 требуют валидный access token.
-api_router = APIRouter(prefix="/api/v1", dependencies=[Depends(get_current_user)])
+# Все маршруты /api/v1 требуют валидный Balance+ access token и привязанный GitLab account.
+api_router = APIRouter(prefix="/api/v1", dependencies=[Depends(bind_gitlab_client)])
 api_router.include_router(geometries.router)
 api_router.include_router(tasks.router)
 api_router.include_router(user.router)

@@ -1,0 +1,125 @@
+name: balance-oauth-smoke
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: balance
+      POSTGRES_PASSWORD: local-db-password
+      POSTGRES_DB: balance_auth
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U balance -d balance_auth"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    volumes:
+      - oauth_smoke_postgres:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "local-redis-password"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "local-redis-password", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    volumes:
+      - oauth_smoke_redis:/data
+
+  gitlab-simulator:
+    build: ./dev/gitlab-oauth-simulator
+    environment:
+      MOCK_GITLAB_CLIENT_ID: balance-local-client
+      MOCK_GITLAB_CLIENT_SECRET: balance-local-secret
+      MOCK_LDAP_USERNAME: engineer
+      MOCK_LDAP_PASSWORD: factory-password
+      MOCK_GITLAB_PROJECT_ID: 41
+      # Force Auth Service to exercise GitLab refresh-token rotation on first API call.
+      MOCK_GITLAB_INITIAL_TOKEN_EXPIRES_IN: 30
+    ports:
+      - "8088:8088"
+    networks:
+      default:
+        aliases:
+          - gitlab.localhost
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8088/health')"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  auth-migration:
+    build: ./authentication-service
+    command: ["alembic", "upgrade", "head"]
+    environment: &auth-environment
+      DATABASE_URL: postgresql+asyncpg://balance:local-db-password@postgres:5432/balance_auth
+      REDIS_URL: redis://:local-redis-password@redis:6379/0
+      SECRET_KEY: local-jwt-secret-that-is-longer-than-32-characters
+      AUTH_MODE: gitlab_oauth
+      FRONTEND_URL: http://localhost:3030
+      ALLOWED_ORIGINS: http://localhost:3030
+      GITLAB_URL: http://gitlab.localhost:8088
+      GITLAB_OAUTH_CLIENT_ID: balance-local-client
+      GITLAB_OAUTH_CLIENT_SECRET: balance-local-secret
+      GITLAB_OAUTH_REDIRECT_URI: http://localhost:3030/auth/gitlab/callback
+      GITLAB_OAUTH_SCOPES: api
+      GITLAB_SSL_VERIFY: "false"
+      GITLAB_REQUIRED_PROJECT_ID: "41"
+      GITLAB_TOKEN_ENCRYPTION_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      ORCHESTRATOR_SERVICE_SECRET: local-orchestrator-service-secret
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  authentication-service:
+    build: ./authentication-service
+    environment: *auth-environment
+    ports:
+      - "8001:8000"
+    depends_on:
+      auth-migration:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      gitlab-simulator:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  backend:
+    build: ./services/balance-orchestrator/backend
+    environment:
+      GITLAB_URL: http://gitlab.localhost:8088
+      GITLAB_AUTH_MODE: oauth
+      GITLAB_PROJECT_ID: "41"
+      GITLAB_SSL_VERIFY: "false"
+      GITLAB_TIMEOUT: "5"
+      AUTH_SERVICE_URL: http://authentication-service:8000
+      AUTH_SERVICE_TIMEOUT: "5"
+      AUTH_SERVICE_CLIENT_SECRET: local-orchestrator-service-secret
+      ALLOWED_ORIGINS: http://localhost:3030
+    depends_on:
+      authentication-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  frontend:
+    build: ./services/balance-orchestrator/frontend
+    ports:
+      - "3030:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+      authentication-service:
+        condition: service_healthy
+
+volumes:
+  oauth_smoke_postgres:
+  oauth_smoke_redis:

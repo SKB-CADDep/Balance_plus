@@ -37,6 +37,25 @@ def test_client_uses_internal_gitlab_options(mock_gitlab: MagicMock) -> None:
     )
 
 
+@patch("app.core.gitlab_adapter.gitlab.Gitlab")
+def test_client_uses_oauth_token_for_delegated_access(mock_gitlab: MagicMock) -> None:
+    adapter = GitLabAdapter(
+        url="http://git.utz.local",
+        token="user-oauth-token",
+        auth_type="oauth",
+    )
+
+    _ = adapter.gl
+
+    mock_gitlab.assert_called_once_with(
+        "http://git.utz.local",
+        oauth_token="user-oauth-token",
+        ssl_verify=False,
+        timeout=10.0,
+        retry_transient_errors=True,
+    )
+
+
 def test_connection_check_returns_sanitized_diagnostics() -> None:
     adapter = GitLabAdapter(url="http://git.utz.local", token="test-token")
     client = MagicMock()
