@@ -111,9 +111,7 @@ const ResultsPage: React.FC<Props> = ({ stockId, inputData, outputData, onGoBack
 
         setIsDownloadingDrawio(prev => ({ ...prev, [groupDetail.valve_id]: true }));
         try {
-            const baseUrl = import.meta.env.VITE_API_URL || OpenAPI.BASE || '';
-            const cleanBaseUrl = baseUrl.replace(/\/$/, '');
-            const url = `${cleanBaseUrl}/api/v1/generate_scheme`;
+            const url = `${OpenAPI.BASE}/api/v1/generate_scheme`;
             
             const mockValveInfo = {
                 id: groupDetail.valve_id,

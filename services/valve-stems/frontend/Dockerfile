@@ -5,11 +5,12 @@ WORKDIR /app
 
 COPY package*.json /app/
 
-RUN npm install
+RUN npm ci --no-audit --no-fund \
+    --fetch-retries=5 --fetch-retry-mintimeout=2000 --fetch-retry-maxtimeout=10000
 
 COPY ./ /app/
 
-ARG VITE_API_URL=${VITE_API_URL}
+ARG VITE_API_URL=""
 
 RUN npm run build
 

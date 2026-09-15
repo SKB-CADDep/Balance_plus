@@ -4,6 +4,74 @@
 
 Проект представляет собой веб-приложение, предназначенное для автоматизации расчётов штоков клапанов на основе данных из базы данных и введённых пользователем параметров. Программа выполняет поиск чертежей клапанов по названию турбины, анализирует данные о клапанах и рассчитывает параметры пара и воздуха для каждого участка клапана. Проект использует базу данных PostgreSQL для хранения информации о турбинах и чертежах, а также библиотеки для работы с таблицами и выполнения термодинамических расчётов.
 
+## Frontend и внутренний backend в Kubernetes
+
+Если frontend и backend доступны пользователю через один host, используйте
+`VITE_API_URL=` (пустую строку) при сборке frontend. Это также значение по
+умолчанию. Запросы будут выглядеть как `/api/v1/...` на текущем origin браузера.
+Публиковать backend наружу для этого не нужно: Nginx frontend проксирует `/api/`
+к внутреннему backend Service, сохраняя полный URI `/api/v1/...`.
+
+```bash
+docker build --build-arg VITE_API_URL= -t valve-stems-frontend ./frontend
+```
+
+`VITE_API_URL` встраивается Vite в JavaScript во время **сборки образа**.
+Переменная `env` в уже запущенном Kubernetes Pod не меняет собранный frontend.
+После этой правки пересоберите образ, опубликуйте новый тег и обновите Deployment.
+Уберите из build args/CI временный `http://valve-stems.local` и `/api`.
+`/api` не является корректным base URL: этот префикс уже есть в эндпоинтах.
+
+В поставляемом `frontend/nginx.conf` upstream — `http://backend:5253`.
+Kubernetes Service должен называться `backend` либо DevOps должен заменить
+upstream на фактическое DNS-имя и порт Service. `proxy_pass` должен быть **без
+завершающего `/`**, чтобы не срезать `/api/` из URI. Backend остаётся ClusterIP.
+
+Для отдельного публично доступного backend сохраняется поддержка полного
+адреса, например `VITE_API_URL=http://localhost:5253`, без `/api/v1` в конце.
+Для локального `npm run dev` пустая база работает через Vite proxy `/api` →
+`http://localhost:5253`; backend должен быть запущен локально на этом порту.
+
+## Redis и Celery
+
+Backend и Celery worker используют один Redis как брокер и хранилище результатов.
+Адрес подключения собирается из отдельных переменных окружения:
+
+- `REDIS_HOST` — DNS-имя Redis Service (`redis` для Docker Compose);
+- `REDIS_PORT` — внутренний порт Redis, обычно `6379`;
+- `REDIS_PASSWORD` — пароль Redis, обязательный для поставляемого Docker Compose;
+- `REDIS_DB` — номер логической базы, по умолчанию `0`;
+- `REDIS_URL` — необязательный полный URL для обратной совместимости. Если он
+  задан, он имеет приоритет над отдельными переменными.
+
+Пример для Kubernetes Deployment (одинаковые значения должны быть переданы в
+контейнеры backend и worker):
+
+```yaml
+env:
+  - name: ENVIRONMENT
+    value: development
+  - name: REDIS_HOST
+    value: valve-stems-redis
+  - name: REDIS_PORT
+    value: "6379"
+  - name: REDIS_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: valve-stems-redis
+        key: password
+  - name: REDIS_DB
+    value: "0"
+```
+
+Redis должен быть запущен с тем же паролем. Если пароль управляется Helm chart
+или внешним Redis, `secretKeyRef` должен ссылаться на созданный им Secret.
+Не задавайте одновременно устаревший `REDIS_URL` и отдельные `REDIS_*`, иначе
+будет использован `REDIS_URL`.
+
+Для локального запуска скопируйте `.env.example` в `.env`, замените значения
+`change-me` и выполните `docker compose up --build`.
+
 ## Функциональность
 
 - Поиск чертежей клапанов по названию турбины.

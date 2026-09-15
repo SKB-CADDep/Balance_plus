@@ -1,9 +1,10 @@
 from typing import Annotated, Any, Literal
-from urllib.parse import quote_plus
+from urllib.parse import quote, quote_plus
 
 from pydantic import (
     AnyUrl,
     BeforeValidator,
+    Field,
     computed_field,
 )
 from pydantic_core import MultiHostUrl
@@ -28,7 +29,7 @@ class Settings(BaseSettings):
 
     API_V1_STR: str = "/api/v1"
 
-    ENVIRONMENT: Literal["local", "staging", "production"] = "local"
+    ENVIRONMENT: Literal["local", "development", "staging", "production"] = "local"
 
     BACKEND_CORS_ORIGINS: Annotated[list[AnyUrl] | str, BeforeValidator(parse_cors)] = []
 
@@ -41,6 +42,13 @@ class Settings(BaseSettings):
     POSTGRES_PASSWORD: str = "password"
     POSTGRES_DB: str = "postgres"
 
+    # Настройки Redis для Celery. REDIS_URL оставлен для обратной совместимости.
+    REDIS_URL: str | None = None
+    REDIS_HOST: str = "redis"
+    REDIS_PORT: int = Field(default=6379, ge=1, le=65535)
+    REDIS_PASSWORD: str | None = None
+    REDIS_DB: int = Field(default=0, ge=0)
+
     @computed_field
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> MultiHostUrl:
@@ -51,6 +59,20 @@ class Settings(BaseSettings):
             host=self.POSTGRES_SERVER,
             port=self.POSTGRES_PORT,
             path=self.POSTGRES_DB,
+        )
+
+    @property
+    def CELERY_REDIS_URL(self) -> str:
+        if self.REDIS_URL:
+            return self.REDIS_URL
+
+        credentials = ""
+        if self.REDIS_PASSWORD:
+            credentials = f":{quote(self.REDIS_PASSWORD, safe='')}@"
+
+        return (
+            f"redis://{credentials}{self.REDIS_HOST}:{self.REDIS_PORT}/"
+            f"{self.REDIS_DB}"
         )
 
 

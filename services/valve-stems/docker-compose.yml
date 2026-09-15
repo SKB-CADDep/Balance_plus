@@ -23,11 +23,18 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
       - PROJECT_NAME=${PROJECT_NAME}
       - BACKEND_CORS_ORIGINS=${BACKEND_CORS_ORIGINS}
-      - ENVIRONMENT=local
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - REDIS_URL=${REDIS_URL:-}
+      - REDIS_HOST=${REDIS_HOST:-redis}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
+      - REDIS_DB=${REDIS_DB:-0}
     ports:
       - "5253:5253"
     depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     volumes:
       - ./backend/app:/app/app
@@ -51,13 +58,13 @@ services:
     build:
       context: ./frontend
       args:
-        VITE_API_URL: ${VITE_API_URL}
+        VITE_API_URL: ${VITE_API_URL:-}
     container_name: clapans_calculator_frontend
     restart: always
     env_file:
       - .env
     environment:
-      - VITE_API_URL=${VITE_API_URL}
+      - VITE_API_URL=${VITE_API_URL:-}
     ports:
       - "5252:5252"
     depends_on:
@@ -114,10 +121,13 @@ services:
       image: redis:7-alpine
       container_name: clapans_calculator_redis
       restart: always
+      environment:
+        - REDIS_PASSWORD=${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
+      command: ["sh", "-c", "exec redis-server --appendonly yes --requirepass \"$${REDIS_PASSWORD}\""]
       ports:
         - "6380:6379" # Используем порт 6380 снаружи, чтобы не было конфликта с редисом конденсатора
       healthcheck:
-        test: ["CMD", "redis-cli", "ping"]
+        test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping"]
         interval: 5s
         timeout: 3s
         retries: 5
@@ -143,7 +153,12 @@ services:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
-      - REDIS_URL=redis://redis:6379/0
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - REDIS_URL=${REDIS_URL:-}
+      - REDIS_HOST=${REDIS_HOST:-redis}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
+      - REDIS_DB=${REDIS_DB:-0}
     depends_on:
       db:
         condition: service_healthy

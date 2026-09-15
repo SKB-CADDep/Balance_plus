@@ -1,15 +1,12 @@
-import os
-
 from celery import Celery
 
+from app.core.config import settings
 
-# Берем URL из переменных окружения (в Docker это обычно redis://redis:6379/0)
-REDIS_URL = os.getenv("REDIS_URL", "redis://redis:6379/0")
 
 celery_app = Celery(
     "valve_stems_worker",
-    broker=REDIS_URL,
-    backend=REDIS_URL,
+    broker=settings.CELERY_REDIS_URL,
+    backend=settings.CELERY_REDIS_URL,
     include=["app.worker"],  # Указываем, где лежат наши задачи
 )
 

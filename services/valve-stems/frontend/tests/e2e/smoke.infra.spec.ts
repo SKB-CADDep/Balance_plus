@@ -11,14 +11,15 @@ test.describe('Valve Stems Frontend - Infrastructure Smoke Test', () => {
     await setupValveStemsApiMocks(page);
   });
 
-  test('Инфраструктура тестов исправна: страница открывается на порту 3001 без ошибок', async ({ page }) => {
+  test('Инфраструктура тестов исправна: страница открывается по настроенному BASE_URL', async ({ page, baseURL }) => {
     // 1. Переходим на главную страницу
     await mainPage.open();
 
     // 2. Проверяем, что заголовок видимый и страница загружена
     await mainPage.expectHeadingVisible();
 
-    // 3. Проверяем корректный URL (согласованный порт 3001)
-    expect(page.url()).toContain('3001');
+    // 3. Проверяем origin стенда, включая порт, без привязки к dev-серверу.
+    expect(baseURL).toBeTruthy();
+    expect(new URL(page.url()).origin).toBe(new URL(baseURL!).origin);
   });
 });

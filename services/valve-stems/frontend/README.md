@@ -115,6 +115,14 @@ If you want to use a remote API, you can set the environment variable `VITE_API_
 VITE_API_URL=https://api.my-domain.example.com
 ```
 
+With an empty or unset `VITE_API_URL`, requests use the current browser origin
+(`/api/v1/...`). Production Nginx proxies `/api/` to the internal backend;
+the Vite development server proxies it to `http://localhost:5253`.
+Do not use `/api` as the base: endpoints already include `/api/v1`.
+`VITE_API_URL` is a build-time setting, so changing a Kubernetes Pod environment
+variable alone is not enough; rebuild the frontend image with
+`--build-arg VITE_API_URL=`. See the service README for Kubernetes deployment.
+
 Then, when you run the frontend, it will use that URL as the base URL for the API.
 
 ## Code Structure
