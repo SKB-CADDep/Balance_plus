@@ -51,7 +51,10 @@ class ValveGroupInput(BaseModel):
     """Описание одной группы клапанов (c одинаковой геометрией)."""
 
     valve_id: int = Field(..., description="ID клапана, чью геометрию берем за основу")
-    type: Literal["СК", "РК", "СРК"] = Field(..., description="Тип группы")
+    type: str = Field(
+        ...,
+        description="Тип группы (СК, РК, СРК, Стопорный, Регулирующий, Стопорно-регулирующий)",
+    )
 
     valve_names: list[str] = Field(
         ..., min_length=1, description="Список имен клапанов (напр. ['СК-1', 'СК-2'])"
@@ -91,7 +94,7 @@ class GroupCalculationDetails(BaseModel):
     """Детализация результатов для одной конкретной группы."""
 
     valve_id: int
-    type: Literal["СК", "РК", "СРК"]
+    type: str
     valve_names: list[str]
     quantity: int
 
