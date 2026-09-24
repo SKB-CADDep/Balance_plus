@@ -1,0 +1,27 @@
+{
+  "condenser_id": "kg2-6200-iii-mnzhmts",
+  "main_info": {
+    "name_condenser": "КГ2-6200-III",
+    "project_id": "Turbine-T-130/150-12.8",
+    "doc_num_thermo_calc": "XLS-KONDT1-24-10-2023",
+    "doc_num_assembly": null,
+    "doc_num_passport": null
+  },
+  "geometry": {
+    "diameter_internal": 22.0,
+    "wall_thickness": 1.0,
+    "material_id": "MNZhMts30-1-1",
+    "main_length": 7430.0,
+    "main_count": 9288.0,
+    "builtin_length": 7080.0,
+    "builtin_count": 1754.0,
+    "aircooler_count": null,
+    "passes_main": 2.0,
+    "passes_builtin": 2.0,
+    "ejectors_count": 1
+  },
+  "limits": {
+    "mass_flow_steam_nom": 275.0,
+    "mass_flow_air": 16.5
+  }
+}

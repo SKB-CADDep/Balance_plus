@@ -8,7 +8,10 @@
     "build": "tsc && vite build",
     "lint": "biome check --apply-unsafe --no-errors-on-unmatched --files-ignore-unknown=true ./",
     "preview": "vite preview",
-    "generate-client": "openapi-ts --input ./openapi.json --output ./src/client --client axios --exportSchemas true"
+    "generate-client": "openapi-ts --input ./openapi.json --output ./src/client --client axios --exportSchemas true",
+    "test:e2e": "playwright test --project=chromium",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:ci": "playwright test"
   },
   "dependencies": {
     "@chakra-ui/icons": "2.1.1",
@@ -33,7 +36,7 @@
   "devDependencies": {
     "@biomejs/biome": "1.6.1",
     "@hey-api/openapi-ts": "^0.34.1",
-    "@playwright/test": "^1.45.2",
+    "@playwright/test": "^1.62.1",
     "@tanstack/router-devtools": "1.19.1",
     "@tanstack/router-vite-plugin": "1.19.0",
     "@types/node": "^20.10.5",

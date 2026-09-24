@@ -249,11 +249,16 @@ class CondenserCalculationAdapter:
 
                 matrix = []
                 for t_j in range(len_t):
-                    row = [
-                        chunk[t_j * len_G + g_k].get("P_steam_seuif_atm", 0.0)
-                        for g_k in range(len_G)
-                    ]
+                    row = []
+                    for g_k in range(len_G):
+                        item_idx = t_j * len_G + g_k
+                        if item_idx < len(chunk):
+                            row.append(chunk[item_idx].get("P_steam_seuif_atm", 0.0))
+                        else:
+                            row.append(0.0)
                     matrix.append(row)
+                
+                idx += len_t * len_G
 
                 w_main = input_data.W_main[w_i] if w_i < len(input_data.W_main) else 0.0
                 w_builtin = (
