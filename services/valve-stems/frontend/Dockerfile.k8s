@@ -3,7 +3,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
-ARG VITE_API_URL="http://valve-stems.local"
+ARG VITE_API_URL="http://valve-stems.utz.local"
 RUN npm run build
 
 FROM nginx:1.31-alpine
