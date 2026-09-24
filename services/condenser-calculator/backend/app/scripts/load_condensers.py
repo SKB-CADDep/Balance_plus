@@ -26,6 +26,22 @@ def safe_int(val):
     return int(f_val) if f_val is not None else None
 
 
+def resolve_main_count(row) -> int:
+    """Возвращает число трубок основного пучка с fallback на общее число.
+
+    Для конденсаторов без отдельного встроенного пучка паспортное значение
+    основного пучка может быть пустым или нулевым: в таком случае все
+    охлаждающие трубки относятся к основному пучку.
+    """
+    main_count = safe_int(
+        row.get("Количество_охлаждающих_труб_основного_пучка_шт")
+    )
+    if main_count is not None and main_count != 0:
+        return main_count
+
+    return safe_int(row.get("Общее_количество_охлаждающих_труб_шт")) or 0
+
+
 def load_condensers(db: Session, excel_path: str = "default.xlsx"):
     """
     Парсит Excel-файл и загружает конденсаторы в базу данных.
@@ -41,6 +57,7 @@ def load_condensers(db: Session, excel_path: str = "default.xlsx"):
     df.replace("", np.nan, inplace=True)
 
     added_count = 0
+    updated_count = 0
     # Кэш имен для защиты от дубликатов внутри одного файла
     processed_names = set()
 
@@ -56,13 +73,27 @@ def load_condensers(db: Session, excel_path: str = "default.xlsx"):
             )
             continue
 
-        # 2. Проверка на дубликаты в базе данных
+        main_count = resolve_main_count(row)
+
+        # 2. Проверка на дубликаты в базе данных. Заодно исправляем ранее
+        # импортированные записи: seed запускается при старте контейнера.
         existing = (
             db.query(Condenser)
             .filter(Condenser.name_condenser == condenser_name)
             .first()
         )
         if existing:
+            if (
+                existing.main_count is None or existing.main_count == 0
+            ) and main_count > 0:
+                existing.main_count = main_count
+                updated_count += 1
+                logger.info(
+                    "Для %s число трубок основного пучка обновлено до %s "
+                    "из общего количества трубок.",
+                    condenser_name,
+                    main_count,
+                )
             logger.info(
                 f"Конденсатор {condenser_name} уже существует в БД. Пропускаем."
             )
@@ -136,10 +167,7 @@ def load_condensers(db: Session, excel_path: str = "default.xlsx"):
                 row.get("Активная_длина_охлаждающих_труб_основного_пучка_мм")
             )
             or 0.0,
-            main_count=safe_int(
-                row.get("Количество_охлаждающих_труб_основного_пучка_шт")
-            )
-            or 0,
+            main_count=main_count,
             builtin_length=safe_float(
                 row.get("Активная_длина_охлаждающих_труб_встроенного_пучка_мм")
             ),
@@ -163,7 +191,11 @@ def load_condensers(db: Session, excel_path: str = "default.xlsx"):
 
     try:
         db.commit()
-        logger.info(f"Успешно добавлено конденсаторов: {added_count}")
+        logger.info(
+            "Успешно добавлено конденсаторов: %s; обновлено: %s",
+            added_count,
+            updated_count,
+        )
     except Exception as e:
         db.rollback()
         logger.error(f"Ошибка при сохранении в БД: {e}")
