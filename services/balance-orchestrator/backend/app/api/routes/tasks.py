@@ -3,7 +3,7 @@ import gitlab.exceptions
 from fastapi import APIRouter, HTTPException, Query
 from slugify import slugify
 
-from app.core.gitlab_adapter import gitlab_client
+from app.core.gitlab_adapter import GitLabConfigurationError, gitlab_client
 from app.schemas.task import BranchCreateRequest, BranchInfo, TaskCreate, TaskInfo
 
 
@@ -12,9 +12,7 @@ router = APIRouter(prefix="/tasks", tags=["Tasks"])
 
 @router.get("", response_model=list[TaskInfo])
 async def list_tasks(
-    project_id: int = Query(
-        ..., description="ID проекта обязателен"
-    ),  # Делаем обязательным для 422
+    project_id: int | None = None,
     state: str = "opened",
     my_only: bool = False,
 ):
@@ -24,10 +22,13 @@ async def list_tasks(
     - my_only: только мои задачи
     """
     try:
-        # Передаем project_id в адаптер (если адаптер поддерживает фильтрацию)
-        # Если нет, просто оставляем для валидации запроса
-        issues = gitlab_client.get_all_assigned_issues(state=state, project_id=project_id)
+        if project_id is None:
+            issues = gitlab_client.get_all_assigned_issues(state=state)
+        else:
+            issues = gitlab_client.get_all_assigned_issues(state=state, project_id=project_id)
         return issues
+    except GitLabConfigurationError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except gitlab.exceptions.GitlabAuthenticationError:
         raise HTTPException(status_code=401, detail="Ошибка авторизации в GitLab")
     except gitlab.exceptions.GitlabError as e:
@@ -42,6 +43,8 @@ async def get_task(issue_iid: int, project_id: int = Query(...)):
     try:
         issue = gitlab_client.get_issue(issue_iid, project_id)
         return issue
+    except GitLabConfigurationError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except gitlab.exceptions.GitlabAuthenticationError:
         raise HTTPException(status_code=401, detail="Ошибка авторизации в GitLab")
     except gitlab.exceptions.GitlabGetError:
@@ -65,6 +68,8 @@ async def create_task(task: TaskCreate):
 
         # Возвращаем полную информацию через get_issue
         return gitlab_client.get_issue(issue_data["iid"], issue_data["project_id"])
+    except GitLabConfigurationError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except gitlab.exceptions.GitlabAuthenticationError:
         raise HTTPException(status_code=401, detail="Ошибка авторизации в GitLab")
     except gitlab.exceptions.GitlabGetError:
@@ -107,6 +112,8 @@ async def create_task_branch(issue_iid: int, payload: BranchCreateRequest):
             issue_iid=issue_iid,
             created=created,
         )
+    except GitLabConfigurationError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except gitlab.exceptions.GitlabAuthenticationError:
         raise HTTPException(status_code=401, detail="Ошибка авторизации в GitLab")
     except gitlab.exceptions.GitlabGetError:
@@ -149,6 +156,8 @@ async def submit_task(issue_iid: int, project_id: int = Query(...)):
 
         return {"status": "success", "mr_url": result["web_url"], "mr_iid": result["iid"]}
 
+    except GitLabConfigurationError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except gitlab.exceptions.GitlabAuthenticationError:
         raise HTTPException(status_code=401, detail="Ошибка авторизации в GitLab")
     except gitlab.exceptions.GitlabGetError:

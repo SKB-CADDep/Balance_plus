@@ -1,0 +1,27 @@
+{
+  "condenser_id": "k-3100-xiii-mnzh",
+  "main_info": {
+    "name_condenser": "К-3100-XIII",
+    "project_id": "Sakhalin-K-65",
+    "doc_num_thermo_calc": "XLS-KONDT1-27-11-21",
+    "doc_num_assembly": null,
+    "doc_num_passport": null
+  },
+  "geometry": {
+    "diameter_internal": 22.0,
+    "wall_thickness": 1.0,
+    "material_id": "MNZh5-1",
+    "main_length": 7430.0,
+    "main_count": 4644.0,
+    "builtin_length": 7430.0,
+    "builtin_count": 0.0,
+    "aircooler_count": null,
+    "passes_main": 2.0,
+    "passes_builtin": 2.0,
+    "ejectors_count": 1
+  },
+  "limits": {
+    "mass_flow_steam_nom": 140.0,
+    "mass_flow_air": 15.0
+  }
+}

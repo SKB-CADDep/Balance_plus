@@ -1,72 +1,162 @@
-# gitlab_adapter.py — ДОПОЛНЯЕМ существующий файл
 import logging
 import os
 import time
-from typing import ClassVar
+from pathlib import Path
+from typing import Any
 
 import gitlab
 from dotenv import load_dotenv
 from gitlab.exceptions import GitlabGetError
 
 
-load_dotenv()
+load_dotenv(Path(__file__).resolve().parents[2] / ".env")
 
 logger = logging.getLogger(__name__)
 
 
+class GitLabConfigurationError(RuntimeError):
+    """GitLab integration is not configured or contains invalid values."""
+
+
+def _env_bool(name: str, default: bool) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _env_float(name: str, default: float) -> float:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    try:
+        return float(value)
+    except ValueError:
+        logger.warning("Invalid numeric environment value", extra={"name": name})
+        return default
+
+
 class GitLabAdapter:
-    # КЕШ ДЛЯ ПРОЕКТОВ (Чтобы не бомбить API)
-    # Структура: { id: (project_obj, timestamp) }
-    _projects_cache: ClassVar[dict[int, tuple]] = {}
+    def __init__(
+        self,
+        url: str | None = None,
+        token: str | None = None,
+        project_id: int | str | None = None,
+        ssl_verify: bool | None = None,
+        timeout: float | None = None,
+    ) -> None:
+        self.url = (url if url is not None else os.getenv("GITLAB_URL", "")).strip().rstrip("/")
+        self.token = (
+            token
+            if token is not None
+            else os.getenv("GITLAB_PRIVATE_TOKEN") or os.getenv("GITLAB_TOKEN", "")
+        ).strip()
+        self.project_id = (
+            project_id if project_id is not None else os.getenv("GITLAB_PROJECT_ID")
+        )
+        self.ssl_verify = (
+            ssl_verify if ssl_verify is not None else _env_bool("GITLAB_SSL_VERIFY", False)
+        )
+        self.timeout = timeout if timeout is not None else _env_float("GITLAB_TIMEOUT", 10.0)
 
-    def __init__(self):
-        self.url = os.getenv("GITLAB_URL")
-        self.token = os.getenv("GITLAB_PRIVATE_TOKEN")
-        self.project_id = os.getenv("GITLAB_PROJECT_ID")
-
-        if not self.url or not self.token:
-            raise ValueError("В файле .env не заданы настройки GitLab")
-
-        self.gl = gitlab.Gitlab(self.url, private_token=self.token, ssl_verify=False)
+        # Клиент создаётся лениво. Благодаря этому API и /health запускаются даже
+        # без .env, а причина ошибки видна через /health/gitlab.
+        self._gl: gitlab.Gitlab | None = None
         self._project = None
         self._default_branch = None
+        self._projects_cache: dict[int, tuple[Any, float]] = {}
         self.CACHE_TTL = 300  # Время жизни кеша: 5 минут (300 сек)
 
-    def check_connection(self) -> str:
-        try:
+    @property
+    def configured(self) -> bool:
+        return bool(self.url and self.token)
+
+    @property
+    def gl(self) -> gitlab.Gitlab:
+        if not self.configured:
+            missing = []
+            if not self.url:
+                missing.append("GITLAB_URL")
+            if not self.token:
+                missing.append("GITLAB_PRIVATE_TOKEN")
+            raise GitLabConfigurationError(
+                f"Не заданы обязательные настройки GitLab: {', '.join(missing)}"
+            )
+
+        if self._gl is None:
+            self._gl = gitlab.Gitlab(
+                self.url,
+                private_token=self.token,
+                ssl_verify=self.ssl_verify,
+                timeout=self.timeout,
+                retry_transient_errors=True,
+            )
+        return self._gl
+
+    def connection_summary(self) -> dict[str, Any]:
+        """Безопасная диагностика конфигурации без токена."""
+        return {
+            "configured": self.configured,
+            "url": self.url or None,
+            "project_id": self.project_id,
+            "ssl_verify": self.ssl_verify,
+            "timeout_seconds": self.timeout,
+        }
+
+    def check_connection(self, check_project: bool = False) -> dict[str, Any]:
+        """Проверяет токен и, при необходимости, доступ к проекту по умолчанию."""
+        self.gl.auth()
+        result = {
+            **self.connection_summary(),
+            "status": "ok",
+            "username": self.gl.user.username,
+        }
+        if check_project:
+            if not self.project_id:
+                raise GitLabConfigurationError("GITLAB_PROJECT_ID не задан в .env")
+            project = self.get_project()
+            result["project"] = {
+                "id": project.id,
+                "path": project.path_with_namespace,
+                "default_branch": project.default_branch,
+            }
+        return result
+
+    def get_current_user(self):
+        if self.gl.user is None:
             self.gl.auth()
-            return f"OK: {self.gl.user.username}"
-        except Exception as e:
-            return f"Error: {e}"
+        return self.gl.user
 
     def get_project(self):
         """Получает объект текущего рабочего проекта (с кешированием)"""
         if self._project is None:
             if not self.project_id:
-                raise ValueError("GITLAB_PROJECT_ID не задан в .env")
+                raise GitLabConfigurationError("GITLAB_PROJECT_ID не задан в .env")
             self._project = self.gl.projects.get(self.project_id)
             self._default_branch = self._project.default_branch
-            print(f"📌 Подключён к проекту: {self._project.path_with_namespace}")
-            print(f"📌 Дефолтная ветка: {self._default_branch}")
+            logger.info(
+                "Connected to default GitLab project",
+                extra={
+                    "project": self._project.path_with_namespace,
+                    "default_branch": self._default_branch,
+                },
+            )
         return self._project
 
     def get_project_by_id(self, project_id: int):
         """Получает проект по ID с кешированием и безопасной обработкой ошибок"""
         now = time.time()
 
+        project_id = int(project_id)
         if project_id in self._projects_cache:
             project, timestamp = self._projects_cache[project_id]
             if now - timestamp < self.CACHE_TTL:
                 return project
 
-        try:
-            print(f"🔄 Запрос проекта ID {project_id} из GitLab...")
-            project = self.gl.projects.get(project_id)
-            self._projects_cache[project_id] = (project, now)
-            return project
-        except (gitlab.exceptions.GitlabGetError, Exception):
-            print(f"❌ Проект ID {project_id} не найден в GitLab")
-            return None
+        logger.debug("Fetching GitLab project", extra={"project_id": project_id})
+        project = self.gl.projects.get(project_id)
+        self._projects_cache[project_id] = (project, now)
+        return project
 
     @property
     def default_branch(self) -> str:
@@ -156,10 +246,6 @@ class GitLabAdapter:
         try:
             return project.repository_tree(path=path, ref=ref, recursive=False)
         except GitlabGetError:
-            # Папка не найдена или нет доступа
-            return []
-        except gitlab.exceptions.GitlabError:
-            # Другие ошибки GitLab API
             return []
 
     def get_file_content_decoded(
@@ -171,10 +257,6 @@ class GitLabAdapter:
             f = project.files.get(file_path=file_path, ref=ref)
             return f.decode().decode("utf-8")
         except GitlabGetError:
-            # Файл не найден
-            return None
-        except gitlab.exceptions.GitlabError:
-            # Другие ошибки GitLab API
             return None
 
     # ==================== РАБОТА С ВЕТКАМИ ====================
@@ -213,18 +295,17 @@ class GitLabAdapter:
         project = self.get_project_by_id(project_id)
         str_iid = str(issue_iid)
 
-        # 1. Ищем все ветки, содержащие ID задачи (API search)
-        try:
-            branches = project.branches.list(search=str_iid)
-        except Exception as e:
-            print(f"Ошибка поиска веток: {e}")
-            return None
+        # Ищем все ветки, содержащие ID задачи (API search)
+        branches = project.branches.list(search=str_iid, get_all=True)
 
         if not branches:
-            print(f"Ветки с ID {str_iid} не найдены через API search")
+            logger.info("No GitLab branches found for issue", extra={"issue_iid": issue_iid})
             return None
 
-        print(f"🔍 Кандидаты для задачи #{str_iid}: {[b.name for b in branches]}")
+        logger.debug(
+            "GitLab branch candidates found",
+            extra={"issue_iid": issue_iid, "branches": [b.name for b in branches]},
+        )
 
         # 2. Фильтруем кандидатов
         for b in branches:
@@ -243,44 +324,57 @@ class GitLabAdapter:
             if name == str_iid:
                 return name
 
-        print("❌ Ни одна ветка не подошла под паттерн 'ID-' или '/ID-'")
+        logger.info("No GitLab branch matched issue naming convention", extra={"issue_iid": issue_iid})
         return None
 
     # ==================== РАБОТА С ЗАДАЧАМИ (ISSUES) ====================
 
-    def get_all_assigned_issues(self, state: str = "opened") -> list[dict]:
-        """Получает ВСЕ задачи. Пропускает те, к проектам которых нет доступа."""
-        try:
-            self.gl.auth()
-            issues = self.gl.issues.list(
-                assignee_id=self.gl.user.id, state=state, scope="all", all=True
+    def get_all_assigned_issues(
+        self, state: str = "opened", project_id: int | None = None
+    ) -> list[dict]:
+        """Получает назначенные пользователю задачи глобально или в одном проекте."""
+        user = self.get_current_user()
+
+        if project_id is not None:
+            project = self.get_project_by_id(project_id)
+            issues = project.issues.list(
+                assignee_id=user.id,
+                state=state,
+                get_all=True,
             )
+            projects = {int(project.id): project}
+        else:
+            issues = self.gl.issues.list(
+                assignee_id=user.id,
+                state=state,
+                scope="all",
+                get_all=True,
+            )
+            projects = {}
 
-            result = []
-            for issue in issues:
+        result = []
+        for issue in issues:
+            issue_project_id = int(getattr(issue, "project_id", project_id))
+            proj = projects.get(issue_project_id)
+            if proj is None:
                 proj = self.get_project_by_id(issue.project_id)
-                if not proj:
-                    continue  # Пропускаем задачу, если проект не найден
 
-                result.append(
-                    {
-                        "iid": issue.iid,
-                        "project_id": issue.project_id,
-                        "project_name": proj.name,
-                        "title": issue.title,
-                        "description": issue.description,
-                        "state": issue.state,
-                        "labels": issue.labels,
-                        "assignee": issue.assignee["username"] if issue.assignee else None,
-                        "created_at": issue.created_at,
-                        "due_date": issue.due_date,
-                        "web_url": issue.web_url,
-                    }
-                )
-            return result
-        except Exception as e:
-            logger.error(f"Ошибка получения задач: {e}")
-            return []
+            result.append(
+                {
+                    "iid": issue.iid,
+                    "project_id": issue_project_id,
+                    "project_name": proj.name,
+                    "title": issue.title,
+                    "description": issue.description,
+                    "state": issue.state,
+                    "labels": issue.labels,
+                    "assignee": issue.assignee["username"] if issue.assignee else None,
+                    "created_at": issue.created_at,
+                    "due_date": issue.due_date,
+                    "web_url": issue.web_url,
+                }
+            )
+        return result
 
     def get_issue(self, issue_iid: int, project_id: int) -> dict:
         project = self.get_project_by_id(project_id)
@@ -324,12 +418,13 @@ class GitLabAdapter:
         """Создаёт новую задачу"""
         # Если ID передан - берем конкретный проект. Иначе - дефолтный из ENV (для совместимости)
         project = self.get_project_by_id(project_id) if project_id else self.get_project()
+        user = self.get_current_user()
         issue = project.issues.create(
             {
                 "title": title,
                 "description": description,
                 "labels": labels or [],
-                "assignee_ids": [self.gl.user.id],  # Сразу назначаем на себя
+                "assignee_ids": [user.id],  # Сразу назначаем на себя
             }
         )
 

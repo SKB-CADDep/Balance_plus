@@ -48,7 +48,10 @@ services:
       log: "enabled"
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "5253", "--workers", "4"]
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: ${VITE_API_URL}
     container_name: clapans_calculator_frontend
     restart: always
     env_file:

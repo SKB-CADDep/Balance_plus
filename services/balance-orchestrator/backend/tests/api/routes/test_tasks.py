@@ -27,6 +27,18 @@ class TestListTasks:
 
     @pytest.mark.asyncio
     @patch("app.api.routes.tasks.gitlab_client")
+    async def test_project_filter_is_forwarded(self, mock_gitlab: MagicMock):
+        mock_gitlab.get_all_assigned_issues.return_value = []
+
+        result = await list_tasks(project_id=41, state="opened")
+
+        assert result == []
+        mock_gitlab.get_all_assigned_issues.assert_called_once_with(
+            state="opened", project_id=41
+        )
+
+    @pytest.mark.asyncio
+    @patch("app.api.routes.tasks.gitlab_client")
     async def test_opened_my_only_returns_issues(self, mock_gitlab: MagicMock):
         """Should return issues for opened state and my_only=True."""
         mock_gitlab.get_all_assigned_issues.return_value = [{"iid": 2, "title": "My task"}]

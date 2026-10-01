@@ -36,15 +36,6 @@ ruff = "^0.15.0"
 pyyaml = "^6.0.3"
 
 
-[[tool.poetry.source]]
-name = "tuna"
-url = "https://pypi.tuna.tsinghua.edu.cn/simple"
-priority = "primary"
-
-
-[tool.poetry.dependencies]
-celery = {source = "tuna"}
-redis = {source = "tuna"}
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]

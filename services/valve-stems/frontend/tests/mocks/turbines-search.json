@@ -1,0 +1,35 @@
+[
+  {
+    "id": 1,
+    "name": "Т-110/120-130",
+    "station_name": "Абаканская ТЭЦ",
+    "station_number": "1",
+    "factory_number": "10452",
+    "valves": [
+      {
+        "id": 101,
+        "name": "УТЗ-304414 (РК-1)",
+        "valve_type": "РК"
+      },
+      {
+        "id": 102,
+        "name": "УТЗ-304415 (РК-2)",
+        "valve_type": "РК"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "name": "К-300-240",
+    "station_name": "Костромская ГРЭС",
+    "station_number": "3",
+    "factory_number": "20881",
+    "valves": [
+      {
+        "id": 201,
+        "name": "УТЗ-405510 (СК-1)",
+        "valve_type": "СК"
+      }
+    ]
+  }
+]

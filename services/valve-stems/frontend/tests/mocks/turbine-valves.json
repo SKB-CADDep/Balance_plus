@@ -1,0 +1,19 @@
+{
+  "count": 2,
+  "valves": [
+    {
+      "id": 101,
+      "turbine_id": 1,
+      "name": "Клапан РК-1 (УТЗ-304414)",
+      "type": "РК",
+      "count_parts": 3
+    },
+    {
+      "id": 102,
+      "turbine_id": 1,
+      "name": "Клапан СК-1 (УТЗ-405510)",
+      "type": "СК",
+      "count_parts": 4
+    }
+  ]
+}

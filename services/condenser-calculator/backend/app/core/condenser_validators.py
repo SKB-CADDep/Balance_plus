@@ -14,7 +14,13 @@ def validate_condenser_for_method(condenser: Condenser, method: str) -> None:
     errors = []
 
     # Геометрия, которая обязательна для обеих методик, уже закрыта nullable=False
-    # на уровне базы данных. Здесь проверяем специфику:
+    if not condenser.main_count or condenser.main_count <= 0:
+        errors.append("Количество трубок основного пучка должно быть больше 0.")
+    if not condenser.main_length or condenser.main_length <= 0:
+        errors.append("Активная длина трубок основного пучка должна быть больше 0.")
+    if not condenser.diameter_internal or condenser.diameter_internal <= 0:
+        errors.append("Внутренний диаметр труб должен быть больше 0.")
+
     if method == "berman":
         if condenser.aircooler_count is None:
             errors.append(

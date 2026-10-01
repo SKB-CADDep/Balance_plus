@@ -64,10 +64,12 @@ def main() -> None:
             print(f"[-] Файл Excel не найден по пути: {excel_path}")
 
     except Exception as e:
-        print(f"[!] Произошла ошибка: {e}")
+        print(f"[!] Произошла ошибка: {e}", file=sys.stderr)
+        raise
     finally:
         db.close()
-        print("\n[*] Готово! Теперь можно запускать тесты.")
+
+    print("\n[*] Готово! Теперь можно запускать тесты.")
 
 
 if __name__ == "__main__":
