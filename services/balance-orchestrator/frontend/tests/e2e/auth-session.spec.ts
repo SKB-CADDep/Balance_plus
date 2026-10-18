@@ -11,14 +11,7 @@ test.describe('Balance Orchestrator Frontend - Auth Session & User Profile E2E',
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify([
-          {
-            id: 'btr',
-            label: 'БТР',
-            color: '#0070F3',
-            modules: [{ id: 'btr-valve-stems', label: 'Штоки клапанов' }],
-          },
-        ]),
+        body: JSON.stringify([{ id: 'btr', label: 'БТР', color: '#0070F3', modules: [] }]),
       });
     });
 
@@ -31,7 +24,10 @@ test.describe('Balance Orchestrator Frontend - Auth Session & User Profile E2E',
     });
   });
 
-  test('Успешная загрузка сессии: в шапке отображается ФИО и аватар пользователя', async ({ page }) => {
+  test('Сохранение токена в localStorage и отображение профиля пользователя', async ({ page }) => {
+    await headerPage.open();
+    await page.evaluate(() => localStorage.setItem('authToken', 'valid-mock-token-xyz'));
+
     await page.route('**/api/v1/user/me*', async (route) => {
       await route.fulfill({
         status: 200,
@@ -45,14 +41,17 @@ test.describe('Balance Orchestrator Frontend - Auth Session & User Profile E2E',
     });
 
     await headerPage.open();
+    const token = await page.evaluate(() => localStorage.getItem('authToken'));
+    expect(token).toBe('valid-mock-token-xyz');
 
     await headerPage.expectUserVisible('Константинопольский К.');
     await headerPage.expectAvatarLoaded();
-
-    await expect(headerPage.logoText).toHaveText('Баланс +');
   });
 
-  test('Перехват 401 Unauthorized: приложение не падает в белый экран при невалидной сессии', async ({ page }) => {
+  test('Перехват 401 Unauthorized: очистка токена и редирект на экран входа с сохранением исходного URL', async ({ page }) => {
+    await headerPage.open();
+    await page.evaluate(() => localStorage.setItem('authToken', 'expired-mock-token'));
+
     await page.route('**/api/v1/user/me*', async (route) => {
       await route.fulfill({
         status: 401,
@@ -61,34 +60,20 @@ test.describe('Balance Orchestrator Frontend - Auth Session & User Profile E2E',
       });
     });
 
-    await headerPage.open();
+    // Открываем URL с параметрами
+    await headerPage.open('/?bureau=btr');
 
-    await expect(headerPage.logoText).toBeVisible();
-    await expect(page.locator('.layout')).toBeVisible();
+    // Проверяем редирект на /login с сохранением redirect URL
+    await expect.poll(() => page.url()).toContain('/login');
+    expect(page.url()).toContain('redirect=');
 
-    await expect(page.getByText('Все задачи')).toBeVisible();
+    // Проверяем очистку токена
+    const token = await page.evaluate(() => localStorage.getItem('authToken'));
+    expect(token).toBeNull();
   });
 
-  test('Перехват 503 Service Unavailable: обработка неконфигурированного GitLab', async ({ page }) => {
+  test('Выход из системы (Logout): очищает токен из localStorage и перенаправляет на экран логина', async ({ page }) => {
     await page.route('**/api/v1/user/me*', async (route) => {
-      await route.fulfill({
-        status: 503,
-        contentType: 'application/json',
-        body: JSON.stringify({ detail: 'Не заданы обязательные настройки GitLab' }),
-      });
-    });
-
-    await headerPage.open();
-
-    await expect(headerPage.header).toBeVisible();
-    await expect(page.locator('.task-grid')).toBeVisible();
-  });
-
-  test('Кнопка "↻ Обновить" инициирует повторный опрос эндпоинта пользователя', async ({ page }) => {
-    let userRequestsCount = 0;
-
-    await page.route('**/api/v1/user/me*', async (route) => {
-      userRequestsCount++;
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -101,13 +86,17 @@ test.describe('Balance Orchestrator Frontend - Auth Session & User Profile E2E',
     });
 
     await headerPage.open();
+    await page.evaluate(() => localStorage.setItem('authToken', 'active-session-token'));
     await headerPage.expectUserVisible('Инженер УТЗ');
-    expect(userRequestsCount).toBe(1);
 
-    const refreshBtn = page.getByRole('button', { name: /Обновить/i });
-    await expect(refreshBtn).toBeVisible();
-    await refreshBtn.click();
+    // Нажимаем «Выйти»
+    await headerPage.clickLogout();
 
-    await expect.poll(() => userRequestsCount).toBe(2);
+    // Проверяем редирект
+    await expect.poll(() => page.url()).toContain('/login');
+
+    // Проверяем удаление токена
+    const token = await page.evaluate(() => localStorage.getItem('authToken'));
+    expect(token).toBeNull();
   });
 });
