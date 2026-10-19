@@ -7,6 +7,7 @@ export class HeaderPage {
   readonly logoText: Locator;
   readonly profileName: Locator;
   readonly avatar: Locator;
+  readonly logoutButton: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -14,10 +15,11 @@ export class HeaderPage {
     this.logoText = page.locator('.logo-text');
     this.profileName = page.locator('.profile-name');
     this.avatar = page.locator('.avatar');
+    this.logoutButton = page.locator('.logout-btn');
   }
 
-  async open(): Promise<void> {
-    await this.page.goto('/');
+  async open(path: string = '/'): Promise<void> {
+    await this.page.goto(path);
     await this.page.waitForLoadState('domcontentloaded');
   }
 
@@ -28,5 +30,9 @@ export class HeaderPage {
 
   async expectAvatarLoaded(): Promise<void> {
     await expect(this.avatar).toBeVisible();
+  }
+
+  async clickLogout(): Promise<void> {
+    await this.logoutButton.click();
   }
 }
