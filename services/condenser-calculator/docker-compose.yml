@@ -1,6 +1,16 @@
-version: "3.8"
-
 services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: condenser_calculator_frontend
+    restart: unless-stopped
+    ports:
+      - "3035:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
   backend:
     build:
       context: ./backend
@@ -15,23 +25,23 @@ services:
       - POSTGRES_USER=condenser
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=condenser_calc
+      - SEED_DATABASE=${SEED_DATABASE:-true}
     depends_on:
       db:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8010/api/v1/health/" ]
+      test: [ "CMD", "curl", "-f", "http://localhost:8010/api/v1/health/db" ]
+      start_period: 30s
       interval: 30s
       timeout: 10s
       retries: 3
-    networks:
-      - condenser-net
 
   db:
     image: postgres:17-alpine
     container_name: condenser_calculator_db
     restart: unless-stopped
     ports:
-      - "5255:5432" # Пробрасываем на хост для подключения через DBeaver/PgAdmin
+      - "5255:5432"
     environment:
       - POSTGRES_USER=condenser
       - POSTGRES_PASSWORD=password
@@ -43,12 +53,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    networks:
-      - condenser-net
-
-networks:
-  condenser-net:
-    driver: bridge
 
 volumes:
   condenser_db_data:

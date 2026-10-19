@@ -190,11 +190,12 @@ export function CondenserForm({ onSubmit, isSubmitting }: CondenserFormProps) {
               />
             </FormControl>
 
-            <FormControl isDisabled={isMetroVickers} {...(isMetroVickers ? disabledStyle : undefined)}>
+            <FormControl isRequired={isBerman} isDisabled={isMetroVickers} {...(isMetroVickers ? disabledStyle : undefined)}>
               <FormLabel>Энтальпия пара (H_steam)</FormLabel>
               <Controller
                 control={control}
                 name="H_steam"
+                rules={{ required: isBerman }}
                 render={({ field }) => (
                   <Controller
                     control={control}
@@ -384,11 +385,12 @@ export function CondenserForm({ onSubmit, isSubmitting }: CondenserFormProps) {
                 />
               </FormControl>
 
-              <FormControl isDisabled={isDisabledBuiltin} {...(isDisabledBuiltin ? disabledStyle : undefined)}>
+              <FormControl isRequired={!!watch('W_builtin')} isDisabled={isDisabledBuiltin} {...(isDisabledBuiltin ? disabledStyle : undefined)}>
                 <FormLabel>Ходы воды (Z_builtin)</FormLabel>
                 <Controller
                   control={control}
                   name="Z_builtin"
+                  rules={{ required: !!watch('W_builtin') }}
                   render={({ field }) => (
                     <InputWithUnit
                       value={field.value}

@@ -2,7 +2,7 @@
 import gitlab.exceptions
 from fastapi import APIRouter, HTTPException, Query
 
-from app.core.gitlab_adapter import gitlab_client
+from app.core.gitlab_adapter import GitLabConfigurationError, gitlab_client
 
 
 router = APIRouter(prefix="/projects", tags=["Projects"])
@@ -13,6 +13,8 @@ async def list_projects(search: str = Query("", description="Поиск по н�
     """Список проектов для выбора при создании задачи"""
     try:
         return gitlab_client.get_user_projects(search)
+    except GitLabConfigurationError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except gitlab.exceptions.GitlabAuthenticationError:
         raise HTTPException(status_code=401, detail="Ошибка авторизации в GitLab")
     except gitlab.exceptions.GitlabError as e:

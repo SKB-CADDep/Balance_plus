@@ -35,9 +35,26 @@ export const Route = createFileRoute('/calculator')({
 });
 
 export function getApiErrorDetail(error: any): string | undefined {
-    if (error instanceof ApiError && error.body && typeof error.body === 'object') {
-        if ('detail' in error.body && typeof (error.body as any).detail === 'string') {
-            return (error.body as any).detail;
+    if (error instanceof ApiError && error.body) {
+        let body = error.body;
+        if (typeof body === 'string') {
+            try { body = JSON.parse(body); } catch (e) {}
+        }
+        
+        if (typeof body === 'object' && body !== null) {
+            const detail = (body as any).detail;
+            if (typeof detail === 'string') {
+                return detail;
+            }
+            if (Array.isArray(detail)) {
+                return detail.map((err: any) => {
+                    const loc = err.loc ? err.loc.join('.') : '';
+                    return `${loc}: ${err.msg}`;
+                }).join('\n');
+            }
+            if ((body as any).message && typeof (body as any).message === 'string') {
+                return (body as any).message;
+            }
         }
     }
     return undefined;

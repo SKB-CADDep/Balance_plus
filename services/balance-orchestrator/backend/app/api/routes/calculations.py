@@ -4,7 +4,7 @@ import gitlab
 import gitlab.exceptions
 from fastapi import APIRouter, HTTPException, Query
 
-from app.core.gitlab_adapter import gitlab_client
+from app.core.gitlab_adapter import GitLabConfigurationError, gitlab_client
 from app.schemas.calculation import CalculationSaveRequest
 
 
@@ -15,12 +15,7 @@ router = APIRouter(prefix="/calculations", tags=["Calculations"])
 async def save_calculation_result(req: CalculationSaveRequest):
     try:
         # 1. Поиск ветки.
-        try:
-            branch_name = gitlab_client.find_branch_by_issue_iid(req.task_iid, req.project_id)
-        except (gitlab.exceptions.GitlabError, Exception) as e:
-            raise HTTPException(
-                status_code=400, detail=f"Ошибка доступа к GitLab или проекту: {e!s}"
-            )
+        branch_name = gitlab_client.find_branch_by_issue_iid(req.task_iid, req.project_id)
 
         if not branch_name:
             raise HTTPException(
@@ -53,6 +48,8 @@ async def save_calculation_result(req: CalculationSaveRequest):
             "web_url": commit.web_url,
         }
 
+    except GitLabConfigurationError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except gitlab.exceptions.GitlabAuthenticationError:
         raise HTTPException(status_code=401, detail="Ошибка авторизации в GitLab")
     except gitlab.exceptions.GitlabGetError:
@@ -98,6 +95,8 @@ async def get_latest_calculation(
             "output_data": json.loads(result_content) if result_content else None,
         }
 
+    except GitLabConfigurationError as e:
+        return {"found": False, "error": str(e), "error_type": "configuration"}
     except gitlab.exceptions.GitlabAuthenticationError:
         return {"found": False, "error": "Ошибка авторизации в GitLab"}
     except gitlab.exceptions.GitlabGetError:

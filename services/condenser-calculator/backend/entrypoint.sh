@@ -25,9 +25,15 @@ done
 
 >&2 echo "PostgreSQL is up - proceeding."
 
-# Миграции закомментированы до создания первой ревизии (сделаем в COND-2)
-# echo "Applying Alembic migrations..."
-# alembic upgrade head
+if [ "${RUN_MIGRATIONS:-true}" = "true" ]; then
+  echo "Applying Alembic migrations..."
+  alembic upgrade head
+fi
+
+if [ "${SEED_DATABASE:-true}" = "true" ]; then
+  echo "Loading reference data (idempotent)..."
+  python seed.py
+fi
 
 echo "Starting Uvicorn server..."
 exec uvicorn app.main:app --host 0.0.0.0 --port 8010 --workers 4

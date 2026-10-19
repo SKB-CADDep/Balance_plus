@@ -4,7 +4,8 @@ services:
     container_name: balance_backend
     restart: always
     env_file:
-      - ./backend/.env
+      - path: ./backend/.env
+        required: false
     ports:
       - "8005:8000"
     healthcheck:
