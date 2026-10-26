@@ -1,0 +1,12 @@
+FROM node:20 AS build-stage
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+ARG VITE_API_URL="http://valve-stems.utz.local"
+RUN npm run build
+
+FROM nginx:1.31-alpine
+COPY --from=build-stage /app/dist/ /usr/share/nginx/html
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]

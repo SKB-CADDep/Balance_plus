@@ -8,22 +8,34 @@
       <div class="profile-section">
         <span class="profile-name">{{ user.name }}</span>
         <div class="avatar" :style="{ backgroundImage: `url(${user.avatar_url})` }"></div>
+        <button class="logout-btn" @click="$emit('logout')">Выйти</button>
       </div>
     </header>
   </template>
   
   <script setup lang="ts">
-  defineProps<{ user: { name: string, avatar_url: string } }>()
-  </script>
-  
-  <style scoped>
-  .top-bar {
-    display: flex; justify-content: space-between; align-items: center;
-    height: 56px; padding: 0 16px; border-bottom: 1px solid #E6E6E6;
-  }
-  .logo-section, .profile-section { display: flex; align-items: center; gap: 16px; }
-  .icon-box { width: 24px; height: 24px; background: #D9D9D9; border-radius: 4px; }
-  .logo-text { font-weight: 600; font-size: 16px; }
-  .profile-name { font-size: 16px; }
-  .avatar { width: 24px; height: 24px; background: #D9D9D9; border-radius: 12px; background-size: cover; }
-  </style>
+defineProps<{ user: { name: string, avatar_url: string } }>()
+defineEmits<{ (e: 'logout'): void }>()
+</script>
+
+<style scoped>
+.top-bar {
+  display: flex; justify-content: space-between; align-items: center;
+  height: 56px; padding: 0 16px; border-bottom: 1px solid #E6E6E6;
+}
+.logo-section, .profile-section { display: flex; align-items: center; gap: 16px; }
+.icon-box { width: 24px; height: 24px; background: #D9D9D9; border-radius: 4px; }
+.logo-text { font-weight: 600; font-size: 16px; }
+.profile-name { font-size: 16px; }
+.avatar { width: 24px; height: 24px; background: #D9D9D9; border-radius: 12px; background-size: cover; }
+.logout-btn {
+  background: transparent;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 4px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+.logout-btn:hover { background: #f0f0f0; }
+</style>

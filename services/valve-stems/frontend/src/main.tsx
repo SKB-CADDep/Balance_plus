@@ -8,7 +8,17 @@ import {StrictMode} from "react";
 import {OpenAPI} from "./client";
 import theme from "./theme";
 
-OpenAPI.BASE = import.meta.env.VITE_API_URL || "http://10.202.220.143:5253";
+const getApiBaseUrl = (): string => {
+    if (import.meta.env.VITE_API_URL) {
+        return import.meta.env.VITE_API_URL;
+    }
+    if (typeof window !== "undefined") {
+        return `${window.location.protocol}//${window.location.hostname}:5253`;
+    }
+    return "http://localhost:5253";
+};
+
+OpenAPI.BASE = getApiBaseUrl();
 
 const queryClient = new QueryClient();
 
