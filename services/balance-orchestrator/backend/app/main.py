@@ -1,8 +1,8 @@
-# main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import calculations, config, geometries, health, projects, tasks, user
+from app.core.rate_limit import RateLimitMiddleware
 
 
 app = FastAPI(
@@ -18,6 +18,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Подключаем Rate Limiting для чувствительных маршрутов (10 req/min)
+app.add_middleware(RateLimitMiddleware, max_requests=10, window_seconds=60)
 
 # Подключаем роуты
 app.include_router(health.router)
