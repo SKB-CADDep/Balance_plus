@@ -4,7 +4,7 @@ import json
 import gitlab.exceptions
 from fastapi import APIRouter, HTTPException
 
-from app.core.gitlab_adapter import gitlab_client
+from app.core.gitlab_adapter import GitLabConfigurationError, gitlab_client
 from app.schemas.geometry import GeometriesManifest, GeometryInfo
 
 
@@ -22,6 +22,8 @@ async def list_geometries():
         content = file.decode().decode("utf-8")
         manifest = GeometriesManifest.model_validate_json(content)
         return manifest.geometries
+    except GitLabConfigurationError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except gitlab.exceptions.GitlabAuthenticationError:
         raise HTTPException(status_code=401, detail="Ошибка авторизации в GitLab")
     except gitlab.exceptions.GitlabGetError:
@@ -56,6 +58,8 @@ async def get_geometry(geometry_id: str):
 
         return geometry_data
 
+    except GitLabConfigurationError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except gitlab.exceptions.GitlabAuthenticationError:
         raise HTTPException(status_code=401, detail="Ошибка авторизации в GitLab")
     except gitlab.exceptions.GitlabGetError:

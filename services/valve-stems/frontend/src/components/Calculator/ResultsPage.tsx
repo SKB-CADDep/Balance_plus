@@ -7,6 +7,7 @@ import {
 import { FiChevronLeft, FiDownload, FiSave, FiFileText } from 'react-icons/fi';
 
 import { 
+    OpenAPI,
     type MultiCalculationParams, 
     type MultiCalculationResult,
     type GroupCalculationDetails,
@@ -110,7 +111,7 @@ const ResultsPage: React.FC<Props> = ({ stockId, inputData, outputData, onGoBack
 
         setIsDownloadingDrawio(prev => ({ ...prev, [groupDetail.valve_id]: true }));
         try {
-            const baseUrl = import.meta.env.VITE_API_URL || '';
+            const baseUrl = import.meta.env.VITE_API_URL || OpenAPI.BASE || '';
             const cleanBaseUrl = baseUrl.replace(/\/$/, '');
             const url = `${cleanBaseUrl}/api/v1/generate_scheme`;
             

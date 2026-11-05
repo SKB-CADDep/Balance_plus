@@ -16,14 +16,20 @@ def health_check():
 
 @router.get("/db", include_in_schema=True)
 def health_check_db(db: Session = Depends(get_db)):
-    """Глубокая проверка с подключением к PostgreSQL."""
+    """Глубокая проверка PostgreSQL и обязательных таблиц приложения."""
     try:
-        # Простая проверка связи
-        db.execute(text("SELECT 1"))
+        tables = db.execute(
+            text(
+                "SELECT to_regclass('public.condensers'), "
+                "to_regclass('public.materials')"
+            )
+        ).one()
+        if any(table is None for table in tables):
+            raise RuntimeError("Required database tables are missing")
         return {
             "status": "ok",
             "database": "connected",
-            "details": "PostgreSQL is reachable",
+            "details": "PostgreSQL is reachable and schema is initialized",
         }
     except Exception as e:
         raise HTTPException(

@@ -8,6 +8,27 @@ import NewTaskCard from './components/task-board/NewTaskCard.vue'
 import CreateTaskModal from './components/task-board/CreateTaskModal.vue'
 import WsaWrapper from './components/apps/WsaWrapper.vue'
 
+// Защита от бесконечного цикла редиректов: проверяем, не на /login ли мы
+const isLoginPage = window.location.pathname.startsWith('/login')
+
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401 && !window.location.pathname.startsWith('/login')) {
+      localStorage.removeItem('authToken')
+      const currentUrl = encodeURIComponent(window.location.pathname + window.location.search)
+      window.location.href = `/login?redirect=${currentUrl}`
+    }
+    return Promise.reject(error)
+  }
+)
+
+const handleLogout = () => {
+  localStorage.removeItem('authToken')
+  const currentUrl = encodeURIComponent(window.location.pathname + window.location.search)
+  window.location.href = `/login?redirect=${currentUrl}`
+}
+
 // --- ТИПЫ ---
 interface Task {
   iid: number
@@ -37,8 +58,8 @@ interface Bureau {
 const currentUser = ref({ name: 'Загрузка...', avatar_url: '' })
 const tasks = ref<Task[]>([])
 const bureaus = ref<Bureau[]>([])
-const activeBureauId = ref<string | null>(null) // null = Все задачи
-const activeModuleId = ref<string | null>(null) // null = Все модули выбранного бюро
+const activeBureauId = ref<string | null>(null)
+const activeModuleId = ref<string | null>(null)
 const showCreateModal = ref(false)
 const searchQuery = ref('')
 const loading = ref(true)
@@ -51,16 +72,22 @@ const currentProjectId = ref(0)
 // --- API ---
 const fetchData = async () => {
   try {
+    const token = localStorage.getItem('authToken')
+    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {}
+
     const [userRes, tasksRes, bureausRes] = await Promise.all([
-      axios.get('/api/v1/user/me'),
-      axios.get('/api/v1/tasks?state=opened'),
-      axios.get('/api/v1/config/bureaus')
+      axios.get('/api/v1/user/me', config),
+      axios.get('/api/v1/tasks?state=opened', config),
+      axios.get('/api/v1/config/bureaus', config)
     ])
     currentUser.value = userRes.data
     tasks.value = tasksRes.data
     bureaus.value = bureausRes.data
-  } catch (e) { console.error(e) } 
-  finally { loading.value = false }
+  } catch (e) {
+    console.error(e)
+  } finally {
+    loading.value = false
+  }
 }
 
 const createTask = async (data: any) => {
@@ -75,7 +102,6 @@ const createTask = async (data: any) => {
     const newTaskId = res.data.iid
     const newProjectId = data.project_id
 
-    // Автоматически создаём ветку после создания задачи
     await axios.post(`/api/v1/tasks/${newTaskId}/branch`, {
       project_id: newProjectId
     })
@@ -89,7 +115,6 @@ const createTask = async (data: any) => {
 }
 
 const handleTaskClick = (task: Task) => {
-  // Обновлено для новых кодов модулей
   if (task.calc_type === 'btr-valve-stems' || task.calc_type === 'valves' || task.labels.includes('valves') || task.title.toLowerCase().includes('шток')) {
     if (!confirm(`Открыть приложение "Расчёт штоков" для задачи #${task.iid}?`)) return;
     currentTaskIid.value = task.iid
@@ -107,7 +132,6 @@ const handleSubmitTask = async (task: Task) => {
     loading.value = true
     const res = await axios.post(`/api/v1/tasks/${task.iid}/submit`, null, { params: { project_id: task.project_id } })
     alert(`✅ Merge Request создан!\nСсылка: ${res.data.mr_url}`)
-    // Можно открыть ссылку в новой вкладке
     window.open(res.data.mr_url, '_blank')
   } catch (e: any) {
     alert('Ошибка: ' + (e.response?.data?.detail || e.message))
@@ -125,17 +149,14 @@ const activeBureau = computed(() => {
 const filteredTasks = computed(() => {
   let result = [...tasks.value]
 
-  // 1. Фильтр по Бюро
   if (activeBureauId.value) {
     result = result.filter(t => t.bureau?.code === activeBureauId.value)
   }
 
-  // 2. Фильтр по Модулю
   if (activeModuleId.value) {
     result = result.filter(t => t.calc_type === activeModuleId.value)
   }
 
-  // 3. Поиск
   if (searchQuery.value) {
     const q = searchQuery.value.toLowerCase()
     result = result.filter(t => 
@@ -145,7 +166,6 @@ const filteredTasks = computed(() => {
     )
   }
 
-  // 4. Сортировка
   result.sort((a, b) => {
     const dateA = new Date(a.created_at).getTime()
     const dateB = new Date(b.created_at).getTime()
@@ -156,27 +176,26 @@ const filteredTasks = computed(() => {
 
 const selectBureau = (bureauId: string | null) => {
   activeBureauId.value = bureauId
-  activeModuleId.value = null // Сбрасываем модуль при смене бюро
+  activeModuleId.value = null
 }
 
 const toggleSort = () => {
   sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
 }
 
-onMounted(fetchData)
+onMounted(() => {
+  if (!isLoginPage) {
+    fetchData()
+  }
+})
 </script>
 
 <template>
-  <!-- Обертка layout должна быть всегда -->
   <div class="layout">
-    
-    <!-- БЛОК 1: ДАШБОРД -->
-    <!-- v-show лучше чем v-if здесь, чтобы не терять скролл при возврате, но v-if надежнее для изоляции -->
     <div v-if="activeView === 'dashboard'" class="dashboard-wrapper">
-      <Header :user="currentUser" />
+      <Header :user="currentUser" @logout="handleLogout" />
       
       <main class="main-container">
-        <!-- УРОВЕНЬ 1: БЮРО -->
         <nav class="bureau-nav">
           <a 
             href="#" 
@@ -202,7 +221,6 @@ onMounted(fetchData)
           </a>
         </nav>
 
-        <!-- УРОВЕНЬ 2: МОДУЛИ (Показываем только если выбрано Бюро) -->
         <div v-if="activeBureau" class="modules-nav">
           <button 
             class="module-chip" 
@@ -243,7 +261,6 @@ onMounted(fetchData)
       </main>
     </div>
 
-    <!-- БЛОК 2: ПРИЛОЖЕНИЕ (ПОЛНЫЙ ЭКРАН ПОВЕРХ ВСЕГО) -->
     <div v-else-if="activeView === 'app-valves'" class="fullscreen-app">
       <WsaWrapper 
         :taskIid="currentTaskIid"
@@ -259,72 +276,22 @@ onMounted(fetchData)
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-/* === ГЛОБАЛЬНЫЙ СБРОС (Самое важное для фикса верстки) === */
-:root {
-  color-scheme: light;
-}
-
-*, *::before, *::after {
-  box-sizing: border-box;
-}
-
+:root { color-scheme: light; }
+*, *::before, *::after { box-sizing: border-box; }
 body {
-  margin: 0;
-  padding: 0;
-  font-family: 'Inter', sans-serif;
-  background-color: #ffffff;
-  color: #000000;
-  /* Возвращаем нормальный скролл для страницы */
-  overflow-y: auto; 
-  overflow-x: hidden;
+  margin: 0; padding: 0; font-family: 'Inter', sans-serif;
+  background-color: #ffffff; color: #000000;
+  overflow-y: auto; overflow-x: hidden;
 }
-
-input, select, textarea {
-  background-color: #ffffff;
-  color: #000000;
-}
-
-.layout {
-  width: 100%;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-}
-
-/* === СТИЛИ ДАШБОРДА === */
-.dashboard-wrapper {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
+input, select, textarea { background-color: #ffffff; color: #000000; }
+.layout { width: 100%; min-height: 100vh; display: flex; flex-direction: column; position: relative; }
+.dashboard-wrapper { width: 100%; display: flex; flex-direction: column; }
 .top-bar { 
-  width: 100%;
-  display: flex; 
-  justify-content: space-between; 
-  align-items: center; 
-  height: 56px; 
-  padding: 0 32px; 
-  border-bottom: 1px solid #E6E6E6; 
-  background: #fff; 
+  width: 100%; display: flex; justify-content: space-between; align-items: center; 
+  height: 56px; padding: 0 32px; border-bottom: 1px solid #E6E6E6; background: #fff; 
 }
-
-.main-container { 
-  width: 100%;
-  max-width: 100%; /* Защита от вылезания */
-  padding: 32px; 
-  flex: 1;
-}
-
-.bureau-nav { 
-  display: flex; 
-  gap: 30px; 
-  margin-bottom: 20px; 
-  border-bottom: 1px solid #eee; 
-  overflow-x: auto; /* Если меню длинное, добавляем скролл */
-}
-
+.main-container { width: 100%; max-width: 100%; padding: 32px; flex: 1; }
+.bureau-nav { display: flex; gap: 30px; margin-bottom: 20px; border-bottom: 1px solid #eee; overflow-x: auto; }
 .nav-link { 
   text-decoration: none; color: #000; font-size: 16px; 
   padding-bottom: 12px; border-bottom: 2px solid transparent; 
@@ -332,46 +299,21 @@ input, select, textarea {
 }
 .nav-link:hover { color: #666; }
 .nav-link.active { font-weight: 600; border-bottom-width: 2px; border-bottom-style: solid; }
-
-.modules-nav {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 30px;
-  flex-wrap: wrap;
-}
-
+.modules-nav { display: flex; gap: 12px; margin-bottom: 30px; flex-wrap: wrap; }
 .module-chip {
-  padding: 8px 16px;
-  border: 1px solid #D9D9D9;
-  border-radius: 20px;
-  background: #fff;
-  cursor: pointer;
-  font-size: 14px;
-  font-family: inherit;
-  transition: all 0.2s;
-  white-space: nowrap;
+  padding: 8px 16px; border: 1px solid #D9D9D9; border-radius: 20px;
+  background: #fff; cursor: pointer; font-size: 14px; font-family: inherit;
+  transition: all 0.2s; white-space: nowrap;
 }
-
-.module-chip:hover {
-  background: #F5F5F5;
-  border-color: #999;
-}
-
-.module-chip.active {
-  background: #000;
-  color: #fff;
-  border-color: #000;
-}
-
+.module-chip:hover { background: #F5F5F5; border-color: #999; }
+.module-chip.active { background: #000; color: #fff; border-color: #000; }
 .actions-row { display: flex; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
-
 .search-input { 
   flex-grow: 1; display: flex; align-items: center; 
   padding: 0 12px; height: 40px; border: 1px solid #D9D9D9; 
   border-radius: 4px; background: #fff; min-width: 200px; 
 }
 .search-input input { border: none; outline: none; width: 100%; font-size: 16px; font-family: inherit; }
-
 .action-btn { 
   display: flex; align-items: center; justify-content: center; 
   padding: 0 20px; height: 40px; background: #F2F2F2; 
@@ -382,25 +324,12 @@ input, select, textarea {
 .action-btn:hover { background: #e0e0e0; }
 .action-btn.primary { background: #000; color: #fff; }
 .action-btn.primary:hover { background: #333; }
-
 .task-grid { 
-  display: grid; 
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); 
-  gap: 24px; 
-  padding-bottom: 50px; 
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); 
+  gap: 24px; padding-bottom: 50px; 
 }
-
-/* === СТИЛИ ПОЛНОЭКРАННОГО ПРИЛОЖЕНИЯ === */
 .fullscreen-app {
-  position: fixed; /* Фиксируем поверх всего */
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: #fff;
-  z-index: 9999;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden; /* Внутри приложения свои скроллы */
+  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+  background: #fff; z-index: 9999; display: flex; flex-direction: column; overflow: hidden;
 }
 </style>

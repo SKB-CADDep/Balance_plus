@@ -4,6 +4,9 @@ README.md
 .gitignore
 .dockerignore
 Dockerfile
+.env
+.env.*
+!.env.example
 *.pyc
 .pytest_cache/
 tests/
